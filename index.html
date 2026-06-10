@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f0c29">
+  <title>Reading Learner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Picker -->
+  <div id="screen-picker" class="screen">
+    <p class="greeting">What would you like to practice?</p>
+    <div class="picker-buttons">
+      <button class="picker-btn numbers-btn" id="btn-numbers" aria-label="Numbers">
+        <span class="picker-icon">123</span>
+        <span class="picker-label">Numbers</span>
+      </button>
+      <button class="picker-btn words-btn" id="btn-words" aria-label="Words">
+        <span class="picker-icon">ABC</span>
+        <span class="picker-label">Words</span>
+      </button>
+    </div>
+    <button class="grownup-gate" id="grownup-gate" aria-label="Grown-up settings (hold)">⚙</button>
+  </div>
+
+  <!-- Practice -->
+  <div id="screen-practice" class="screen hidden">
+    <div id="round-progress" class="round-progress" aria-label="Round progress"></div>
+    <div id="word-display" class="word-display" aria-live="polite"></div>
+    <button id="mic-button" class="mic-button" aria-label="Tap to speak">
+      <div class="mic-ripple" aria-hidden="true"></div>
+      <span class="mic-icon" aria-hidden="true">🎤</span>
+      <span class="mic-status" id="mic-status">Tap to speak</span>
+    </button>
+    <div id="fallback-controls" class="fallback-controls hidden" role="group" aria-label="Grown-up judgement">
+      <p class="fallback-label">Did they say it right?</p>
+      <div class="fallback-buttons">
+        <button id="btn-correct" class="fallback-btn correct-btn" aria-label="Yes, correct">✓</button>
+        <button id="btn-retry"   class="fallback-btn retry-btn"   aria-label="Try again">↺</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- All Done -->
+  <div id="screen-alldone" class="screen hidden">
+    <div id="stars-burst" class="stars-burst" aria-hidden="true"></div>
+    <p class="alldone-title" id="alldone-title">Amazing!</p>
+    <p class="alldone-score" id="alldone-score" aria-live="polite"></p>
+    <button id="btn-tomorrow" class="tomorrow-btn">🌟 Play again tomorrow!</button>
+  </div>
+
+  <!-- Grown-up -->
+  <div id="screen-grownup" class="screen hidden">
+    <div class="grownup-panel">
+      <div class="grownup-header">
+        <h2>Settings</h2>
+        <button id="btn-back" class="back-btn" aria-label="Close settings">✕</button>
+      </div>
+      <div class="settings-scroll">
+
+        <section class="settings-group">
+          <h3>Practice</h3>
+          <label class="setting-row">
+            <span>Items per round</span>
+            <input type="number" id="s-round-size" min="4" max="20">
+          </label>
+          <label class="setting-row">
+            <span>Successes before silent mode</span>
+            <input type="number" id="s-fade-threshold" min="1" max="10">
+          </label>
+          <label class="setting-row">
+            <span>Retry limit on a miss</span>
+            <input type="number" id="s-retry-cap" min="1" max="5">
+          </label>
+          <label class="setting-row">
+            <span>Grown-up decides (no mic)</span>
+            <input type="checkbox" id="s-grownup-decides">
+          </label>
+        </section>
+
+        <section class="settings-group">
+          <h3>Voice</h3>
+          <label class="setting-row">
+            <span>Voice</span>
+            <select id="s-voice"></select>
+          </label>
+          <label class="setting-row">
+            <span>Speed: <span id="s-rate-value">0.9×</span></span>
+            <input type="range" id="s-speech-rate" min="0.5" max="1.5" step="0.1">
+          </label>
+        </section>
+
+        <section class="settings-group">
+          <h3>Progress</h3>
+          <div id="progress-grid" class="progress-grid"></div>
+          <p id="progress-summary" class="progress-summary"></p>
+        </section>
+
+        <section class="settings-group danger-group">
+          <button id="btn-reset" class="reset-btn">Reset all progress</button>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Flash overlay (appended by JS) -->
+
+  <script src="app.js"></script>
+</body>
+</html>
