@@ -209,6 +209,15 @@ html, body {
 
 .mic-button:active  { transform: scale(0.95); }
 
+.mic-button.waiting {
+  background: rgba(255,255,255,0.1);
+  box-shadow: none;
+  cursor: default;
+  transform: none;
+}
+
+.mic-button.waiting:active { transform: none; }
+
 .mic-button.listening {
   background: var(--success);
   box-shadow: 0 8px 48px rgba(74,222,128,0.55);

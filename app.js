@@ -235,6 +235,11 @@ let recognitionActive = false;
 let recogTimeout      = null;
 let resultHandled     = false;
 
+// 'waiting': TTS playing or processing — button disabled
+// 'ready':   child's turn — button enabled (red)
+// 'listening': mic open — button enabled (green)
+let micState = 'waiting';
+
 function initRecognition() {
   if (!SpeechRecognitionAPI) return;
   recognition = new SpeechRecognitionAPI();
@@ -248,16 +253,16 @@ function initRecognition() {
     resultHandled = true;
     clearTimeout(recogTimeout);
     recognitionActive = false;
-    setMicIdle();
+    setMicState('waiting');
     const transcripts = Array.from({ length: e.results[0].length }, (_, i) => e.results[0][i].transcript);
     onRecognitionResult(transcripts);
   };
 
   recognition.onerror = (e) => {
     clearTimeout(recogTimeout);
-    resultHandled     = true; // prevent onend from also calling fallback
+    resultHandled     = true; // prevent onend from double-firing
     recognitionActive = false;
-    setMicIdle();
+    setMicState('ready');
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
       onMicDenied();
     } else {
@@ -269,7 +274,7 @@ function initRecognition() {
     clearTimeout(recogTimeout);
     if (resultHandled) return; // already handled by onresult or onerror
     recognitionActive = false;
-    setMicIdle();
+    setMicState('ready');
     onRecognitionFallback();
   };
 }
@@ -282,27 +287,30 @@ function startListening() {
   try {
     recognition.start();
     recognitionActive = true;
-    setMicListening();
-    // Safety: give up after 8 s
+    setMicState('listening');
+    // Safety: give up after 8 s. Set resultHandled first so onend doesn't double-fire.
     recogTimeout = setTimeout(() => {
       if (recognitionActive) {
+        resultHandled     = true;
         recognitionActive = false;
         try { recognition.stop(); } catch(_) {}
-        setMicIdle();
+        setMicState('ready');
         onRecognitionFallback();
       }
     }, 8000);
   } catch (e) {
-    setMicIdle();
+    setMicState('ready');
     onRecognitionFallback();
   }
 }
 
 function stopListeningManually() {
-  if (!recognitionActive) return;
+  if (micState !== 'listening') return;
   clearTimeout(recogTimeout);
+  resultHandled     = true; // prevent onend from firing fallback
   recognitionActive = false;
   try { recognition.stop(); } catch(_) {}
+  setMicState('ready'); // child can try again — no fallback
 }
 
 // ============================================================
@@ -427,15 +435,14 @@ function nextItem() {
   gs.retryCount  = 0;
   gs.currentItem.lastSeenRound = roundNumber;
   gs.awaitingResult = false;
-  setMicIdle();
-  hideFallback();
-  presentItem(gs.currentItem);
+  presentItem(gs.currentItem); // presentItem owns mic state from here
 }
 
 function presentItem(item) {
   renderDots();
+  setMicState('waiting'); // block mic until TTS is done
+  hideFallback();
 
-  // Resize word display to fit
   const el = document.getElementById('word-display');
   const len = item.display.length;
   el.style.fontSize =
@@ -443,20 +450,26 @@ function presentItem(item) {
     len <= 4  ? 'clamp(5rem, 20vmin, 10rem)' :
     len <= 7  ? 'clamp(4rem, 15vmin,  8rem)' :
                 'clamp(3rem, 11vmin,  5.5rem)';
-  el.textContent  = item.display;
-  el.className    = 'word-display' + (item.mode === 'audio' ? ' audio-mode' : '');
+  el.textContent = item.display;
+  el.className   = 'word-display' + (item.mode === 'audio' ? ' audio-mode' : '');
 
   if (item.mode === 'audio') {
     speakWord(item.display, () => {
       if (gs.currentItem !== item) return;
-      setTimeout(() => speak("Your turn!", 1.0), 200);
+      setTimeout(() => speak("Your turn!", 1.0, () => {
+        if (gs.currentItem === item && !gs.awaitingResult) setMicState('ready');
+      }), 200);
     });
+  } else {
+    // Silent mode: no TTS — mic is ready immediately
+    setMicState('ready');
   }
 }
 
 function handleAnswer(correct) {
   if (gs.awaitingResult) return;
   gs.awaitingResult = true;
+  setMicState('waiting'); // block mic while praise/correction TTS plays
   hideFallback();
 
   const item = gs.currentItem;
@@ -564,14 +577,20 @@ function showScreen(name) {
   );
 }
 
-function setMicListening() {
-  document.getElementById('mic-button').classList.add('listening');
-  document.getElementById('mic-status').textContent = 'Listening…';
-}
-
-function setMicIdle() {
-  document.getElementById('mic-button').classList.remove('listening');
-  document.getElementById('mic-status').textContent = 'Tap to speak';
+function setMicState(state) {
+  micState = state;
+  const btn = document.getElementById('mic-button');
+  const lbl = document.getElementById('mic-status');
+  btn.classList.remove('listening', 'waiting');
+  if (state === 'listening') {
+    btn.classList.add('listening');
+    lbl.textContent = 'Listening…';
+  } else if (state === 'waiting') {
+    btn.classList.add('waiting');
+    lbl.textContent = '';
+  } else {
+    lbl.textContent = 'Tap to speak';
+  }
 }
 
 function showFallback()  { document.getElementById('fallback-controls').classList.remove('hidden'); }
@@ -741,14 +760,14 @@ function setupEvents() {
     speak('Words!', 1.0, () => startRound('words'));
   });
 
-  // Mic button — tap to toggle listen
+  // Mic button — state machine gates all taps
   document.getElementById('mic-button').addEventListener('click', () => {
-    if (gs.awaitingResult) return;
-    if (recognitionActive) {
-      stopListeningManually();
-    } else {
-      startListening();
+    if (micState === 'listening') {
+      stopListeningManually();        // → ready (not fallback)
+    } else if (micState === 'ready') {
+      startListening();               // → listening
     }
+    // 'waiting': TTS is speaking — silently ignore
   });
 
   // Grown-up fallback
