@@ -310,7 +310,17 @@ function stopListeningManually() {
   resultHandled     = true; // prevent onend from firing fallback
   recognitionActive = false;
   try { recognition.stop(); } catch(_) {}
-  setMicState('ready'); // child can try again — no fallback
+  setMicState('ready'); // child cancelled — no fallback
+}
+
+// Stop and let recognition evaluate what was heard (hold-release path).
+// Does NOT set resultHandled — onresult/onend decide the outcome naturally.
+function stopAndEvaluate() {
+  if (micState !== 'listening') return;
+  clearTimeout(recogTimeout);
+  recognitionActive = false;
+  try { recognition.stop(); } catch(_) {}
+  // Stay green until onresult/onend updates state
 }
 
 // ============================================================
@@ -760,14 +770,33 @@ function setupEvents() {
     speak('Words!', 1.0, () => startRound('words'));
   });
 
-  // Mic button — state machine gates all taps
-  document.getElementById('mic-button').addEventListener('click', () => {
-    if (micState === 'listening') {
-      stopListeningManually();        // → ready (not fallback)
-    } else if (micState === 'ready') {
-      startListening();               // → listening
+  // Mic button — push-and-hold (primary) + tap-to-toggle (accommodation)
+  const micBtn = document.getElementById('mic-button');
+  let holdStart = 0;
+
+  micBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    micBtn.setPointerCapture(e.pointerId);
+    if (micState === 'ready') {
+      holdStart = Date.now();
+      startListening();                // green immediately on press-down
+    } else if (micState === 'listening') {
+      stopListeningManually();         // second tap cancels → ready, no fallback
     }
-    // 'waiting': TTS is speaking — silently ignore
+    // 'waiting': TTS is playing — ignore
+  });
+
+  micBtn.addEventListener('pointerup', () => {
+    if (micState !== 'listening') return;
+    const held = Date.now() - holdStart;
+    if (held >= 150) {
+      stopAndEvaluate();               // hold-release: evaluate what was said
+    }
+    // quick tap (< 150 ms): stay green — child speaks, then taps again to submit
+  });
+
+  micBtn.addEventListener('pointercancel', () => {
+    if (micState === 'listening') stopAndEvaluate();
   });
 
   // Grown-up fallback
