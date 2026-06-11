@@ -954,7 +954,6 @@ function nextItem() {
 
 function presentItem(item) {
   renderDots();
-  hideFallback();
 
   const el  = document.getElementById('word-display');
   const len = item.display.length;
