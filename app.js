@@ -507,7 +507,8 @@ const ACCEPTED_OVERRIDES = {
   // Pure-digit number matches from the export were dropped: the practice grammar
   // only emits [a-z] tokens, so a digit string can never be returned.
   'word:and':    ['at'],
-  'word:can':    ['cap', 'cant'],
+  'word:big':    ['pick', 'pig'],
+  'word:can':    ['cap', 'cant', 'cat'],
   'word:find':   ['for', 'fine', 'try'],
   'word:for':    ['fall'],
   'word:funny':  ['front'],
@@ -515,8 +516,8 @@ const ACCEPTED_OVERRIDES = {
   'word:in':     ['a', 'and'],
   'word:is':     ['a', 'his', 'if', 'this'],
   'word:jump':   ['john'],
-  'word:not':    ['now'],
-  'word:one':    ['what'],
+  'word:not':    ['now', 'the not'],
+  'word:one':    ['what', 'why'],
   'word:red':    ['right'],
   'word:three':  ['free'],
   'word:to':     ['so'],
@@ -550,6 +551,9 @@ const ACCEPTED_OVERRIDES = {
   'word:will':   ['well'],
   'word:with':   ['well', 'quiz', 'wheres'],
   'word:yes':    ['yeah'],
+  'word:beowulf': ['bell', 'the off', 'they were'],
+  'word:help':   ['hell'],
+  'word:play':   ['please'],
 };
 
 function applyAcceptedOverrides(items) {
