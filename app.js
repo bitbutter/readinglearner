@@ -631,7 +631,7 @@ const MAX_LEVEL = 10;
 // tuning list) but hidden from practice rounds, left out of the practice grammar,
 // and not counted toward level completion. Prune an item's accepted list back to
 // <= this in the tuning screen to bring it back.
-const MAX_ACCEPTED_FOR_ACTIVE = 2;
+const MAX_ACCEPTED_FOR_ACTIVE = 3;
 
 function isItemActive(item) {
   return (item.accepted ? item.accepted.length : 0) <= MAX_ACCEPTED_FOR_ACTIVE;
@@ -2183,7 +2183,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v13 — overrides baked in + soft-exclude (>2 accepted). Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v14 — overrides baked in + soft-exclude (>3 accepted). Type rlDump() / rlExportAccepted().');
   loadStored();
   if (!stored) return;
   loadVoices();
