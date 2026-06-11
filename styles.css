@@ -132,6 +132,30 @@ html, body {
 
 .level-btn.locked:active { transform: none; }
 
+/* In settings, locked levels are still tappable */
+.settings-level-row .level-btn.locked {
+  cursor: pointer;
+  color: rgba(255,255,255,0.4);
+}
+
+.settings-level-row .level-btn.locked:active { transform: scale(0.90); }
+
+.settings-level-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.settings-level-section:last-child { border-bottom: none; }
+
+.settings-level-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
 .grownup-gate {
   position: fixed;
   bottom: 0.75rem;

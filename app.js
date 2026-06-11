@@ -1204,8 +1204,15 @@ const LEVEL_GRADIENTS = [
 ];
 
 function setLevelBackground(level) {
-  const g = LEVEL_GRADIENTS[level] || LEVEL_GRADIENTS[1];
-  document.body.style.background = g;
+  const gradient = LEVEL_GRADIENTS[level] || LEVEL_GRADIENTS[1];
+  document.body.style.background = gradient;  // immediate fallback
+  const imgPath = `/images/l${level}.jpg`;
+  const img = new Image();
+  img.onload = () => {
+    document.body.style.background =
+      `linear-gradient(rgba(10,8,30,0.62), rgba(10,8,30,0.62)), url('${imgPath}') center/cover no-repeat`;
+  };
+  img.src = imgPath; // triggers load; onerror just leaves gradient in place
 }
 
 function renderPicker() {
@@ -1244,6 +1251,31 @@ function renderLevelRow(containerId, set) {
         speak(`Finish level ${l - 1} first!`, 1.0);
       });
     }
+    container.appendChild(btn);
+  }
+}
+
+function renderSettingsLevelRows() {
+  renderSettingsLevelRow('s-word-level-row',   'wordLevel');
+  renderSettingsLevelRow('s-num-level-row',    'numberLevel');
+}
+
+function renderSettingsLevelRow(containerId, levelKey) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const current = stored.settings[levelKey];
+  container.innerHTML = '';
+  for (let l = 1; l <= MAX_LEVEL; l++) {
+    const btn = document.createElement('button');
+    btn.className = 'level-btn';
+    if      (l < current)  { btn.classList.add('done');    btn.textContent = `L${l} ✓`; }
+    else if (l === current) { btn.classList.add('current'); btn.textContent = `L${l}`; }
+    else                    { btn.classList.add('locked');  btn.textContent = `L${l}`; }
+    btn.addEventListener('click', () => {
+      stored.settings[levelKey] = l;
+      saveStored();
+      renderSettingsLevelRow(containerId, levelKey);
+    });
     container.appendChild(btn);
   }
 }
@@ -1341,6 +1373,7 @@ function makeChip(item) {
 
 function openGrownUp() {
   renderSettings();
+  renderSettingsLevelRows();
   renderProgress();
   renderCustomItems();
   populateVoiceSelect();
@@ -1368,8 +1401,6 @@ function renderSettings() {
   document.getElementById('s-round-size').value        = s.roundSize;
   document.getElementById('s-retry-cap').value         = s.retryCap;
   document.getElementById('s-mastery-threshold').value = s.masteryThreshold;
-  document.getElementById('s-word-level').value        = s.wordLevel;
-  document.getElementById('s-number-level').value      = s.numberLevel;
   document.getElementById('s-grownup-decides').checked = s.grownUpDecides;
   document.getElementById('s-speech-rate').value       = s.speechRate;
   document.getElementById('s-rate-value').textContent  = s.speechRate + '×';
@@ -1380,8 +1411,6 @@ function saveSettings() {
   s.roundSize         = Math.max(4,  parseInt(document.getElementById('s-round-size').value)        || 10);
   s.retryCap          = Math.max(1,  parseInt(document.getElementById('s-retry-cap').value)         || 2);
   s.masteryThreshold  = Math.max(1,  parseInt(document.getElementById('s-mastery-threshold').value) || 3);
-  s.wordLevel         = Math.min(MAX_LEVEL, Math.max(1, parseInt(document.getElementById('s-word-level').value)   || 1));
-  s.numberLevel       = Math.min(MAX_LEVEL, Math.max(1, parseInt(document.getElementById('s-number-level').value) || 1));
   s.grownUpDecides    = document.getElementById('s-grownup-decides').checked;
   s.speechRate        = parseFloat(document.getElementById('s-speech-rate').value)                 || 0.9;
   s.voiceName         = document.getElementById('s-voice').value || null;
@@ -1535,7 +1564,7 @@ function setupEvents() {
     document.getElementById('s-rate-value').textContent = parseFloat(e.target.value).toFixed(1) + '×';
     saveSettings();
   });
-  for (const id of ['s-round-size','s-retry-cap','s-mastery-threshold','s-word-level','s-number-level']) {
+  for (const id of ['s-round-size','s-retry-cap','s-mastery-threshold']) {
     document.getElementById(id).addEventListener('change', saveSettings);
   }
   document.getElementById('s-grownup-decides').addEventListener('change', saveSettings);
