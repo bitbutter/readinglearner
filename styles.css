@@ -156,6 +156,37 @@ html, body {
   font-weight: 600;
 }
 
+/* ── Mode choice buttons ── */
+
+.mode-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.mode-btn {
+  width: 100%;
+  padding: 1.4rem 2rem;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius);
+  color: white;
+  font-family: inherit;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background 0.15s, transform 0.1s, border-color 0.15s;
+}
+
+.mode-btn:active {
+  transform: scale(0.96);
+  background: rgba(255,255,255,0.18);
+}
+
 .grownup-gate {
   position: fixed;
   bottom: 0.75rem;

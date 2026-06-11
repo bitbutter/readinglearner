@@ -601,12 +601,19 @@ function showStorageError(msg) {
 // ============================================================
 
 let levelImages = {};
+let pickerImageUrl = null;
 
 async function loadImageManifest() {
   try {
     const resp = await fetch('./images/manifest.json');
     if (resp.ok) levelImages = await resp.json();
   } catch (_) {}
+  pickerImageUrl = await new Promise(resolve => {
+    const img = new Image();
+    img.onload  = () => resolve('./images/picker.png');
+    img.onerror = () => resolve(null);
+    img.src = './images/picker.png';
+  });
 }
 
 let voices = [];
@@ -925,7 +932,7 @@ function startRound(set, level) {
   gs.awaitingResult      = false;
   gs.hearPressed         = false;
 
-  setLevelBackground(level);
+  setLevelBackground(level, set);
   showScreen('practice');
   createRoundRecognizer(set);
   if (!stored.settings.grownUpDecides) openMicStream();
@@ -1191,7 +1198,7 @@ function showLevelUp(result) {
       `Brilliant! You've unlocked Level ${newLevel} of ${set}!`;
     speak(`Level ${level} complete! You unlocked level ${newLevel}! Well done!`, 1.0);
   }
-  setLevelBackground(isMax ? level : newLevel);
+  setLevelBackground(isMax ? level : newLevel, gs.currentSet);
 }
 
 // ============================================================
@@ -1212,10 +1219,11 @@ const LEVEL_GRADIENTS = [
   'linear-gradient(135deg, #1a1200 0%, #e9c46a 50%, #3d2c00 100%)',  // L10 – gold
 ];
 
-function setLevelBackground(level) {
+function setLevelBackground(level, set) {
   const gradient = LEVEL_GRADIENTS[level] || LEVEL_GRADIENTS[1];
   document.body.style.background = gradient;
-  const filename = levelImages[level] || levelImages[String(level)];
+  const setImages = (set && levelImages[set]) ? levelImages[set] : levelImages;
+  const filename = setImages[level] || setImages[String(level)];
   if (!filename) return;
   const imgPath = `./images/${filename}`;
   const img = new Image();
@@ -1227,9 +1235,12 @@ function setLevelBackground(level) {
 }
 
 function renderPicker() {
-  renderLevelRow('picker-word-levels', 'words');
-  renderLevelRow('picker-num-levels',  'numbers');
-  setLevelBackground(1); // picker uses neutral default; rounds set their own
+  if (pickerImageUrl) {
+    document.body.style.background =
+      `linear-gradient(rgba(10,8,30,0.62), rgba(10,8,30,0.62)), url('${pickerImageUrl}') center/cover no-repeat`;
+  } else {
+    document.body.style.background = LEVEL_GRADIENTS[1];
+  }
 }
 
 function renderLevelRow(containerId, set) {
@@ -1503,6 +1514,13 @@ function setupGate() {
 // ============================================================
 
 function setupEvents() {
+
+  document.getElementById('btn-mode-words').addEventListener('click', () => {
+    startRound('words', stored.settings.wordLevel);
+  });
+  document.getElementById('btn-mode-numbers').addEventListener('click', () => {
+    startRound('numbers', stored.settings.numberLevel);
+  });
 
   // Hear button — tap to speak the current word/number
   const hearBtn = document.getElementById('hear-button');
