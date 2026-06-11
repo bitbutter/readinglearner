@@ -965,6 +965,7 @@ function presentItem(item) {
   el.textContent = item.display;
   el.className   = 'word-display' + (item.kind === 'number' ? ' number-display' : '');
 
+  clearHeardDisplay();
   DBG('presentItem', { id: item.id });
   setMicState('ready'); // mic and hear button ready immediately — child controls pacing
 }
@@ -1071,6 +1072,8 @@ function checkLevelComplete() {
 function onRecognitionResult(transcripts) {
   const matched = matchAnswer(transcripts, gs.currentItem);
   DBG('judge', { expected: gs.currentItem?.display, heard: transcripts, matched });
+  const best = transcripts.find(t => t && t !== '[unk]') || '';
+  setHeardDisplay(best);
   handleAnswer(matched);
 }
 
@@ -1122,6 +1125,13 @@ function setMicState(state) {
 
 function showFallback() { document.getElementById('fallback-controls').classList.remove('hidden'); }
 function hideFallback() { document.getElementById('fallback-controls').classList.add('hidden'); }
+
+function setHeardDisplay(text) {
+  const el = document.getElementById('heard-display');
+  if (!el) return;
+  el.textContent = text ? `Heard: "${text}"` : '';
+}
+function clearHeardDisplay() { setHeardDisplay(''); }
 
 let flashTimer = null;
 function flashScreen(correct) {

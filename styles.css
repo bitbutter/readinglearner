@@ -260,6 +260,15 @@ html, body {
 
 .word-display.number-display { color: #fbbf24; }
 
+.heard-display {
+  font-size: clamp(0.75rem, 2.2vmin, 0.95rem);
+  color: var(--muted);
+  text-align: center;
+  min-height: 1.2em;
+  font-style: italic;
+  opacity: 0.75;
+}
+
 /* ── Practice buttons layout ── */
 
 .practice-buttons {
