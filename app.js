@@ -505,7 +505,6 @@ const DEFAULT_SETTINGS = {
   masteryThreshold: 3,
   wordLevel: 1,
   numberLevel: 1,
-  grownUpDecides: false,
   voiceName: null,
   speechRate: 0.9,
 };
@@ -794,11 +793,10 @@ function closeMicStream() {
 }
 
 function startListening() {
-  DBG('startListening', { sessionMicBlocked, grownUpDecides: stored.settings.grownUpDecides, voskReady });
-  if (sessionMicBlocked || stored.settings.grownUpDecides) { showFallback(); return; }
+  DBG('startListening', { sessionMicBlocked, voskReady });
+  if (sessionMicBlocked) { onMicDenied(); return; }
   if (!voskReady || !voskRecognizer) { onRecognitionFallback(); return; }
   if (!micStream) {
-    // Mic opened in the background at round start; if still pending, show fallback
     onRecognitionFallback();
     return;
   }
@@ -915,6 +913,7 @@ const gs = {
   recycled:            new Set(),
   awaitingResult:      false,
   hearPressed:         false,
+  showingTranscripts:  [],
 };
 
 function startRound(set, level) {
@@ -931,11 +930,12 @@ function startRound(set, level) {
   gs.recycled            = new Set();
   gs.awaitingResult      = false;
   gs.hearPressed         = false;
+  gs.showingTranscripts  = [];
 
   setLevelBackground(level, set);
   showScreen('practice');
   createRoundRecognizer(set);
-  if (!stored.settings.grownUpDecides) openMicStream();
+  openMicStream();
 
   // Announce the level at the start of the session
   speak(`Level ${level}!`, 1.1, () => nextItem());
@@ -943,9 +943,10 @@ function startRound(set, level) {
 
 function nextItem() {
   if (gs.queue.length === 0) { endRound(); return; }
-  gs.currentItem = gs.queue.shift();
-  gs.retryCount  = 0;
-  gs.hearPressed = false;
+  gs.currentItem        = gs.queue.shift();
+  gs.retryCount         = 0;
+  gs.hearPressed        = false;
+  gs.showingTranscripts = [];
   gs.currentItem.lastSeenRound = roundNumber;
   gs.awaitingResult = false;
   presentItem(gs.currentItem);
@@ -966,6 +967,7 @@ function presentItem(item) {
   el.className   = 'word-display' + (item.kind === 'number' ? ' number-display' : '');
 
   clearHeardDisplay();
+  hideAddHeardBtn();
   DBG('presentItem', { id: item.id });
   setMicState('ready'); // mic and hear button ready immediately — child controls pacing
 }
@@ -974,7 +976,6 @@ function handleAnswer(correct) {
   if (gs.awaitingResult) return;
   gs.awaitingResult = true;
   setMicState('waiting');
-  hideFallback();
 
   const item = gs.currentItem;
   item.totalAttempts++;
@@ -1074,21 +1075,28 @@ function onRecognitionResult(transcripts) {
   DBG('judge', { expected: gs.currentItem?.display, heard: transcripts, matched });
   const best = transcripts.find(t => t && t !== '[unk]') || '';
   setHeardDisplay(best);
+
+  if (best && !matched) {
+    gs.showingTranscripts.push(best);
+    const counts = {};
+    for (const t of gs.showingTranscripts) counts[t] = (counts[t] || 0) + 1;
+    const repeated = Object.keys(counts).find(t => counts[t] >= 2);
+    showAddHeardBtn(repeated || null);
+  }
+
   handleAnswer(matched);
 }
 
 function onRecognitionFallback() {
   DBG('onRecognitionFallback', { awaitingResult: gs.awaitingResult });
   if (gs.awaitingResult) return;
-  speak("I didn't quite hear that. Did they say it right?", 0.9);
-  showFallback();
+  setMicState('ready');
 }
 
 function onMicDenied() {
   sessionMicBlocked = true;
   setMicState('ready');
-  speak("Microphone not available. Please use the buttons below.", 0.9);
-  showFallback();
+  speak("Microphone not available. Please allow microphone access and try again.", 0.9);
 }
 
 // ============================================================
@@ -1123,15 +1131,25 @@ function setMicState(state) {
   }
 }
 
-function showFallback() { document.getElementById('fallback-controls').classList.remove('hidden'); }
-function hideFallback() { document.getElementById('fallback-controls').classList.add('hidden'); }
-
 function setHeardDisplay(text) {
   const el = document.getElementById('heard-display');
   if (!el) return;
   el.textContent = text ? `Heard: "${text}"` : '';
 }
 function clearHeardDisplay() { setHeardDisplay(''); }
+
+function showAddHeardBtn(transcript) {
+  const btn = document.getElementById('btn-add-heard');
+  if (!btn) return;
+  if (!transcript) { btn.classList.add('hidden'); return; }
+  btn.textContent = `Add "${transcript}" as accepted`;
+  btn.dataset.transcript = transcript;
+  btn.classList.remove('hidden');
+}
+function hideAddHeardBtn() {
+  const btn = document.getElementById('btn-add-heard');
+  if (btn) btn.classList.add('hidden');
+}
 
 let flashTimer = null;
 function flashScreen(correct) {
@@ -1432,7 +1450,6 @@ function renderSettings() {
   document.getElementById('s-round-size').value        = s.roundSize;
   document.getElementById('s-retry-cap').value         = s.retryCap;
   document.getElementById('s-mastery-threshold').value = s.masteryThreshold;
-  document.getElementById('s-grownup-decides').checked = s.grownUpDecides;
   document.getElementById('s-speech-rate').value       = s.speechRate;
   document.getElementById('s-rate-value').textContent  = s.speechRate + '×';
 }
@@ -1442,7 +1459,6 @@ function saveSettings() {
   s.roundSize         = Math.max(4,  parseInt(document.getElementById('s-round-size').value)        || 10);
   s.retryCap          = Math.max(1,  parseInt(document.getElementById('s-retry-cap').value)         || 2);
   s.masteryThreshold  = Math.max(1,  parseInt(document.getElementById('s-mastery-threshold').value) || 3);
-  s.grownUpDecides    = document.getElementById('s-grownup-decides').checked;
   s.speechRate        = parseFloat(document.getElementById('s-speech-rate').value)                 || 0.9;
   s.voiceName         = document.getElementById('s-voice').value || null;
   saveStored();
@@ -1570,16 +1586,15 @@ function setupEvents() {
     if (micState === 'listening') requestStopAndEvaluate();
   });
 
-  document.getElementById('btn-correct').addEventListener('click', () => {
-    hideFallback(); handleAnswer(true);
-  });
-  document.getElementById('btn-retry').addEventListener('click', () => {
-    hideFallback();
-    setMicState('waiting');
-    speakWord(gs.currentItem.display, () => {
-      setMicState('ready');
-      if (sessionMicBlocked || stored.settings.grownUpDecides) showFallback();
-    });
+  document.getElementById('btn-add-heard').addEventListener('click', () => {
+    const transcript = document.getElementById('btn-add-heard').dataset.transcript;
+    const item = gs.currentItem;
+    if (transcript && item && !item.accepted.includes(transcript)) {
+      item.accepted.push(transcript);
+      saveStored();
+      DBG('addHeard', { id: item.id, transcript });
+    }
+    hideAddHeardBtn();
   });
 
   document.getElementById('tomorrow-text').addEventListener('click', () => {
@@ -1605,7 +1620,6 @@ function setupEvents() {
   for (const id of ['s-round-size','s-retry-cap','s-mastery-threshold']) {
     document.getElementById(id).addEventListener('change', saveSettings);
   }
-  document.getElementById('s-grownup-decides').addEventListener('change', saveSettings);
   document.getElementById('s-voice').addEventListener('change', () => {
     saveSettings();
     speak('Hello! This is how I sound.', 0.9);

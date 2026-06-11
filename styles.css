@@ -269,6 +269,23 @@ html, body {
   opacity: 0.75;
 }
 
+.add-heard-btn {
+  padding: 0.45rem 1rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 100px;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: clamp(0.72rem, 2vmin, 0.88rem);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.add-heard-btn:active {
+  background: rgba(255,255,255,0.16);
+  color: white;
+}
+
 /* ── Practice buttons layout ── */
 
 .practice-buttons {
@@ -400,51 +417,6 @@ html, body {
   font-weight: 700;
   pointer-events: none;
 }
-
-/* ── Fallback ── */
-
-.fallback-controls {
-  position: fixed;
-  bottom: 1.25rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.65rem;
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 0.85rem 1.4rem;
-  border-radius: var(--radius);
-  border: 1px solid rgba(255,255,255,0.15);
-  white-space: nowrap;
-}
-
-.fallback-label {
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-.fallback-buttons {
-  display: flex;
-  gap: 1.2rem;
-}
-
-.fallback-btn {
-  width: 62px;
-  height: 62px;
-  border-radius: 50%;
-  border: none;
-  font-size: 1.9rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: transform 0.1s;
-}
-
-.fallback-btn:active { transform: scale(0.88); }
-.correct-btn { background: var(--success); color: #000; }
-.retry-btn   { background: var(--warn);    color: #000; }
 
 /* ── Screen flash ── */
 
