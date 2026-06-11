@@ -154,7 +154,7 @@ const letterAudioCache = {};
 
 // Bump when the clips in audio/letters/ are regenerated: the service worker
 // caches audio exact-URL, so a new query string forces a refetch.
-const AUDIO_VERSION = 2;
+const AUDIO_VERSION = 3;
 
 function playLetterSound(seg) {
   const key = seg.toLowerCase();
@@ -2443,7 +2443,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v20 — sound-group preview screen; tail-capped release clips. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v21 — letter sounds re-recorded in Dad\'s voice. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
