@@ -20,9 +20,11 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+// Exact-URL match (no ignoreSearch): bumping a ?v= query on an asset is how
+// the app forces a refetch when e.g. the letter-sound clips are regenerated.
 async function cacheFirst(request) {
   const cache = await caches.open(CACHE);
-  const hit = await cache.match(request, { ignoreSearch: true });
+  const hit = await cache.match(request);
   if (hit) return hit;
   const resp = await fetch(request);
   if (resp.ok) cache.put(request, resp.clone());

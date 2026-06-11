@@ -325,7 +325,8 @@ html, body {
 
 /* Tappable letters: flash colour on tap, then fade back to the word's own
    colour (the keyframe only defines the start, so it eases back to normal). */
-.word-display .letter {
+.word-display .letter,
+.preview-word .letter {
   display: inline-block;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -338,12 +339,29 @@ html, body {
 
 /* Alternating sound units get a subtle tint (only applied when the word
    contains a compound group) so the child can see which letters go together. */
-.word-display .letter.alt {
+.word-display .letter.alt,
+.preview-word .letter.alt {
   color: #c7d9ff;
 }
 
-.word-display .letter.tapped {
+.word-display .letter.tapped,
+.preview-word .letter.tapped {
   animation: letter-flash 0.9s ease-out;
+}
+
+/* Grown-up preview: every word in the lists, big, with tappable groups. */
+.preview-word {
+  font-size: clamp(2.2rem, 7vmin, 3.6rem);
+  font-weight: 900;
+  line-height: 1.25;
+  color: var(--text);
+  user-select: none;
+}
+
+.soundpreview-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 @keyframes letter-flash {

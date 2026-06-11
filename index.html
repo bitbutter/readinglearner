@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#110f21">
   <title>Reading Learner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎤</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
 
@@ -113,6 +113,7 @@
           <h3>Words &amp; Numbers</h3>
           <p class="settings-blurb">Audition how the recognizer hears every word and number in your own voice, add accepted answers, and add your own custom items.</p>
           <button id="btn-open-tuning" class="open-tuning-btn">🎤 Audition &amp; edit all terms →</button>
+          <button id="btn-open-soundpreview" class="open-tuning-btn">🔤 Preview sound groups →</button>
         </section>
 
         <section class="settings-group danger-group">
@@ -145,6 +146,18 @@
     </div>
   </div>
 
+  <!-- Sound-group preview (grown-up) -->
+  <div id="screen-soundpreview" class="screen hidden">
+    <div class="grownup-panel">
+      <div class="grownup-header">
+        <h2>Sound groups</h2>
+        <button id="btn-soundpreview-back" class="back-btn" aria-label="Back to settings">✕</button>
+      </div>
+      <p class="tune-hint">Every word in the lists, split into sound units. Tap any letter or group to hear its sound — the white/blue alternation shows which letters belong together.</p>
+      <div id="soundpreview-list" class="tune-list soundpreview-list"></div>
+    </div>
+  </div>
+
   <!-- Level Up -->
   <div id="screen-levelup" class="screen hidden">
     <div id="levelup-title" class="levelup-title"></div>
@@ -155,6 +168,6 @@
   <!-- Flash overlay (appended by JS) -->
 
   <script src="vosk/vosk.js"></script>
-  <script src="app.js?v=19"></script>
+  <script src="app.js?v=20"></script>
 </body>
 </html>

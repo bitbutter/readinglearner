@@ -122,7 +122,39 @@ function soundFallback(key) {
   return LETTER_SOUNDS[key] || DIGRAPH_TTS[key] || null;
 }
 
+// Build the tappable sound-unit spans for a display word: one span per unit,
+// alternating tint when the word contains a compound group, tap = flash the
+// whole group + play its sound. `guard` (optional) can veto taps.
+function buildSoundUnitSpans(display, guard) {
+  const frag = document.createDocumentFragment();
+  const segs = segmentDisplay(display);
+  const hasGroups = segs.some(s => s.length > 1);
+  segs.forEach((seg, idx) => {
+    const span = document.createElement('span');
+    span.className   = 'letter';
+    span.textContent = seg;
+    if (hasGroups && idx % 2 === 1) span.classList.add('alt');
+    const key = seg.toLowerCase();
+    if (soundFallback(key) || DIGIT_NAMES[key]) {
+      span.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (guard && !guard()) return;
+        span.classList.remove('tapped');
+        void span.offsetWidth;  // restart the flash animation
+        span.classList.add('tapped');
+        playLetterSound(seg);
+      });
+    }
+    frag.appendChild(span);
+  });
+  return frag;
+}
+
 const letterAudioCache = {};
+
+// Bump when the clips in audio/letters/ are regenerated: the service worker
+// caches audio exact-URL, so a new query string forces a refetch.
+const AUDIO_VERSION = 2;
 
 function playLetterSound(seg) {
   const key = seg.toLowerCase();
@@ -130,7 +162,7 @@ function playLetterSound(seg) {
   if (fallback) {
     let a = letterAudioCache[key];
     if (!a) {
-      a = new Audio('./audio/letters/' + key + '.mp3');
+      a = new Audio('./audio/letters/' + key + '.mp3?v=' + AUDIO_VERSION);
       letterAudioCache[key] = a;
     }
     try { speechSynthesis.cancel(); } catch (_) {}
@@ -1346,29 +1378,9 @@ function presentItem(item) {
   // The word is split into sound units — single letters and compound sounds
   // like "sh"/"ee"/"igh". Tapping one flashes the whole group and plays its
   // isolated phonetic sound, so the child can sound the word out himself.
-  // When a word contains a compound group, alternating units get a subtle
-  // tint so the child can see which letters belong together.
   el.innerHTML = '';
-  const segs = segmentDisplay(item.display);
-  const hasGroups = segs.some(s => s.length > 1);
-  segs.forEach((seg, idx) => {
-    const span = document.createElement('span');
-    span.className   = 'letter';
-    span.textContent = seg;
-    if (hasGroups && idx % 2 === 1) span.classList.add('alt');
-    const key = seg.toLowerCase();
-    if (soundFallback(key) || DIGIT_NAMES[key]) {
-      span.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        if (gs.awaitingResult || micState === 'listening' || micState === 'evaluating') return;
-        span.classList.remove('tapped');
-        void span.offsetWidth;  // restart the flash animation
-        span.classList.add('tapped');
-        playLetterSound(seg);
-      });
-    }
-    el.appendChild(span);
-  });
+  el.appendChild(buildSoundUnitSpans(item.display,
+    () => !(gs.awaitingResult || micState === 'listening' || micState === 'evaluating')));
 
   clearHeardDisplay();
   DBG('presentItem', { id: item.id });
@@ -2155,6 +2167,39 @@ function renderAuditionResult(id, best, matched, item, sessionConf) {
 }
 
 // ============================================================
+// SOUND-GROUP PREVIEW (grown-up)
+// ============================================================
+
+// Every word in the lists (all levels + customs), rendered large with the
+// same tappable, alternately-tinted sound units the practice screen uses.
+function openSoundPreview() {
+  showScreen('soundpreview');
+  const list = document.getElementById('soundpreview-list');
+  list.innerHTML = '';
+
+  const words = Object.values(stored.items)
+    .filter(i => i.kind === 'word')
+    .sort((a, b) => ((a.level || 1) - (b.level || 1)) ||
+                    a.display.localeCompare(b.display));
+
+  let lastLevel = null;
+  for (const item of words) {
+    const level = item.level || 1;
+    if (level !== lastLevel) {
+      lastLevel = level;
+      const h = document.createElement('div');
+      h.className   = 'tune-group-header';
+      h.textContent = 'Level ' + level;
+      list.appendChild(h);
+    }
+    const w = document.createElement('div');
+    w.className = 'preview-word';
+    w.appendChild(buildSoundUnitSpans(item.display, null));
+    list.appendChild(w);
+  }
+}
+
+// ============================================================
 // GROWN-UP SETTINGS
 // ============================================================
 
@@ -2365,6 +2410,10 @@ function setupEvents() {
     speak('All progress has been reset. Ready to start fresh!', 0.9);
   });
 
+  // Sound-group preview
+  document.getElementById('btn-open-soundpreview').addEventListener('click', openSoundPreview);
+  document.getElementById('btn-soundpreview-back').addEventListener('click', openGrownUp);
+
   // Tuning screen (audition & edit every term)
   document.getElementById('btn-open-tuning').addEventListener('click', openTuning);
   document.getElementById('btn-tune-back').addEventListener('click', closeTuning);
@@ -2394,7 +2443,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v19 — alternating tint marks sound-unit groups. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v20 — sound-group preview screen; tail-capped release clips. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
