@@ -122,7 +122,6 @@ const STORAGE_KEY = 'readingLearner.v1';
 
 const DEFAULT_SETTINGS = {
   roundSize: 10,
-  audioFadeThreshold: 3,
   retryCap: 2,
   grownUpDecides: false,
   voiceName: null,
@@ -135,7 +134,6 @@ function makeItem(c, kind) {
     kind: kind || (c.id.startsWith('num:') ? 'number' : 'word'),
     display: c.display,
     accepted: [...c.accepted],
-    mode: 'audio',
     successStreak: 0,
     silentCorrect: 0,
     totalCorrect: 0,
@@ -231,13 +229,17 @@ function getVoice() {
     const v = voices.find(v => v.name === stored.settings.voiceName);
     if (v) return v;
   }
-  const gbFemale = voices.find(v =>
-    v.lang === 'en-GB' && /female|serena|kate|emily|fiona|amy/i.test(v.name)
-  );
-  if (gbFemale) return gbFemale;
-  const gb = voices.find(v => v.lang === 'en-GB');
-  if (gb) return gb;
-  return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
+  const en = voices.filter(v => v.lang.startsWith('en'));
+  // Prefer online/neural voices — much higher quality (e.g. Google UK English Female on Chrome)
+  const onlineGB = en.find(v => v.lang === 'en-GB' && !v.localService);
+  if (onlineGB) return onlineGB;
+  const onlineEN = en.find(v => !v.localService);
+  if (onlineEN) return onlineEN;
+  const localGBFemale = en.find(v => v.lang === 'en-GB' && /female|serena|kate|emily|fiona|amy/i.test(v.name));
+  if (localGBFemale) return localGBFemale;
+  const localGB = en.find(v => v.lang === 'en-GB');
+  if (localGB) return localGB;
+  return en[0] || voices[0] || null;
 }
 
 let currentUtterance = null;
@@ -498,12 +500,14 @@ const gs = {
   currentSet:     null,
   queue:          [],
   originalSize:   0,
-  completedCount: 0,
-  roundCorrect:   0,
+  completedCount:      0,
+  roundCorrect:        0,
+  roundSilentCorrect:  0,
   currentItem:    null,
   retryCount:     0,
   recycled:       new Set(),
   awaitingResult: false,
+  hearPressed:    false,
 };
 
 function startRound(set) {
@@ -511,12 +515,14 @@ function startRound(set) {
   gs.currentSet     = set;
   gs.queue          = [...items];
   gs.originalSize   = items.length;
-  gs.completedCount = 0;
-  gs.roundCorrect   = 0;
+  gs.completedCount      = 0;
+  gs.roundCorrect        = 0;
+  gs.roundSilentCorrect  = 0;
   gs.currentItem    = null;
   gs.retryCount     = 0;
   gs.recycled       = new Set();
   gs.awaitingResult = false;
+  gs.hearPressed    = false;
 
   showScreen('practice');
   createRoundRecognizer(set);
@@ -528,6 +534,7 @@ function nextItem() {
   if (gs.queue.length === 0) { endRound(); return; }
   gs.currentItem = gs.queue.shift();
   gs.retryCount  = 0;
+  gs.hearPressed = false;
   gs.currentItem.lastSeenRound = roundNumber;
   gs.awaitingResult = false;
   presentItem(gs.currentItem);
@@ -545,13 +552,9 @@ function presentItem(item) {
     len <= 7  ? 'clamp(4rem, 15vmin,  8rem)' :
                 'clamp(3rem, 11vmin,  5.5rem)';
   el.textContent = item.display;
-  el.className   = 'word-display' + (item.mode === 'audio' ? ' audio-mode' : '');
+  el.className   = 'word-display';
 
-  // Dim hear button in silent mode so child tries on their own first
-  const hearBtn = document.getElementById('hear-button');
-  if (hearBtn) hearBtn.classList.toggle('silent-mode', item.mode === 'silent');
-
-  DBG('presentItem', { id: item.id, mode: item.mode });
+  DBG('presentItem', { id: item.id });
   setMicState('ready'); // mic and hear button ready immediately — child controls pacing
 }
 
@@ -569,12 +572,12 @@ function handleAnswer(correct) {
     item.successStreak++;
     item.lastResult = 'correct';
 
-    if (item.mode === 'silent') item.silentCorrect++;
-
-    if (item.mode === 'audio' && item.successStreak >= stored.settings.audioFadeThreshold) {
-      item.mode = 'silent';
+    if (!gs.hearPressed) {
+      item.silentCorrect++;
+      gs.roundSilentCorrect++;
     }
-    if (item.mode === 'silent' && item.silentCorrect >= 2) {
+
+    if (item.silentCorrect >= 2) {
       item.mastered = true;
     }
 
@@ -591,11 +594,6 @@ function handleAnswer(correct) {
   } else {
     item.successStreak = 0;
     item.lastResult    = 'miss';
-
-    if (item.mode === 'silent') {
-      item.mode          = 'audio';
-      item.silentCorrect = 0;
-    }
 
     saveStored();
     flashScreen(false);
@@ -720,17 +718,29 @@ function renderDots() {
 
 function showAllDone() {
   showScreen('alldone');
-  const correct = gs.roundCorrect;
-  const total   = gs.completedCount;
-  const stars   = Math.max(1, Math.round((correct / Math.max(total, 1)) * 5));
+  const total  = gs.originalSize;
+  const silent = gs.roundSilentCorrect;
+  const stars  = Math.max(1, Math.round(
+    (silent > 0 ? silent : gs.roundCorrect) / Math.max(total, 1) * 5
+  ));
 
-  document.getElementById('stars-burst').textContent   = '⭐'.repeat(stars);
-  document.getElementById('alldone-title').textContent = shuffle(['Amazing work!','Well done!','Great job!','You did it!','Fantastic!'])[0];
-  document.getElementById('alldone-score').textContent = `${correct} out of ${total}`;
+  document.getElementById('stars-burst').textContent = '⭐'.repeat(stars);
+  document.getElementById('alldone-title').textContent = `You practised ${total} word${total !== 1 ? 's' : ''}`;
 
-  setTimeout(() => speak(
-    `Well done! You got ${correct} right. Play again tomorrow!`, 0.9
-  ), 600);
+  let scoreText, speakText;
+  if (silent >= total && total > 0) {
+    scoreText  = 'Read them all by yourself!';
+    speakText  = `You practised ${total} words, and read them all by yourself. See you again tomorrow!`;
+  } else if (silent > 0) {
+    scoreText  = `Got ${silent} right without hearing!`;
+    speakText  = `You practised ${total} words, and got ${silent} right without hearing them first. See you again tomorrow!`;
+  } else {
+    scoreText  = "You're learning — keep it up!";
+    speakText  = `You practised ${total} words today. See you again tomorrow!`;
+  }
+
+  document.getElementById('alldone-score').textContent = scoreText;
+  setTimeout(() => speak(speakText, 0.85), 600);
 }
 
 // ============================================================
@@ -748,7 +758,7 @@ function addCustomWord(displayText) {
   stored.items[id] = {
     id, kind: 'word', display,
     accepted: [lower],
-    mode: 'audio', successStreak: 0, silentCorrect: 0,
+    successStreak: 0, silentCorrect: 0,
     totalCorrect: 0, totalAttempts: 0, mastered: false,
     lastSeenRound: null, lastResult: null,
   };
@@ -767,7 +777,7 @@ function addCustomNumber(numStr) {
   stored.items[id] = {
     id, kind: 'number', display: String(num),
     accepted: [spoken],
-    mode: 'audio', successStreak: 0, silentCorrect: 0,
+    successStreak: 0, silentCorrect: 0,
     totalCorrect: 0, totalAttempts: 0, mastered: false,
     lastSeenRound: null, lastResult: null,
   };
@@ -805,6 +815,12 @@ function makeChip(item) {
   const chip = document.createElement('span');
   chip.className = 'custom-chip';
   chip.textContent = item.display + ' ';
+  const preview = document.createElement('button');
+  preview.className   = 'custom-chip-preview';
+  preview.textContent = '🔊';
+  preview.setAttribute('aria-label', 'Hear ' + item.display);
+  preview.addEventListener('click', () => speakWord(item.display));
+  chip.appendChild(preview);
   const del = document.createElement('button');
   del.className   = 'custom-chip-del';
   del.textContent = '×';
@@ -829,12 +845,14 @@ function openGrownUp() {
 function populateVoiceSelect() {
   const sel = document.getElementById('s-voice');
   if (!sel || !stored) return;
-  sel.innerHTML = '<option value="">Auto (en-GB preferred)</option>';
-  for (const v of voices) {
-    if (!v.lang.startsWith('en')) continue;
+  sel.innerHTML = '<option value="">Auto (prefers online voices)</option>';
+  const en = voices.filter(v => v.lang.startsWith('en'));
+  const online = en.filter(v => !v.localService);
+  const local  = en.filter(v => v.localService);
+  for (const v of [...online, ...local]) {
     const opt = document.createElement('option');
     opt.value       = v.name;
-    opt.textContent = `${v.name} (${v.lang})`;
+    opt.textContent = `${v.localService ? '' : '★ '}${v.name} (${v.lang})`;
     opt.selected    = v.name === stored.settings.voiceName;
     sel.appendChild(opt);
   }
@@ -843,7 +861,6 @@ function populateVoiceSelect() {
 function renderSettings() {
   const s = stored.settings;
   document.getElementById('s-round-size').value         = s.roundSize;
-  document.getElementById('s-fade-threshold').value     = s.audioFadeThreshold;
   document.getElementById('s-retry-cap').value          = s.retryCap;
   document.getElementById('s-grownup-decides').checked  = s.grownUpDecides;
   document.getElementById('s-speech-rate').value        = s.speechRate;
@@ -853,7 +870,6 @@ function renderSettings() {
 function saveSettings() {
   const s = stored.settings;
   s.roundSize          = Math.max(4, parseInt(document.getElementById('s-round-size').value)     || 10);
-  s.audioFadeThreshold = Math.max(1, parseInt(document.getElementById('s-fade-threshold').value) || 3);
   s.retryCap           = Math.max(1, parseInt(document.getElementById('s-retry-cap').value)      || 2);
   s.grownUpDecides     = document.getElementById('s-grownup-decides').checked;
   s.speechRate         = parseFloat(document.getElementById('s-speech-rate').value)              || 0.9;
@@ -866,7 +882,7 @@ function renderProgress() {
   const summary = document.getElementById('progress-summary');
   if (!grid || !summary) return;
 
-  let counts = { new: 0, learning: 0, silent: 0, mastered: 0 };
+  let counts = { new: 0, learning: 0, unaided: 0, mastered: 0 };
   grid.innerHTML = '';
 
   for (const item of Object.values(stored.items)) {
@@ -879,18 +895,18 @@ function renderProgress() {
       cell.classList.add('mastered'); counts.mastered++;
     } else if (item.totalAttempts === 0) {
       cell.classList.add('new');      counts.new++;
-    } else if (item.mode === 'audio') {
+    } else if (item.silentCorrect === 0) {
       cell.classList.add('learning'); counts.learning++;
     } else {
-      cell.classList.add('silent');   counts.silent++;
+      cell.classList.add('unaided');  counts.unaided++;
     }
     grid.appendChild(cell);
   }
 
   summary.innerHTML = `
     ⬜ New: ${counts.new} &nbsp;
-    🔊 Learning: ${counts.learning} &nbsp;
-    🤫 Silent: ${counts.silent} &nbsp;
+    📖 Learning: ${counts.learning} &nbsp;
+    🎯 Unaided: ${counts.unaided} &nbsp;
     ⭐ Mastered: ${counts.mastered}
   `;
 }
@@ -947,6 +963,7 @@ function setupEvents() {
   const hearBtn = document.getElementById('hear-button');
   hearBtn.addEventListener('click', () => {
     if (micState !== 'ready' || !gs.currentItem) return;
+    gs.hearPressed = true;
     setMicState('waiting');
     speakWord(gs.currentItem.display, () => {
       if (gs.currentItem && !gs.awaitingResult) setMicState('ready');
@@ -993,8 +1010,8 @@ function setupEvents() {
     });
   });
 
-  document.getElementById('btn-tomorrow').addEventListener('click', () => {
-    speak('See you next time! Bye bye!', 0.9, () => showScreen('picker'));
+  document.getElementById('tomorrow-text').addEventListener('click', () => {
+    showScreen('picker');
   });
 
   document.getElementById('btn-back').addEventListener('click', () => {
@@ -1006,7 +1023,7 @@ function setupEvents() {
     document.getElementById('s-rate-value').textContent = parseFloat(e.target.value).toFixed(1) + '×';
     saveSettings();
   });
-  for (const id of ['s-round-size','s-fade-threshold','s-retry-cap']) {
+  for (const id of ['s-round-size','s-retry-cap']) {
     document.getElementById(id).addEventListener('change', saveSettings);
   }
   document.getElementById('s-grownup-decides').addEventListener('change', saveSettings);

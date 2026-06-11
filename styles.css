@@ -179,12 +179,6 @@ html, body {
   transition: opacity 0.15s;
 }
 
-.word-display.audio-mode {
-  /* subtle underline hint that audio is available */
-  border-bottom: 4px solid rgba(99,179,237,0.35);
-  padding-bottom: 0.05em;
-}
-
 /* ── Practice buttons layout ── */
 
 .practice-buttons {
@@ -223,10 +217,6 @@ html, body {
 }
 
 .hear-button.disabled:active { transform: none; }
-
-.hear-button.silent-mode {
-  opacity: 0.18;
-}
 
 .hear-icon {
   font-size: clamp(2rem, 7vmin, 3.5rem);
@@ -398,7 +388,7 @@ html, body {
 }
 
 .alldone-title {
-  font-size: clamp(2.8rem, 10vw, 5rem);
+  font-size: clamp(1.8rem, 6vw, 3rem);
   font-weight: 900;
   text-align: center;
   animation: slide-up 0.4s 0.25s ease-out both;
@@ -410,28 +400,22 @@ html, body {
 }
 
 .alldone-score {
-  font-size: clamp(1.1rem, 3.5vw, 1.7rem);
-  color: var(--muted);
+  font-size: clamp(1.3rem, 4.5vw, 2.2rem);
+  font-weight: 700;
+  color: var(--fg);
   text-align: center;
   animation: slide-up 0.4s 0.4s ease-out both;
 }
 
-.tomorrow-btn {
-  padding: 1rem 2.2rem;
+.tomorrow-text {
   font-size: clamp(1.1rem, 3.5vw, 1.6rem);
-  font-weight: 700;
-  font-family: inherit;
-  background: linear-gradient(135deg, #f72585, #b5179e);
-  color: white;
-  border: none;
-  border-radius: 100px;
-  cursor: pointer;
-  box-shadow: 0 8px 28px rgba(247,37,133,0.45);
-  transition: transform 0.12s, box-shadow 0.12s;
-  animation: slide-up 0.4s 0.55s ease-out both;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+  animation: slide-up 0.4s 0.7s ease-out both;
+  cursor: default;
+  user-select: none;
 }
-
-.tomorrow-btn:active { transform: scale(0.94); }
 
 /* ============================================================
    GROWN-UP
@@ -573,7 +557,7 @@ html, body {
 
 .progress-cell.new      { background: rgba(255,255,255,0.08); color: var(--muted); }
 .progress-cell.learning { background: rgba(99,179,237,0.25);  color: #63b3ed; }
-.progress-cell.silent   { background: rgba(251,191,36,0.25);  color: var(--warn); }
+.progress-cell.unaided  { background: rgba(251,191,36,0.25);  color: var(--warn); }
 .progress-cell.mastered { background: rgba(74,222,128,0.25);  color: var(--success); }
 
 .progress-summary {
@@ -702,6 +686,19 @@ html, body {
   font-size: 0.82rem;
   font-weight: 600;
 }
+
+.custom-chip-preview {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.78rem;
+  padding: 0 0.1rem;
+  line-height: 1;
+  transition: opacity 0.1s;
+}
+
+.custom-chip-preview:hover { opacity: 0.7; }
 
 .custom-chip-del {
   background: none;
