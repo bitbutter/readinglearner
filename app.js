@@ -487,6 +487,74 @@ const WORDS_CONTENT = [
   { id: 'word:perhaps',    display: 'perhaps',    accepted: ['perhaps'],         level: 10 },
 ];
 
+// ============================================================
+// ACCEPTED OVERRIDES
+// ============================================================
+//
+// Extra accepted answers discovered by auditioning on a real voice (grown-up
+// tuning screen) and promoted into the canonical app. Keyed by item id; merged
+// into each item's accepted list at load, so they reach BOTH fresh installs and
+// devices that already have saved progress (the seed only fills missing items,
+// it never touches an existing item's accepted list).
+//
+// To add to this: on your dev machine, audition terms in Settings → "Audition &
+// edit all terms", then run rlExportAccepted() in the console (or tap Export on
+// that screen) and paste the `acceptedAdditions` entries below.
+const ACCEPTED_OVERRIDES = {
+  // 'word:three': ['free', 'tree'],
+  // 'num:3':      ['free'],
+};
+
+function applyAcceptedOverrides(items) {
+  for (const [id, terms] of Object.entries(ACCEPTED_OVERRIDES)) {
+    const item = items[id];
+    if (!item) continue;
+    for (const term of terms) {
+      const n = normText(term);
+      if (n && !item.accepted.some(a => normText(a) === n)) item.accepted.push(n);
+    }
+  }
+}
+
+// Dump accepted-term additions (vs. canonical defaults + overrides already in
+// source) plus any custom items, ready to paste back into ACCEPTED_OVERRIDES /
+// the content arrays. Copied to clipboard; also printed to the console.
+window.rlExportAccepted = function () {
+  const canon = {};
+  for (const c of NUMBERS_CONTENT) canon[c.id] = c.accepted.map(normText);
+  for (const c of WORDS_CONTENT)   canon[c.id] = c.accepted.map(normText);
+
+  const acceptedAdditions = {};
+  const customItems = [];
+
+  for (const item of Object.values(stored.items)) {
+    if (item.id.startsWith('custom:')) {
+      customItems.push({
+        id: item.id, kind: item.kind, display: item.display,
+        accepted: item.accepted.map(normText), level: item.level || 1,
+      });
+      continue;
+    }
+    const base  = new Set([
+      ...(canon[item.id] || []),
+      ...((ACCEPTED_OVERRIDES[item.id] || []).map(normText)),
+    ]);
+    const extra = [];
+    for (const a of item.accepted) {
+      const n = normText(a);
+      if (n && !base.has(n) && !extra.includes(n)) extra.push(n);
+    }
+    if (extra.length) acceptedAdditions[item.id] = extra;
+  }
+
+  const out  = { acceptedAdditions, customItems };
+  const json = JSON.stringify(out, null, 2);
+  try { console.log('%c===== ReadingLearner accepted export =====', 'font-weight:bold'); } catch (_) {}
+  console.log(json);
+  try { navigator.clipboard.writeText(json).then(() => console.log('(copied to clipboard)')); } catch (_) {}
+  return out;
+};
+
 const PRAISE = [
   'Yes!', 'Great job!', 'You got it!', 'Well done!', 'Amazing!',
   'Wonderful!', "That's right!", 'Brilliant!', 'Super!', 'Perfect!',
@@ -533,6 +601,7 @@ function freshState() {
   const items = {};
   for (const c of NUMBERS_CONTENT) items[c.id] = makeItem(c, 'number');
   for (const c of WORDS_CONTENT)   items[c.id] = makeItem(c, 'word');
+  applyAcceptedOverrides(items);
   return {
     version: 1,
     createdAt: new Date().toISOString(),
@@ -565,6 +634,7 @@ function loadStored() {
         item.unaidedStreak = item.mastered ? threshold : (item.silentCorrect || 0);
       }
     }
+    applyAcceptedOverrides(parsed.items);
     stored = parsed;
   } catch (e) {
     showStorageError(e.message);
@@ -2011,6 +2081,17 @@ function setupEvents() {
   // Tuning screen (audition & edit every term)
   document.getElementById('btn-open-tuning').addEventListener('click', openTuning);
   document.getElementById('btn-tune-back').addEventListener('click', closeTuning);
+  document.getElementById('btn-tune-export').addEventListener('click', () => {
+    const out  = window.rlExportAccepted();
+    const adds = Object.keys(out.acceptedAdditions).length;
+    const cust = out.customItems.length;
+    alert(
+      `Exported to clipboard (and console):\n` +
+      `• ${adds} item(s) with new accepted terms\n` +
+      `• ${cust} custom item(s)\n\n` +
+      `Paste it in to bake these into the canonical app.`
+    );
+  });
   document.getElementById('tune-tab-words').addEventListener('click', () => setTuneTab('words'));
   document.getElementById('tune-tab-numbers').addEventListener('click', () => setTuneTab('numbers'));
   document.getElementById('tune-search').addEventListener('input', (e) => {
@@ -2026,7 +2107,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v11 — Vosk recognition + grown-up tuning. Type rlDump() for trace.');
+  console.log('[ReadingLearner] build v12 — tuning + accepted-term export/overrides. Type rlDump() / rlExportAccepted().');
   loadStored();
   if (!stored) return;
   loadVoices();
