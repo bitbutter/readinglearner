@@ -20,16 +20,16 @@
 
   <!-- Picker -->
   <div id="screen-picker" class="screen hidden">
-    <p class="greeting">What would you like to practice?</p>
-    <div class="picker-buttons">
-      <button class="picker-btn numbers-btn" id="btn-numbers" aria-label="Numbers">
-        <span class="picker-icon">123</span>
-        <span class="picker-label">Numbers</span>
-      </button>
-      <button class="picker-btn words-btn" id="btn-words" aria-label="Words">
-        <span class="picker-icon">ABC</span>
-        <span class="picker-label">Words</span>
-      </button>
+    <p class="greeting">What would you like to practise?</p>
+    <div class="picker-sets">
+      <div class="picker-set">
+        <div class="picker-set-title">📖 Words</div>
+        <div id="picker-word-levels" class="level-row"></div>
+      </div>
+      <div class="picker-set">
+        <div class="picker-set-title">🔢 Numbers</div>
+        <div id="picker-num-levels" class="level-row"></div>
+      </div>
     </div>
     <button class="grownup-gate" id="grownup-gate" title="Hold for 2 seconds to open settings" aria-label="Grown-up settings (hold for 2 seconds)">⚙</button>
   </div>
@@ -86,8 +86,24 @@
             <input type="number" id="s-retry-cap" min="1" max="5">
           </label>
           <label class="setting-row">
+            <span>Unaided streak to master</span>
+            <input type="number" id="s-mastery-threshold" min="1" max="10">
+          </label>
+          <label class="setting-row">
             <span>Grown-up decides (no mic)</span>
             <input type="checkbox" id="s-grownup-decides">
+          </label>
+        </section>
+
+        <section class="settings-group">
+          <h3>Level Override (grown-up)</h3>
+          <label class="setting-row">
+            <span>Words level (1–10)</span>
+            <input type="number" id="s-word-level" min="1" max="10">
+          </label>
+          <label class="setting-row">
+            <span>Numbers level (1–10)</span>
+            <input type="number" id="s-number-level" min="1" max="10">
           </label>
         </section>
 
@@ -131,6 +147,13 @@
 
       </div>
     </div>
+  </div>
+
+  <!-- Level Up -->
+  <div id="screen-levelup" class="screen hidden">
+    <div id="levelup-title" class="levelup-title"></div>
+    <div id="levelup-body"  class="levelup-body"></div>
+    <button id="btn-levelup-continue" class="levelup-continue-btn">Continue →</button>
   </div>
 
   <!-- Flash overlay (appended by JS) -->

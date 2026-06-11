@@ -43,69 +43,448 @@ function numberToWords(n) {
 // ============================================================
 
 const NUMBERS_CONTENT = [
-  { id: 'num:1',  display: '1',  accepted: ['one','won'] },
-  { id: 'num:2',  display: '2',  accepted: ['two','to','too'] },
-  { id: 'num:3',  display: '3',  accepted: ['three'] },
-  { id: 'num:4',  display: '4',  accepted: ['four','for','fore'] },
-  { id: 'num:5',  display: '5',  accepted: ['five'] },
-  { id: 'num:6',  display: '6',  accepted: ['six'] },
-  { id: 'num:7',  display: '7',  accepted: ['seven'] },
-  { id: 'num:8',  display: '8',  accepted: ['eight','ate'] },
-  { id: 'num:9',  display: '9',  accepted: ['nine'] },
-  { id: 'num:10', display: '10', accepted: ['ten'] },
-  { id: 'num:11', display: '11', accepted: ['eleven'] },
-  { id: 'num:12', display: '12', accepted: ['twelve'] },
-  { id: 'num:13', display: '13', accepted: ['thirteen'] },
-  { id: 'num:14', display: '14', accepted: ['fourteen'] },
-  { id: 'num:15', display: '15', accepted: ['fifteen'] },
-  { id: 'num:16', display: '16', accepted: ['sixteen'] },
-  { id: 'num:17', display: '17', accepted: ['seventeen'] },
-  { id: 'num:18', display: '18', accepted: ['eighteen'] },
-  { id: 'num:19', display: '19', accepted: ['nineteen'] },
-  { id: 'num:20', display: '20', accepted: ['twenty'] },
+  // Level 1: 1–10
+  { id: 'num:1',  display: '1',  accepted: ['one','won'],        level: 1 },
+  { id: 'num:2',  display: '2',  accepted: ['two','to','too'],   level: 1 },
+  { id: 'num:3',  display: '3',  accepted: ['three'],             level: 1 },
+  { id: 'num:4',  display: '4',  accepted: ['four','for','fore'], level: 1 },
+  { id: 'num:5',  display: '5',  accepted: ['five'],              level: 1 },
+  { id: 'num:6',  display: '6',  accepted: ['six'],               level: 1 },
+  { id: 'num:7',  display: '7',  accepted: ['seven'],             level: 1 },
+  { id: 'num:8',  display: '8',  accepted: ['eight','ate'],       level: 1 },
+  { id: 'num:9',  display: '9',  accepted: ['nine'],              level: 1 },
+  { id: 'num:10', display: '10', accepted: ['ten'],               level: 1 },
+  // Level 2: 11–20
+  { id: 'num:11', display: '11', accepted: ['eleven'],            level: 2 },
+  { id: 'num:12', display: '12', accepted: ['twelve'],            level: 2 },
+  { id: 'num:13', display: '13', accepted: ['thirteen'],          level: 2 },
+  { id: 'num:14', display: '14', accepted: ['fourteen'],          level: 2 },
+  { id: 'num:15', display: '15', accepted: ['fifteen'],           level: 2 },
+  { id: 'num:16', display: '16', accepted: ['sixteen'],           level: 2 },
+  { id: 'num:17', display: '17', accepted: ['seventeen'],         level: 2 },
+  { id: 'num:18', display: '18', accepted: ['eighteen'],          level: 2 },
+  { id: 'num:19', display: '19', accepted: ['nineteen'],          level: 2 },
+  { id: 'num:20', display: '20', accepted: ['twenty'],            level: 2 },
+  // Level 3: 21–30
+  { id: 'num:21', display: '21', accepted: ['twenty one'],        level: 3 },
+  { id: 'num:22', display: '22', accepted: ['twenty two'],        level: 3 },
+  { id: 'num:23', display: '23', accepted: ['twenty three'],      level: 3 },
+  { id: 'num:24', display: '24', accepted: ['twenty four'],       level: 3 },
+  { id: 'num:25', display: '25', accepted: ['twenty five'],       level: 3 },
+  { id: 'num:26', display: '26', accepted: ['twenty six'],        level: 3 },
+  { id: 'num:27', display: '27', accepted: ['twenty seven'],      level: 3 },
+  { id: 'num:28', display: '28', accepted: ['twenty eight'],      level: 3 },
+  { id: 'num:29', display: '29', accepted: ['twenty nine'],       level: 3 },
+  { id: 'num:30', display: '30', accepted: ['thirty'],            level: 3 },
+  // Level 4: 31–40
+  { id: 'num:31', display: '31', accepted: ['thirty one'],        level: 4 },
+  { id: 'num:32', display: '32', accepted: ['thirty two'],        level: 4 },
+  { id: 'num:33', display: '33', accepted: ['thirty three'],      level: 4 },
+  { id: 'num:34', display: '34', accepted: ['thirty four'],       level: 4 },
+  { id: 'num:35', display: '35', accepted: ['thirty five'],       level: 4 },
+  { id: 'num:36', display: '36', accepted: ['thirty six'],        level: 4 },
+  { id: 'num:37', display: '37', accepted: ['thirty seven'],      level: 4 },
+  { id: 'num:38', display: '38', accepted: ['thirty eight'],      level: 4 },
+  { id: 'num:39', display: '39', accepted: ['thirty nine'],       level: 4 },
+  { id: 'num:40', display: '40', accepted: ['forty'],             level: 4 },
+  // Level 5: 41–50
+  { id: 'num:41', display: '41', accepted: ['forty one'],         level: 5 },
+  { id: 'num:42', display: '42', accepted: ['forty two'],         level: 5 },
+  { id: 'num:43', display: '43', accepted: ['forty three'],       level: 5 },
+  { id: 'num:44', display: '44', accepted: ['forty four'],        level: 5 },
+  { id: 'num:45', display: '45', accepted: ['forty five'],        level: 5 },
+  { id: 'num:46', display: '46', accepted: ['forty six'],         level: 5 },
+  { id: 'num:47', display: '47', accepted: ['forty seven'],       level: 5 },
+  { id: 'num:48', display: '48', accepted: ['forty eight'],       level: 5 },
+  { id: 'num:49', display: '49', accepted: ['forty nine'],        level: 5 },
+  { id: 'num:50', display: '50', accepted: ['fifty'],             level: 5 },
+  // Level 6: 51–60
+  { id: 'num:51', display: '51', accepted: ['fifty one'],         level: 6 },
+  { id: 'num:52', display: '52', accepted: ['fifty two'],         level: 6 },
+  { id: 'num:53', display: '53', accepted: ['fifty three'],       level: 6 },
+  { id: 'num:54', display: '54', accepted: ['fifty four'],        level: 6 },
+  { id: 'num:55', display: '55', accepted: ['fifty five'],        level: 6 },
+  { id: 'num:56', display: '56', accepted: ['fifty six'],         level: 6 },
+  { id: 'num:57', display: '57', accepted: ['fifty seven'],       level: 6 },
+  { id: 'num:58', display: '58', accepted: ['fifty eight'],       level: 6 },
+  { id: 'num:59', display: '59', accepted: ['fifty nine'],        level: 6 },
+  { id: 'num:60', display: '60', accepted: ['sixty'],             level: 6 },
+  // Level 7: 61–70
+  { id: 'num:61', display: '61', accepted: ['sixty one'],         level: 7 },
+  { id: 'num:62', display: '62', accepted: ['sixty two'],         level: 7 },
+  { id: 'num:63', display: '63', accepted: ['sixty three'],       level: 7 },
+  { id: 'num:64', display: '64', accepted: ['sixty four'],        level: 7 },
+  { id: 'num:65', display: '65', accepted: ['sixty five'],        level: 7 },
+  { id: 'num:66', display: '66', accepted: ['sixty six'],         level: 7 },
+  { id: 'num:67', display: '67', accepted: ['sixty seven'],       level: 7 },
+  { id: 'num:68', display: '68', accepted: ['sixty eight'],       level: 7 },
+  { id: 'num:69', display: '69', accepted: ['sixty nine'],        level: 7 },
+  { id: 'num:70', display: '70', accepted: ['seventy'],           level: 7 },
+  // Level 8: 71–80
+  { id: 'num:71', display: '71', accepted: ['seventy one'],       level: 8 },
+  { id: 'num:72', display: '72', accepted: ['seventy two'],       level: 8 },
+  { id: 'num:73', display: '73', accepted: ['seventy three'],     level: 8 },
+  { id: 'num:74', display: '74', accepted: ['seventy four'],      level: 8 },
+  { id: 'num:75', display: '75', accepted: ['seventy five'],      level: 8 },
+  { id: 'num:76', display: '76', accepted: ['seventy six'],       level: 8 },
+  { id: 'num:77', display: '77', accepted: ['seventy seven'],     level: 8 },
+  { id: 'num:78', display: '78', accepted: ['seventy eight'],     level: 8 },
+  { id: 'num:79', display: '79', accepted: ['seventy nine'],      level: 8 },
+  { id: 'num:80', display: '80', accepted: ['eighty'],            level: 8 },
+  // Level 9: 81–90
+  { id: 'num:81', display: '81', accepted: ['eighty one'],        level: 9 },
+  { id: 'num:82', display: '82', accepted: ['eighty two'],        level: 9 },
+  { id: 'num:83', display: '83', accepted: ['eighty three'],      level: 9 },
+  { id: 'num:84', display: '84', accepted: ['eighty four'],       level: 9 },
+  { id: 'num:85', display: '85', accepted: ['eighty five'],       level: 9 },
+  { id: 'num:86', display: '86', accepted: ['eighty six'],        level: 9 },
+  { id: 'num:87', display: '87', accepted: ['eighty seven'],      level: 9 },
+  { id: 'num:88', display: '88', accepted: ['eighty eight'],      level: 9 },
+  { id: 'num:89', display: '89', accepted: ['eighty nine'],       level: 9 },
+  { id: 'num:90', display: '90', accepted: ['ninety'],            level: 9 },
+  // Level 10: 91–100
+  { id: 'num:91',  display: '91',  accepted: ['ninety one'],          level: 10 },
+  { id: 'num:92',  display: '92',  accepted: ['ninety two'],          level: 10 },
+  { id: 'num:93',  display: '93',  accepted: ['ninety three'],        level: 10 },
+  { id: 'num:94',  display: '94',  accepted: ['ninety four'],         level: 10 },
+  { id: 'num:95',  display: '95',  accepted: ['ninety five'],         level: 10 },
+  { id: 'num:96',  display: '96',  accepted: ['ninety six'],          level: 10 },
+  { id: 'num:97',  display: '97',  accepted: ['ninety seven'],        level: 10 },
+  { id: 'num:98',  display: '98',  accepted: ['ninety eight'],        level: 10 },
+  { id: 'num:99',  display: '99',  accepted: ['ninety nine'],         level: 10 },
+  { id: 'num:100', display: '100', accepted: ['one hundred','a hundred'], level: 10 },
 ];
 
 const WORDS_CONTENT = [
-  { id: 'word:a',      display: 'a',      accepted: ['a','uh','ah'] },
-  { id: 'word:and',    display: 'and',    accepted: ['and'] },
-  { id: 'word:away',   display: 'away',   accepted: ['away'] },
-  { id: 'word:big',    display: 'big',    accepted: ['big'] },
-  { id: 'word:blue',   display: 'blue',   accepted: ['blue','blew'] },
-  { id: 'word:can',    display: 'can',    accepted: ['can'] },
-  { id: 'word:come',   display: 'come',   accepted: ['come'] },
-  { id: 'word:down',   display: 'down',   accepted: ['down'] },
-  { id: 'word:find',   display: 'find',   accepted: ['find','fined'] },
-  { id: 'word:for',    display: 'for',    accepted: ['for','four','fore'] },
-  { id: 'word:funny',  display: 'funny',  accepted: ['funny'] },
-  { id: 'word:go',     display: 'go',     accepted: ['go'] },
-  { id: 'word:help',   display: 'help',   accepted: ['help'] },
-  { id: 'word:here',   display: 'here',   accepted: ['here','hear'] },
-  { id: 'word:i',      display: 'I',      accepted: ['i','eye','ay'] },
-  { id: 'word:in',     display: 'in',     accepted: ['in','inn'] },
-  { id: 'word:is',     display: 'is',     accepted: ['is'] },
-  { id: 'word:it',     display: 'it',     accepted: ['it'] },
-  { id: 'word:jump',   display: 'jump',   accepted: ['jump'] },
-  { id: 'word:little', display: 'little', accepted: ['little'] },
-  { id: 'word:look',   display: 'look',   accepted: ['look'] },
-  { id: 'word:make',   display: 'make',   accepted: ['make'] },
-  { id: 'word:me',     display: 'me',     accepted: ['me'] },
-  { id: 'word:my',     display: 'my',     accepted: ['my'] },
-  { id: 'word:not',    display: 'not',    accepted: ['not','knot'] },
-  { id: 'word:one',    display: 'one',    accepted: ['one','won'] },
-  { id: 'word:play',   display: 'play',   accepted: ['play'] },
-  { id: 'word:red',    display: 'red',    accepted: ['red','read'] },
-  { id: 'word:run',    display: 'run',    accepted: ['run'] },
-  { id: 'word:said',   display: 'said',   accepted: ['said','sed'] },
-  { id: 'word:see',    display: 'see',    accepted: ['see','sea'] },
-  { id: 'word:the',    display: 'the',    accepted: ['the','da','duh'] },
-  { id: 'word:three',  display: 'three',  accepted: ['three'] },
-  { id: 'word:to',     display: 'to',     accepted: ['to','two','too'] },
-  { id: 'word:two',    display: 'two',    accepted: ['two','to','too'] },
-  { id: 'word:up',     display: 'up',     accepted: ['up'] },
-  { id: 'word:we',     display: 'we',     accepted: ['we','wee'] },
-  { id: 'word:where',  display: 'where',  accepted: ['where','wear','were'] },
-  { id: 'word:yellow', display: 'yellow', accepted: ['yellow'] },
-  { id: 'word:you',    display: 'you',    accepted: ['you'] },
+  // Level 1: Dolch Pre-Primer
+  { id: 'word:a',       display: 'a',       accepted: ['a','uh','ah'],          level: 1 },
+  { id: 'word:and',     display: 'and',     accepted: ['and'],                   level: 1 },
+  { id: 'word:away',    display: 'away',    accepted: ['away'],                  level: 1 },
+  { id: 'word:big',     display: 'big',     accepted: ['big'],                   level: 1 },
+  { id: 'word:blue',    display: 'blue',    accepted: ['blue','blew'],           level: 1 },
+  { id: 'word:can',     display: 'can',     accepted: ['can'],                   level: 1 },
+  { id: 'word:come',    display: 'come',    accepted: ['come'],                  level: 1 },
+  { id: 'word:down',    display: 'down',    accepted: ['down'],                  level: 1 },
+  { id: 'word:find',    display: 'find',    accepted: ['find','fined'],          level: 1 },
+  { id: 'word:for',     display: 'for',     accepted: ['for','four','fore'],     level: 1 },
+  { id: 'word:funny',   display: 'funny',   accepted: ['funny'],                 level: 1 },
+  { id: 'word:go',      display: 'go',      accepted: ['go'],                    level: 1 },
+  { id: 'word:help',    display: 'help',    accepted: ['help'],                  level: 1 },
+  { id: 'word:here',    display: 'here',    accepted: ['here','hear'],           level: 1 },
+  { id: 'word:i',       display: 'I',       accepted: ['i','eye','ay'],          level: 1 },
+  { id: 'word:in',      display: 'in',      accepted: ['in','inn'],              level: 1 },
+  { id: 'word:is',      display: 'is',      accepted: ['is'],                    level: 1 },
+  { id: 'word:it',      display: 'it',      accepted: ['it'],                    level: 1 },
+  { id: 'word:jump',    display: 'jump',    accepted: ['jump'],                  level: 1 },
+  { id: 'word:little',  display: 'little',  accepted: ['little'],                level: 1 },
+  { id: 'word:look',    display: 'look',    accepted: ['look'],                  level: 1 },
+  { id: 'word:make',    display: 'make',    accepted: ['make'],                  level: 1 },
+  { id: 'word:me',      display: 'me',      accepted: ['me'],                    level: 1 },
+  { id: 'word:my',      display: 'my',      accepted: ['my'],                    level: 1 },
+  { id: 'word:not',     display: 'not',     accepted: ['not','knot'],            level: 1 },
+  { id: 'word:one',     display: 'one',     accepted: ['one','won'],             level: 1 },
+  { id: 'word:play',    display: 'play',    accepted: ['play'],                  level: 1 },
+  { id: 'word:red',     display: 'red',     accepted: ['red','read'],            level: 1 },
+  { id: 'word:run',     display: 'run',     accepted: ['run'],                   level: 1 },
+  { id: 'word:said',    display: 'said',    accepted: ['said','sed'],            level: 1 },
+  { id: 'word:see',     display: 'see',     accepted: ['see','sea'],             level: 1 },
+  { id: 'word:the',     display: 'the',     accepted: ['the','da','duh'],        level: 1 },
+  { id: 'word:three',   display: 'three',   accepted: ['three'],                 level: 1 },
+  { id: 'word:to',      display: 'to',      accepted: ['to','two','too'],        level: 1 },
+  { id: 'word:two',     display: 'two',     accepted: ['two','to','too'],        level: 1 },
+  { id: 'word:up',      display: 'up',      accepted: ['up'],                    level: 1 },
+  { id: 'word:we',      display: 'we',      accepted: ['we','wee'],              level: 1 },
+  { id: 'word:where',   display: 'where',   accepted: ['where','wear','were'],   level: 1 },
+  { id: 'word:yellow',  display: 'yellow',  accepted: ['yellow'],                level: 1 },
+  { id: 'word:you',     display: 'you',     accepted: ['you'],                   level: 1 },
+  // Level 2: Dolch Primer
+  { id: 'word:all',     display: 'all',     accepted: ['all'],                   level: 2 },
+  { id: 'word:am',      display: 'am',      accepted: ['am'],                    level: 2 },
+  { id: 'word:are',     display: 'are',     accepted: ['are'],                   level: 2 },
+  { id: 'word:at',      display: 'at',      accepted: ['at'],                    level: 2 },
+  { id: 'word:ate',     display: 'ate',     accepted: ['ate'],                   level: 2 },
+  { id: 'word:be',      display: 'be',      accepted: ['be','bee'],              level: 2 },
+  { id: 'word:black',   display: 'black',   accepted: ['black'],                 level: 2 },
+  { id: 'word:brown',   display: 'brown',   accepted: ['brown'],                 level: 2 },
+  { id: 'word:but',     display: 'but',     accepted: ['but'],                   level: 2 },
+  { id: 'word:came',    display: 'came',    accepted: ['came'],                  level: 2 },
+  { id: 'word:did',     display: 'did',     accepted: ['did'],                   level: 2 },
+  { id: 'word:do',      display: 'do',      accepted: ['do','dew','due'],        level: 2 },
+  { id: 'word:eat',     display: 'eat',     accepted: ['eat'],                   level: 2 },
+  { id: 'word:four',    display: 'four',    accepted: ['four','for','fore'],     level: 2 },
+  { id: 'word:get',     display: 'get',     accepted: ['get'],                   level: 2 },
+  { id: 'word:good',    display: 'good',    accepted: ['good'],                  level: 2 },
+  { id: 'word:have',    display: 'have',    accepted: ['have'],                  level: 2 },
+  { id: 'word:he',      display: 'he',      accepted: ['he'],                    level: 2 },
+  { id: 'word:into',    display: 'into',    accepted: ['into'],                  level: 2 },
+  { id: 'word:like',    display: 'like',    accepted: ['like'],                  level: 2 },
+  { id: 'word:must',    display: 'must',    accepted: ['must'],                  level: 2 },
+  { id: 'word:new',     display: 'new',     accepted: ['new','knew'],            level: 2 },
+  { id: 'word:no',      display: 'no',      accepted: ['no','know'],             level: 2 },
+  { id: 'word:now',     display: 'now',     accepted: ['now'],                   level: 2 },
+  { id: 'word:on',      display: 'on',      accepted: ['on'],                    level: 2 },
+  { id: 'word:our',     display: 'our',     accepted: ['our','hour'],            level: 2 },
+  { id: 'word:out',     display: 'out',     accepted: ['out'],                   level: 2 },
+  { id: 'word:please',  display: 'please',  accepted: ['please'],                level: 2 },
+  { id: 'word:pretty',  display: 'pretty',  accepted: ['pretty'],                level: 2 },
+  { id: 'word:ran',     display: 'ran',     accepted: ['ran'],                   level: 2 },
+  { id: 'word:ride',    display: 'ride',    accepted: ['ride'],                  level: 2 },
+  { id: 'word:saw',     display: 'saw',     accepted: ['saw'],                   level: 2 },
+  { id: 'word:say',     display: 'say',     accepted: ['say'],                   level: 2 },
+  { id: 'word:she',     display: 'she',     accepted: ['she'],                   level: 2 },
+  { id: 'word:so',      display: 'so',      accepted: ['so','sew'],              level: 2 },
+  { id: 'word:soon',    display: 'soon',    accepted: ['soon'],                  level: 2 },
+  { id: 'word:that',    display: 'that',    accepted: ['that'],                  level: 2 },
+  { id: 'word:there',   display: 'there',   accepted: ['there','their'],         level: 2 },
+  { id: 'word:they',    display: 'they',    accepted: ['they'],                  level: 2 },
+  { id: 'word:this',    display: 'this',    accepted: ['this'],                  level: 2 },
+  { id: 'word:too',     display: 'too',     accepted: ['too','to','two'],        level: 2 },
+  { id: 'word:under',   display: 'under',   accepted: ['under'],                 level: 2 },
+  { id: 'word:want',    display: 'want',    accepted: ['want'],                  level: 2 },
+  { id: 'word:was',     display: 'was',     accepted: ['was'],                   level: 2 },
+  { id: 'word:well',    display: 'well',    accepted: ['well'],                  level: 2 },
+  { id: 'word:went',    display: 'went',    accepted: ['went'],                  level: 2 },
+  { id: 'word:what',    display: 'what',    accepted: ['what'],                  level: 2 },
+  { id: 'word:white',   display: 'white',   accepted: ['white'],                 level: 2 },
+  { id: 'word:who',     display: 'who',     accepted: ['who'],                   level: 2 },
+  { id: 'word:will',    display: 'will',    accepted: ['will'],                  level: 2 },
+  { id: 'word:with',    display: 'with',    accepted: ['with'],                  level: 2 },
+  { id: 'word:yes',     display: 'yes',     accepted: ['yes'],                   level: 2 },
+  // Level 3: Dolch Grade 1
+  { id: 'word:after',   display: 'after',   accepted: ['after'],                 level: 3 },
+  { id: 'word:again',   display: 'again',   accepted: ['again'],                 level: 3 },
+  { id: 'word:an',      display: 'an',      accepted: ['an'],                    level: 3 },
+  { id: 'word:any',     display: 'any',     accepted: ['any'],                   level: 3 },
+  { id: 'word:as',      display: 'as',      accepted: ['as'],                    level: 3 },
+  { id: 'word:ask',     display: 'ask',     accepted: ['ask'],                   level: 3 },
+  { id: 'word:by',      display: 'by',      accepted: ['by','bye','buy'],        level: 3 },
+  { id: 'word:could',   display: 'could',   accepted: ['could'],                 level: 3 },
+  { id: 'word:every',   display: 'every',   accepted: ['every'],                 level: 3 },
+  { id: 'word:fly',     display: 'fly',     accepted: ['fly'],                   level: 3 },
+  { id: 'word:from',    display: 'from',    accepted: ['from'],                  level: 3 },
+  { id: 'word:give',    display: 'give',    accepted: ['give'],                  level: 3 },
+  { id: 'word:going',   display: 'going',   accepted: ['going'],                 level: 3 },
+  { id: 'word:had',     display: 'had',     accepted: ['had'],                   level: 3 },
+  { id: 'word:has',     display: 'has',     accepted: ['has'],                   level: 3 },
+  { id: 'word:her',     display: 'her',     accepted: ['her'],                   level: 3 },
+  { id: 'word:him',     display: 'him',     accepted: ['him'],                   level: 3 },
+  { id: 'word:his',     display: 'his',     accepted: ['his'],                   level: 3 },
+  { id: 'word:how',     display: 'how',     accepted: ['how'],                   level: 3 },
+  { id: 'word:just',    display: 'just',    accepted: ['just'],                  level: 3 },
+  { id: 'word:know',    display: 'know',    accepted: ['know','no'],             level: 3 },
+  { id: 'word:let',     display: 'let',     accepted: ['let'],                   level: 3 },
+  { id: 'word:live',    display: 'live',    accepted: ['live'],                  level: 3 },
+  { id: 'word:may',     display: 'may',     accepted: ['may'],                   level: 3 },
+  { id: 'word:of',      display: 'of',      accepted: ['of'],                    level: 3 },
+  { id: 'word:old',     display: 'old',     accepted: ['old'],                   level: 3 },
+  { id: 'word:once',    display: 'once',    accepted: ['once'],                  level: 3 },
+  { id: 'word:open',    display: 'open',    accepted: ['open'],                  level: 3 },
+  { id: 'word:over',    display: 'over',    accepted: ['over'],                  level: 3 },
+  { id: 'word:put',     display: 'put',     accepted: ['put'],                   level: 3 },
+  { id: 'word:round',   display: 'round',   accepted: ['round'],                 level: 3 },
+  { id: 'word:some',    display: 'some',    accepted: ['some','sum'],            level: 3 },
+  { id: 'word:stop',    display: 'stop',    accepted: ['stop'],                  level: 3 },
+  { id: 'word:take',    display: 'take',    accepted: ['take'],                  level: 3 },
+  { id: 'word:thank',   display: 'thank',   accepted: ['thank'],                 level: 3 },
+  { id: 'word:them',    display: 'them',    accepted: ['them'],                  level: 3 },
+  { id: 'word:think',   display: 'think',   accepted: ['think'],                 level: 3 },
+  { id: 'word:walk',    display: 'walk',    accepted: ['walk'],                  level: 3 },
+  { id: 'word:were',    display: 'were',    accepted: ['were','where','wear'],   level: 3 },
+  { id: 'word:when',    display: 'when',    accepted: ['when'],                  level: 3 },
+  // Level 4: Dolch Grade 2
+  { id: 'word:always',  display: 'always',  accepted: ['always'],                level: 4 },
+  { id: 'word:around',  display: 'around',  accepted: ['around'],                level: 4 },
+  { id: 'word:because', display: 'because', accepted: ['because'],               level: 4 },
+  { id: 'word:been',    display: 'been',    accepted: ['been','bin'],            level: 4 },
+  { id: 'word:before',  display: 'before',  accepted: ['before'],                level: 4 },
+  { id: 'word:best',    display: 'best',    accepted: ['best'],                  level: 4 },
+  { id: 'word:both',    display: 'both',    accepted: ['both'],                  level: 4 },
+  { id: 'word:buy',     display: 'buy',     accepted: ['buy','by','bye'],        level: 4 },
+  { id: 'word:call',    display: 'call',    accepted: ['call'],                  level: 4 },
+  { id: 'word:cold',    display: 'cold',    accepted: ['cold'],                  level: 4 },
+  { id: 'word:does',    display: 'does',    accepted: ['does','duz'],            level: 4 },
+  { id: 'word:dont',    display: "don't",   accepted: ["don't",'dont'],          level: 4 },
+  { id: 'word:fast',    display: 'fast',    accepted: ['fast'],                  level: 4 },
+  { id: 'word:first',   display: 'first',   accepted: ['first'],                 level: 4 },
+  { id: 'word:five',    display: 'five',    accepted: ['five'],                  level: 4 },
+  { id: 'word:found',   display: 'found',   accepted: ['found'],                 level: 4 },
+  { id: 'word:gave',    display: 'gave',    accepted: ['gave'],                  level: 4 },
+  { id: 'word:goes',    display: 'goes',    accepted: ['goes'],                  level: 4 },
+  { id: 'word:green',   display: 'green',   accepted: ['green'],                 level: 4 },
+  { id: 'word:its',     display: 'its',     accepted: ['its'],                   level: 4 },
+  { id: 'word:made',    display: 'made',    accepted: ['made','maid'],           level: 4 },
+  { id: 'word:many',    display: 'many',    accepted: ['many'],                  level: 4 },
+  { id: 'word:off',     display: 'off',     accepted: ['off'],                   level: 4 },
+  { id: 'word:or',      display: 'or',      accepted: ['or','ore','oar'],        level: 4 },
+  { id: 'word:pull',    display: 'pull',    accepted: ['pull'],                  level: 4 },
+  { id: 'word:read',    display: 'read',    accepted: ['read','red'],            level: 4 },
+  { id: 'word:right',   display: 'right',   accepted: ['right','write'],         level: 4 },
+  { id: 'word:sing',    display: 'sing',    accepted: ['sing'],                  level: 4 },
+  { id: 'word:sit',     display: 'sit',     accepted: ['sit'],                   level: 4 },
+  { id: 'word:sleep',   display: 'sleep',   accepted: ['sleep'],                 level: 4 },
+  { id: 'word:tell',    display: 'tell',    accepted: ['tell'],                  level: 4 },
+  { id: 'word:their',   display: 'their',   accepted: ['their','there'],         level: 4 },
+  { id: 'word:these',   display: 'these',   accepted: ['these'],                 level: 4 },
+  { id: 'word:those',   display: 'those',   accepted: ['those'],                 level: 4 },
+  { id: 'word:upon',    display: 'upon',    accepted: ['upon'],                  level: 4 },
+  { id: 'word:us',      display: 'us',      accepted: ['us'],                    level: 4 },
+  { id: 'word:use',     display: 'use',     accepted: ['use','yooz'],            level: 4 },
+  { id: 'word:very',    display: 'very',    accepted: ['very'],                  level: 4 },
+  { id: 'word:wash',    display: 'wash',    accepted: ['wash'],                  level: 4 },
+  { id: 'word:which',   display: 'which',   accepted: ['which','witch'],         level: 4 },
+  { id: 'word:why',     display: 'why',     accepted: ['why'],                   level: 4 },
+  { id: 'word:wish',    display: 'wish',    accepted: ['wish'],                  level: 4 },
+  { id: 'word:work',    display: 'work',    accepted: ['work'],                  level: 4 },
+  { id: 'word:would',   display: 'would',   accepted: ['would','wood'],          level: 4 },
+  { id: 'word:write',   display: 'write',   accepted: ['write','right'],         level: 4 },
+  { id: 'word:your',    display: 'your',    accepted: ['your','you\'re'],        level: 4 },
+  // Level 5: Dolch Grade 3
+  { id: 'word:about',    display: 'about',    accepted: ['about'],               level: 5 },
+  { id: 'word:better',   display: 'better',   accepted: ['better'],              level: 5 },
+  { id: 'word:bring',    display: 'bring',    accepted: ['bring'],               level: 5 },
+  { id: 'word:carry',    display: 'carry',    accepted: ['carry'],               level: 5 },
+  { id: 'word:clean',    display: 'clean',    accepted: ['clean'],               level: 5 },
+  { id: 'word:cut',      display: 'cut',      accepted: ['cut'],                 level: 5 },
+  { id: 'word:done',     display: 'done',     accepted: ['done','dun'],          level: 5 },
+  { id: 'word:draw',     display: 'draw',     accepted: ['draw'],                level: 5 },
+  { id: 'word:drink',    display: 'drink',    accepted: ['drink'],               level: 5 },
+  { id: 'word:eight',    display: 'eight',    accepted: ['eight','ate'],         level: 5 },
+  { id: 'word:fall',     display: 'fall',     accepted: ['fall'],                level: 5 },
+  { id: 'word:far',      display: 'far',      accepted: ['far'],                 level: 5 },
+  { id: 'word:full',     display: 'full',     accepted: ['full'],                level: 5 },
+  { id: 'word:got',      display: 'got',      accepted: ['got'],                 level: 5 },
+  { id: 'word:grow',     display: 'grow',     accepted: ['grow'],                level: 5 },
+  { id: 'word:hold',     display: 'hold',     accepted: ['hold'],                level: 5 },
+  { id: 'word:hot',      display: 'hot',      accepted: ['hot'],                 level: 5 },
+  { id: 'word:hurt',     display: 'hurt',     accepted: ['hurt'],                level: 5 },
+  { id: 'word:if',       display: 'if',       accepted: ['if'],                  level: 5 },
+  { id: 'word:keep',     display: 'keep',     accepted: ['keep'],                level: 5 },
+  { id: 'word:kind',     display: 'kind',     accepted: ['kind'],                level: 5 },
+  { id: 'word:laugh',    display: 'laugh',    accepted: ['laugh','laf'],         level: 5 },
+  { id: 'word:light',    display: 'light',    accepted: ['light'],               level: 5 },
+  { id: 'word:long',     display: 'long',     accepted: ['long'],                level: 5 },
+  { id: 'word:much',     display: 'much',     accepted: ['much'],                level: 5 },
+  { id: 'word:myself',   display: 'myself',   accepted: ['myself'],              level: 5 },
+  { id: 'word:never',    display: 'never',    accepted: ['never'],               level: 5 },
+  { id: 'word:only',     display: 'only',     accepted: ['only'],                level: 5 },
+  { id: 'word:own',      display: 'own',      accepted: ['own'],                 level: 5 },
+  { id: 'word:pick',     display: 'pick',     accepted: ['pick'],                level: 5 },
+  { id: 'word:seven',    display: 'seven',    accepted: ['seven'],               level: 5 },
+  { id: 'word:shall',    display: 'shall',    accepted: ['shall'],               level: 5 },
+  { id: 'word:show',     display: 'show',     accepted: ['show'],                level: 5 },
+  { id: 'word:six',      display: 'six',      accepted: ['six'],                 level: 5 },
+  { id: 'word:small',    display: 'small',    accepted: ['small'],               level: 5 },
+  { id: 'word:start',    display: 'start',    accepted: ['start'],               level: 5 },
+  { id: 'word:ten',      display: 'ten',      accepted: ['ten'],                 level: 5 },
+  { id: 'word:today',    display: 'today',    accepted: ['today'],               level: 5 },
+  { id: 'word:together', display: 'together', accepted: ['together'],            level: 5 },
+  { id: 'word:try',      display: 'try',      accepted: ['try'],                 level: 5 },
+  { id: 'word:warm',     display: 'warm',     accepted: ['warm'],                level: 5 },
+  // Level 6: High-frequency words
+  { id: 'word:time',     display: 'time',     accepted: ['time'],                level: 6 },
+  { id: 'word:water',    display: 'water',    accepted: ['water'],               level: 6 },
+  { id: 'word:people',   display: 'people',   accepted: ['people'],              level: 6 },
+  { id: 'word:year',     display: 'year',     accepted: ['year'],                level: 6 },
+  { id: 'word:back',     display: 'back',     accepted: ['back'],                level: 6 },
+  { id: 'word:home',     display: 'home',     accepted: ['home'],                level: 6 },
+  { id: 'word:place',    display: 'place',    accepted: ['place'],               level: 6 },
+  { id: 'word:end',      display: 'end',      accepted: ['end'],                 level: 6 },
+  { id: 'word:land',     display: 'land',     accepted: ['land'],                level: 6 },
+  { id: 'word:air',      display: 'air',      accepted: ['air','ere'],           level: 6 },
+  { id: 'word:animal',   display: 'animal',   accepted: ['animal'],              level: 6 },
+  { id: 'word:mother',   display: 'mother',   accepted: ['mother'],              level: 6 },
+  { id: 'word:face',     display: 'face',     accepted: ['face'],                level: 6 },
+  { id: 'word:family',   display: 'family',   accepted: ['family'],              level: 6 },
+  { id: 'word:school',   display: 'school',   accepted: ['school'],              level: 6 },
+  { id: 'word:father',   display: 'father',   accepted: ['father'],              level: 6 },
+  { id: 'word:body',     display: 'body',     accepted: ['body'],                level: 6 },
+  { id: 'word:food',     display: 'food',     accepted: ['food'],                level: 6 },
+  { id: 'word:more',     display: 'more',     accepted: ['more'],                level: 6 },
+  { id: 'word:door',     display: 'door',     accepted: ['door'],                level: 6 },
+  // Level 7: Nature and everyday life
+  { id: 'word:music',    display: 'music',    accepted: ['music'],               level: 7 },
+  { id: 'word:colour',   display: 'colour',   accepted: ['colour','color'],      level: 7 },
+  { id: 'word:sun',      display: 'sun',      accepted: ['sun','son'],           level: 7 },
+  { id: 'word:fish',     display: 'fish',     accepted: ['fish'],                level: 7 },
+  { id: 'word:dog',      display: 'dog',      accepted: ['dog'],                 level: 7 },
+  { id: 'word:horse',    display: 'horse',    accepted: ['horse'],               level: 7 },
+  { id: 'word:river',    display: 'river',    accepted: ['river'],               level: 7 },
+  { id: 'word:sea',      display: 'sea',      accepted: ['sea','see'],           level: 7 },
+  { id: 'word:bird',     display: 'bird',     accepted: ['bird'],                level: 7 },
+  { id: 'word:tree',     display: 'tree',     accepted: ['tree'],                level: 7 },
+  { id: 'word:mountain', display: 'mountain', accepted: ['mountain'],            level: 7 },
+  { id: 'word:morning',  display: 'morning',  accepted: ['morning'],             level: 7 },
+  { id: 'word:night',    display: 'night',    accepted: ['night','nite'],        level: 7 },
+  { id: 'word:city',     display: 'city',     accepted: ['city'],                level: 7 },
+  { id: 'word:road',     display: 'road',     accepted: ['road','rode'],         level: 7 },
+  { id: 'word:room',     display: 'room',     accepted: ['room'],                level: 7 },
+  { id: 'word:book',     display: 'book',     accepted: ['book'],                level: 7 },
+  { id: 'word:page',     display: 'page',     accepted: ['page'],                level: 7 },
+  { id: 'word:story',    display: 'story',    accepted: ['story'],               level: 7 },
+  { id: 'word:friend',   display: 'friend',   accepted: ['friend'],              level: 7 },
+  // Level 8: Home and school
+  { id: 'word:children', display: 'children', accepted: ['children'],            level: 8 },
+  { id: 'word:brother',  display: 'brother',  accepted: ['brother'],             level: 8 },
+  { id: 'word:sister',   display: 'sister',   accepted: ['sister'],              level: 8 },
+  { id: 'word:teacher',  display: 'teacher',  accepted: ['teacher'],             level: 8 },
+  { id: 'word:window',   display: 'window',   accepted: ['window'],              level: 8 },
+  { id: 'word:table',    display: 'table',    accepted: ['table'],               level: 8 },
+  { id: 'word:chair',    display: 'chair',    accepted: ['chair'],               level: 8 },
+  { id: 'word:floor',    display: 'floor',    accepted: ['floor'],               level: 8 },
+  { id: 'word:wall',     display: 'wall',     accepted: ['wall'],                level: 8 },
+  { id: 'word:clock',    display: 'clock',    accepted: ['clock'],               level: 8 },
+  { id: 'word:paper',    display: 'paper',    accepted: ['paper'],               level: 8 },
+  { id: 'word:pencil',   display: 'pencil',   accepted: ['pencil'],              level: 8 },
+  { id: 'word:picture',  display: 'picture',  accepted: ['picture'],             level: 8 },
+  { id: 'word:street',   display: 'street',   accepted: ['street'],              level: 8 },
+  { id: 'word:garden',   display: 'garden',   accepted: ['garden'],              level: 8 },
+  { id: 'word:kitchen',  display: 'kitchen',  accepted: ['kitchen'],             level: 8 },
+  { id: 'word:weather',  display: 'weather',  accepted: ['weather','whether'],   level: 8 },
+  { id: 'word:sound',    display: 'sound',    accepted: ['sound'],               level: 8 },
+  { id: 'word:earth',    display: 'earth',    accepted: ['earth'],               level: 8 },
+  { id: 'word:idea',     display: 'idea',     accepted: ['idea'],                level: 8 },
+  // Level 9: Descriptive and abstract
+  { id: 'word:important',  display: 'important',  accepted: ['important'],       level: 9 },
+  { id: 'word:different',  display: 'different',  accepted: ['different'],       level: 9 },
+  { id: 'word:special',    display: 'special',    accepted: ['special'],         level: 9 },
+  { id: 'word:beautiful',  display: 'beautiful',  accepted: ['beautiful'],       level: 9 },
+  { id: 'word:birthday',   display: 'birthday',   accepted: ['birthday'],        level: 9 },
+  { id: 'word:tomorrow',   display: 'tomorrow',   accepted: ['tomorrow'],        level: 9 },
+  { id: 'word:yesterday',  display: 'yesterday',  accepted: ['yesterday'],       level: 9 },
+  { id: 'word:quickly',    display: 'quickly',    accepted: ['quickly'],         level: 9 },
+  { id: 'word:slowly',     display: 'slowly',     accepted: ['slowly'],          level: 9 },
+  { id: 'word:outside',    display: 'outside',    accepted: ['outside'],         level: 9 },
+  { id: 'word:inside',     display: 'inside',     accepted: ['inside'],          level: 9 },
+  { id: 'word:everything', display: 'everything', accepted: ['everything'],      level: 9 },
+  { id: 'word:everyone',   display: 'everyone',   accepted: ['everyone'],        level: 9 },
+  { id: 'word:anything',   display: 'anything',   accepted: ['anything'],        level: 9 },
+  { id: 'word:nothing',    display: 'nothing',    accepted: ['nothing'],         level: 9 },
+  { id: 'word:between',    display: 'between',    accepted: ['between'],         level: 9 },
+  { id: 'word:another',    display: 'another',    accepted: ['another'],         level: 9 },
+  { id: 'word:behind',     display: 'behind',     accepted: ['behind'],          level: 9 },
+  { id: 'word:second',     display: 'second',     accepted: ['second'],          level: 9 },
+  { id: 'word:almost',     display: 'almost',     accepted: ['almost'],          level: 9 },
+  // Level 10: Advanced vocabulary
+  { id: 'word:adventure',  display: 'adventure',  accepted: ['adventure'],       level: 10 },
+  { id: 'word:discover',   display: 'discover',   accepted: ['discover'],        level: 10 },
+  { id: 'word:imagine',    display: 'imagine',    accepted: ['imagine'],         level: 10 },
+  { id: 'word:wonderful',  display: 'wonderful',  accepted: ['wonderful'],       level: 10 },
+  { id: 'word:amazing',    display: 'amazing',    accepted: ['amazing'],         level: 10 },
+  { id: 'word:fantastic',  display: 'fantastic',  accepted: ['fantastic'],       level: 10 },
+  { id: 'word:impossible', display: 'impossible', accepted: ['impossible'],      level: 10 },
+  { id: 'word:remember',   display: 'remember',   accepted: ['remember'],        level: 10 },
+  { id: 'word:favourite',  display: 'favourite',  accepted: ['favourite','favorite'], level: 10 },
+  { id: 'word:excellent',  display: 'excellent',  accepted: ['excellent'],       level: 10 },
+  { id: 'word:actually',   display: 'actually',   accepted: ['actually'],        level: 10 },
+  { id: 'word:suddenly',   display: 'suddenly',   accepted: ['suddenly'],        level: 10 },
+  { id: 'word:probably',   display: 'probably',   accepted: ['probably'],        level: 10 },
+  { id: 'word:usually',    display: 'usually',    accepted: ['usually'],         level: 10 },
+  { id: 'word:already',    display: 'already',    accepted: ['already'],         level: 10 },
+  { id: 'word:whenever',   display: 'whenever',   accepted: ['whenever'],        level: 10 },
+  { id: 'word:wherever',   display: 'wherever',   accepted: ['wherever'],        level: 10 },
+  { id: 'word:interesting',display: 'interesting',accepted: ['interesting'],     level: 10 },
+  { id: 'word:question',   display: 'question',   accepted: ['question'],        level: 10 },
+  { id: 'word:perhaps',    display: 'perhaps',    accepted: ['perhaps'],         level: 10 },
 ];
 
 const PRAISE = [
@@ -123,10 +502,15 @@ const STORAGE_KEY = 'readingLearner.v1';
 const DEFAULT_SETTINGS = {
   roundSize: 10,
   retryCap: 2,
+  masteryThreshold: 3,
+  wordLevel: 1,
+  numberLevel: 1,
   grownUpDecides: false,
   voiceName: null,
   speechRate: 0.9,
 };
+
+const MAX_LEVEL = 10;
 
 function makeItem(c, kind) {
   return {
@@ -134,7 +518,9 @@ function makeItem(c, kind) {
     kind: kind || (c.id.startsWith('num:') ? 'number' : 'word'),
     display: c.display,
     accepted: [...c.accepted],
+    level: c.level || 1,
     successStreak: 0,
+    unaidedStreak: 0,
     silentCorrect: 0,
     totalCorrect: 0,
     totalAttempts: 0,
@@ -172,9 +558,13 @@ function loadStored() {
     for (const k of Object.keys(DEFAULT_SETTINGS)) {
       if (parsed.settings[k] === undefined) parsed.settings[k] = DEFAULT_SETTINGS[k];
     }
-    // Ensure all items have a kind field (migration from v7)
+    const threshold = parsed.settings.masteryThreshold || DEFAULT_SETTINGS.masteryThreshold;
     for (const item of Object.values(parsed.items)) {
       if (!item.kind) item.kind = item.id.startsWith('num:') ? 'number' : 'word';
+      if (item.level === undefined) item.level = 1;
+      if (item.unaidedStreak === undefined) {
+        item.unaidedStreak = item.mastered ? threshold : (item.silentCorrect || 0);
+      }
     }
     stored = parsed;
   } catch (e) {
@@ -463,11 +853,11 @@ function shuffle(arr) {
 
 let roundNumber = 0;
 
-function buildRound(set) {
+function buildRound(set, level) {
   roundNumber++;
   const kind = set === 'numbers' ? 'number' : 'word';
-  const all  = Object.values(stored.items).filter(i => i.kind === kind);
-  const size = stored.settings.roundSize;
+  const all  = Object.values(stored.items).filter(i => i.kind === kind && i.level === level);
+  const size = Math.min(stored.settings.roundSize, all.length);
 
   const missed     = shuffle(all.filter(i => i.lastResult === 'miss' && !i.mastered));
   const newItems   = shuffle(all.filter(i => i.totalAttempts === 0));
@@ -497,37 +887,42 @@ function buildRound(set) {
 // ============================================================
 
 const gs = {
-  currentSet:     null,
-  queue:          [],
-  originalSize:   0,
+  currentSet:          null,
+  currentLevel:        1,
+  queue:               [],
+  originalSize:        0,
   completedCount:      0,
   roundCorrect:        0,
   roundSilentCorrect:  0,
-  currentItem:    null,
-  retryCount:     0,
-  recycled:       new Set(),
-  awaitingResult: false,
-  hearPressed:    false,
+  currentItem:         null,
+  retryCount:          0,
+  recycled:            new Set(),
+  awaitingResult:      false,
+  hearPressed:         false,
 };
 
-function startRound(set) {
-  const items = buildRound(set);
-  gs.currentSet     = set;
-  gs.queue          = [...items];
-  gs.originalSize   = items.length;
+function startRound(set, level) {
+  const items = buildRound(set, level);
+  gs.currentSet          = set;
+  gs.currentLevel        = level;
+  gs.queue               = [...items];
+  gs.originalSize        = items.length;
   gs.completedCount      = 0;
   gs.roundCorrect        = 0;
   gs.roundSilentCorrect  = 0;
-  gs.currentItem    = null;
-  gs.retryCount     = 0;
-  gs.recycled       = new Set();
-  gs.awaitingResult = false;
-  gs.hearPressed    = false;
+  gs.currentItem         = null;
+  gs.retryCount          = 0;
+  gs.recycled            = new Set();
+  gs.awaitingResult      = false;
+  gs.hearPressed         = false;
 
+  setLevelBackground(level);
   showScreen('practice');
   createRoundRecognizer(set);
-  if (!stored.settings.grownUpDecides) openMicStream(); // pre-open; fire and forget
-  nextItem();
+  if (!stored.settings.grownUpDecides) openMicStream();
+
+  // Announce the level at the start of the session
+  speak(`Level ${level}!`, 1.1, () => nextItem());
 }
 
 function nextItem() {
@@ -573,13 +968,14 @@ function handleAnswer(correct) {
     item.lastResult = 'correct';
 
     if (!gs.hearPressed) {
+      item.unaidedStreak++;
       item.silentCorrect++;
       gs.roundSilentCorrect++;
+    } else {
+      item.unaidedStreak = 0;
     }
 
-    if (item.silentCorrect >= 2) {
-      item.mastered = true;
-    }
+    item.mastered = item.unaidedStreak >= stored.settings.masteryThreshold;
 
     gs.roundCorrect++;
     gs.completedCount++;
@@ -593,6 +989,8 @@ function handleAnswer(correct) {
 
   } else {
     item.successStreak = 0;
+    item.unaidedStreak = 0;
+    item.mastered      = false;
     item.lastResult    = 'miss';
 
     saveStored();
@@ -624,13 +1022,30 @@ function endRound() {
   stored.rounds.push({
     id:      new Date().toISOString(),
     set:     gs.currentSet,
+    level:   gs.currentLevel,
     endedAt: new Date().toISOString(),
     correct: gs.roundCorrect,
     total:   gs.completedCount,
   });
   saveStored();
   closeMicStream();
-  showAllDone();
+
+  const levelKey   = gs.currentSet === 'numbers' ? 'numberLevel' : 'wordLevel';
+  const wasOnCurrent = gs.currentLevel === stored.settings[levelKey];
+  const levelResult = wasOnCurrent ? checkLevelComplete() : null;
+  showAllDone(levelResult);
+}
+
+function checkLevelComplete() {
+  const levelKey = gs.currentSet === 'numbers' ? 'numberLevel' : 'wordLevel';
+  const kind     = gs.currentSet === 'numbers' ? 'number' : 'word';
+  const level    = gs.currentLevel;
+  const items    = Object.values(stored.items).filter(i => i.kind === kind && i.level === level);
+  if (!items.every(i => i.mastered)) return null;
+  if (level >= MAX_LEVEL) return 'all_defeated';
+  stored.settings[levelKey] = level + 1;
+  saveStored();
+  return 'level_complete';
 }
 
 // ============================================================
@@ -716,31 +1131,121 @@ function renderDots() {
   }
 }
 
-function showAllDone() {
+function showAllDone(levelResult) {
+  if (levelResult) {
+    showLevelUp(levelResult);
+    return;
+  }
+
   showScreen('alldone');
   const total  = gs.originalSize;
   const silent = gs.roundSilentCorrect;
+  const noun   = gs.currentSet === 'numbers' ? 'number' : 'word';
   const stars  = Math.max(1, Math.round(
     (silent > 0 ? silent : gs.roundCorrect) / Math.max(total, 1) * 5
   ));
 
   document.getElementById('stars-burst').textContent = '⭐'.repeat(stars);
-  document.getElementById('alldone-title').textContent = `You practised ${total} word${total !== 1 ? 's' : ''}`;
+  document.getElementById('alldone-title').textContent = `You practised ${total} ${noun}${total !== 1 ? 's' : ''}`;
 
   let scoreText, speakText;
   if (silent >= total && total > 0) {
-    scoreText  = 'Read them all by yourself!';
-    speakText  = `You practised ${total} words, and read them all by yourself. See you again tomorrow!`;
+    scoreText = 'Read them all by yourself!';
+    speakText = `You practised ${total} ${noun}s, and read them all by yourself. See you again tomorrow!`;
   } else if (silent > 0) {
-    scoreText  = `Got ${silent} right without hearing!`;
-    speakText  = `You practised ${total} words, and got ${silent} right without hearing them first. See you again tomorrow!`;
+    scoreText = `Got ${silent} right without hearing!`;
+    speakText = `You practised ${total} ${noun}s, and got ${silent} right without hearing them first. See you again tomorrow!`;
   } else {
-    scoreText  = "You're learning — keep it up!";
-    speakText  = `You practised ${total} words today. See you again tomorrow!`;
+    scoreText = "You're learning — keep it up!";
+    speakText = `You practised ${total} ${noun}s today. See you again tomorrow!`;
   }
 
   document.getElementById('alldone-score').textContent = scoreText;
   setTimeout(() => speak(speakText, 0.85), 600);
+}
+
+function showLevelUp(result) {
+  showScreen('levelup');
+  const set    = gs.currentSet;
+  const level  = gs.currentLevel;
+  const isMax  = result === 'all_defeated';
+  const newLevel = isMax ? level : level + 1;
+
+  if (isMax) {
+    document.getElementById('levelup-title').textContent = '🏆 Champion!';
+    document.getElementById('levelup-body').textContent  =
+      `You've conquered all ${MAX_LEVEL} levels of ${set}! Keep practising to stay sharp!`;
+    speak(`Champion! You have conquered all ${MAX_LEVEL} levels of ${set}! You are amazing!`, 1.0);
+  } else {
+    document.getElementById('levelup-title').textContent = `🎉 Level ${level} complete!`;
+    document.getElementById('levelup-body').textContent  =
+      `Brilliant! You've unlocked Level ${newLevel} of ${set}!`;
+    speak(`Level ${level} complete! You unlocked level ${newLevel}! Well done!`, 1.0);
+  }
+  setLevelBackground(isMax ? level : newLevel);
+}
+
+// ============================================================
+// LEVEL BACKGROUND & PICKER
+// ============================================================
+
+const LEVEL_GRADIENTS = [
+  '',
+  'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',  // L1 – original deep purple
+  'linear-gradient(135deg, #1a0533 0%, #3a0ca3 50%, #1a0566 100%)',  // L2 – indigo
+  'linear-gradient(135deg, #003049 0%, #0077b6 50%, #023e8a 100%)',  // L3 – ocean blue
+  'linear-gradient(135deg, #004b23 0%, #007f5f 50%, #1b4332 100%)',  // L4 – forest green
+  'linear-gradient(135deg, #2d0000 0%, #9d0208 50%, #370617 100%)',  // L5 – deep red
+  'linear-gradient(135deg, #3d2c00 0%, #b5830a 50%, #4d3800 100%)',  // L6 – amber
+  'linear-gradient(135deg, #1a001a 0%, #7209b7 50%, #3a0068 100%)',  // L7 – violet
+  'linear-gradient(135deg, #001a33 0%, #0096c7 50%, #00335e 100%)',  // L8 – cyan
+  'linear-gradient(135deg, #001a00 0%, #52b788 50%, #1b4332 100%)',  // L9 – teal
+  'linear-gradient(135deg, #1a1200 0%, #e9c46a 50%, #3d2c00 100%)',  // L10 – gold
+];
+
+function setLevelBackground(level) {
+  const g = LEVEL_GRADIENTS[level] || LEVEL_GRADIENTS[1];
+  document.body.style.background = g;
+}
+
+function renderPicker() {
+  renderLevelRow('picker-word-levels', 'words');
+  renderLevelRow('picker-num-levels',  'numbers');
+  setLevelBackground(1); // picker uses neutral default; rounds set their own
+}
+
+function renderLevelRow(containerId, set) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const levelKey   = set === 'numbers' ? 'numberLevel' : 'wordLevel';
+  const unlocked   = stored.settings[levelKey];
+  container.innerHTML = '';
+
+  for (let l = 1; l <= MAX_LEVEL; l++) {
+    const btn = document.createElement('button');
+    btn.className = 'level-btn';
+    if (l < unlocked) {
+      btn.classList.add('done');
+      btn.textContent = `L${l} ✓`;
+      btn.addEventListener('click', () => {
+        speak(`Level ${l}!`, 1.1, () => startRound(set, l));
+      });
+    } else if (l === unlocked) {
+      btn.classList.add('current');
+      btn.textContent = `L${l}`;
+      btn.addEventListener('click', () => {
+        speak(`Level ${l}!`, 1.1, () => startRound(set, l));
+      });
+    } else {
+      btn.classList.add('locked');
+      btn.textContent = `L${l}`;
+      btn.setAttribute('aria-label', `Level ${l} locked`);
+      btn.addEventListener('click', () => {
+        speak(`Finish level ${l - 1} first!`, 1.0);
+      });
+    }
+    container.appendChild(btn);
+  }
 }
 
 // ============================================================
@@ -860,20 +1365,26 @@ function populateVoiceSelect() {
 
 function renderSettings() {
   const s = stored.settings;
-  document.getElementById('s-round-size').value         = s.roundSize;
-  document.getElementById('s-retry-cap').value          = s.retryCap;
-  document.getElementById('s-grownup-decides').checked  = s.grownUpDecides;
-  document.getElementById('s-speech-rate').value        = s.speechRate;
-  document.getElementById('s-rate-value').textContent   = s.speechRate + '×';
+  document.getElementById('s-round-size').value        = s.roundSize;
+  document.getElementById('s-retry-cap').value         = s.retryCap;
+  document.getElementById('s-mastery-threshold').value = s.masteryThreshold;
+  document.getElementById('s-word-level').value        = s.wordLevel;
+  document.getElementById('s-number-level').value      = s.numberLevel;
+  document.getElementById('s-grownup-decides').checked = s.grownUpDecides;
+  document.getElementById('s-speech-rate').value       = s.speechRate;
+  document.getElementById('s-rate-value').textContent  = s.speechRate + '×';
 }
 
 function saveSettings() {
   const s = stored.settings;
-  s.roundSize          = Math.max(4, parseInt(document.getElementById('s-round-size').value)     || 10);
-  s.retryCap           = Math.max(1, parseInt(document.getElementById('s-retry-cap').value)      || 2);
-  s.grownUpDecides     = document.getElementById('s-grownup-decides').checked;
-  s.speechRate         = parseFloat(document.getElementById('s-speech-rate').value)              || 0.9;
-  s.voiceName          = document.getElementById('s-voice').value || null;
+  s.roundSize         = Math.max(4,  parseInt(document.getElementById('s-round-size').value)        || 10);
+  s.retryCap          = Math.max(1,  parseInt(document.getElementById('s-retry-cap').value)         || 2);
+  s.masteryThreshold  = Math.max(1,  parseInt(document.getElementById('s-mastery-threshold').value) || 3);
+  s.wordLevel         = Math.min(MAX_LEVEL, Math.max(1, parseInt(document.getElementById('s-word-level').value)   || 1));
+  s.numberLevel       = Math.min(MAX_LEVEL, Math.max(1, parseInt(document.getElementById('s-number-level').value) || 1));
+  s.grownUpDecides    = document.getElementById('s-grownup-decides').checked;
+  s.speechRate        = parseFloat(document.getElementById('s-speech-rate').value)                 || 0.9;
+  s.voiceName         = document.getElementById('s-voice').value || null;
   saveStored();
 }
 
@@ -895,7 +1406,7 @@ function renderProgress() {
       cell.classList.add('mastered'); counts.mastered++;
     } else if (item.totalAttempts === 0) {
       cell.classList.add('new');      counts.new++;
-    } else if (item.silentCorrect === 0) {
+    } else if (item.unaidedStreak === 0) {
       cell.classList.add('learning'); counts.learning++;
     } else {
       cell.classList.add('unaided');  counts.unaided++;
@@ -952,12 +1463,6 @@ function setupGate() {
 // ============================================================
 
 function setupEvents() {
-  document.getElementById('btn-numbers').addEventListener('click', () => {
-    speak('Numbers!', 1.0, () => startRound('numbers'));
-  });
-  document.getElementById('btn-words').addEventListener('click', () => {
-    speak('Words!', 1.0, () => startRound('words'));
-  });
 
   // Hear button — tap to speak the current word/number
   const hearBtn = document.getElementById('hear-button');
@@ -1011,11 +1516,18 @@ function setupEvents() {
   });
 
   document.getElementById('tomorrow-text').addEventListener('click', () => {
+    renderPicker();
+    showScreen('picker');
+  });
+
+  document.getElementById('btn-levelup-continue').addEventListener('click', () => {
+    renderPicker();
     showScreen('picker');
   });
 
   document.getElementById('btn-back').addEventListener('click', () => {
     saveSettings();
+    renderPicker();
     showScreen('picker');
   });
 
@@ -1023,7 +1535,7 @@ function setupEvents() {
     document.getElementById('s-rate-value').textContent = parseFloat(e.target.value).toFixed(1) + '×';
     saveSettings();
   });
-  for (const id of ['s-round-size','s-retry-cap']) {
+  for (const id of ['s-round-size','s-retry-cap','s-mastery-threshold','s-word-level','s-number-level']) {
     document.getElementById(id).addEventListener('change', saveSettings);
   }
   document.getElementById('s-grownup-decides').addEventListener('change', saveSettings);
@@ -1085,6 +1597,7 @@ async function init() {
 
   await initVosk();
 
+  renderPicker();
   showScreen('picker');
 }
 
