@@ -997,6 +997,8 @@ function handleAnswer(correct) {
     gs.roundCorrect++;
     gs.completedCount++;
     saveStored();
+    playPling();
+    burstStars();
     flashScreen(true);
 
     speakPraise(() => {
@@ -1148,6 +1150,95 @@ function showAddHeardBtn(transcript) {
 function hideAddHeardBtn() {
   const btn = document.getElementById('btn-add-heard');
   if (btn) btn.classList.add('hidden');
+}
+
+function playPling() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    // C major chord upper register: C6, E6, G6
+    [[1046.5, 0.3], [1318.5, 0.22], [1568.0, 0.14]].forEach(([freq, vol]) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(vol, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.48);
+      osc.start(t);
+      osc.stop(t + 0.55);
+    });
+    setTimeout(() => { try { ctx.close(); } catch (_) {} }, 700);
+  } catch (_) {}
+}
+
+function burstStars() {
+  const wordEl = document.getElementById('word-display');
+  if (!wordEl) return;
+  const rect = wordEl.getBoundingClientRect();
+  const cx = rect.left + rect.width  / 2;
+  const cy = rect.top  + rect.height / 2;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:999';
+  document.body.appendChild(canvas);
+  const c = canvas.getContext('2d');
+
+  const COLORS   = ['#ff6b6b','#ffd166','#06d6a0','#a78bfa','#ff9f1c','#4cc9f0','#f72585','#80ffdb','#ffbe0b'];
+  const GRAVITY  = 0.22;
+  const DURATION = 1800;
+
+  const particles = Array.from({length: 40}, () => {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 3 + Math.random() * 9;
+    return {
+      x:        cx + (Math.random() - 0.5) * rect.width  * 0.5,
+      y:        cy + (Math.random() - 0.5) * rect.height * 0.3,
+      vx:       Math.cos(angle) * speed,
+      vy:       Math.sin(angle) * speed - 5,
+      size:     8 + Math.random() * 14,
+      color:    COLORS[Math.floor(Math.random() * COLORS.length)],
+      rot:      Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.28,
+      isStar:   Math.random() < 0.6,
+    };
+  });
+
+  function drawStar(x, y, r, rot) {
+    const inner = r * 0.42;
+    c.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a  = rot + (i * Math.PI) / 5;
+      const ri = i % 2 === 0 ? r : inner;
+      if (i === 0) c.moveTo(x + ri * Math.cos(a), y + ri * Math.sin(a));
+      else         c.lineTo(x + ri * Math.cos(a), y + ri * Math.sin(a));
+    }
+    c.closePath();
+  }
+
+  const start = performance.now();
+  (function tick(now) {
+    const t = (now - start) / DURATION;
+    if (t >= 1) { canvas.remove(); return; }
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    c.globalAlpha = Math.max(0, 1 - t * 1.1);
+    for (const p of particles) {
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.vy += GRAVITY;
+      p.rot += p.rotSpeed;
+      c.fillStyle = p.color;
+      if (p.isStar) { drawStar(p.x, p.y, p.size / 2, p.rot); }
+      else          { c.beginPath(); c.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2); }
+      c.fill();
+    }
+    c.globalAlpha = 1;
+    requestAnimationFrame(tick);
+  })(start);
 }
 
 let flashTimer = null;
