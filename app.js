@@ -983,7 +983,7 @@ function handleAnswer(correct) {
     item.successStreak++;
     item.lastResult = 'correct';
 
-    if (!gs.hearPressed) {
+    if (!gs.hearPressed && gs.retryCount === 0) {
       item.unaidedStreak++;
       item.silentCorrect++;
       gs.roundSilentCorrect++;
