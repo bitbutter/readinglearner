@@ -323,6 +323,31 @@ html, body {
   text-shadow: 0 4px 32px rgba(0,0,0,0.5), 0 0 60px rgba(255,190,11,0.1);
 }
 
+/* Tappable letters: flash colour on tap, then fade back to the word's own
+   colour (the keyframe only defines the start, so it eases back to normal). */
+.word-display .letter {
+  display: inline-block;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  --letter-flash: #ffd166;
+}
+
+.word-display.number-display .letter {
+  --letter-flash: #ffffff;
+}
+
+.word-display .letter.tapped {
+  animation: letter-flash 0.9s ease-out;
+}
+
+@keyframes letter-flash {
+  0% {
+    color: var(--letter-flash);
+    transform: scale(1.18);
+    text-shadow: 0 0 30px var(--letter-flash);
+  }
+}
+
 .heard-display {
   font-size: clamp(0.75rem, 2.2vmin, 0.95rem);
   color: var(--muted);
@@ -331,24 +356,6 @@ html, body {
   font-weight: 600;
   font-style: italic;
   opacity: 0.75;
-}
-
-.add-heard-btn {
-  padding: 0.5rem 1.1rem;
-  background: rgba(255,255,255,0.07);
-  border: 1.5px solid rgba(255,255,255,0.16);
-  border-radius: 100px;
-  color: var(--muted-hi);
-  font-family: inherit;
-  font-size: clamp(0.72rem, 2vmin, 0.88rem);
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.add-heard-btn:active {
-  background: rgba(255,255,255,0.15);
-  color: white;
 }
 
 /* ── Practice buttons layout ── */

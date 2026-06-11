@@ -38,6 +38,27 @@ function numberToWords(n) {
   return ones[h] + ' hundred' + (r ? ' and ' + numberToWords(r) : '');
 }
 
+// Isolated phonetic sounds for letters (phonics sounds, not letter names —
+// "sss" for s, not "ess"). Spelled so the TTS voice produces roughly the right
+// phone; tune individual entries here if a voice mangles one.
+const LETTER_SOUNDS = {
+  a: 'ah',  b: 'buh', c: 'kuh', d: 'duh', e: 'eh',  f: 'fff',
+  g: 'guh', h: 'huh', i: 'ih',  j: 'juh', k: 'kuh', l: 'lll',
+  m: 'mmm', n: 'nnn', o: 'oh',  p: 'puh', q: 'kwuh', r: 'rrr',
+  s: 'sss', t: 'tuh', u: 'uh',  v: 'vvv', w: 'wuh', x: 'ks',
+  y: 'yuh', z: 'zzz',
+};
+
+const DIGIT_NAMES = {
+  0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four',
+  5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine',
+};
+
+function letterSound(ch) {
+  const c = ch.toLowerCase();
+  return LETTER_SOUNDS[c] || DIGIT_NAMES[c] || null;
+}
+
 // ============================================================
 // CONTENT
 // ============================================================
@@ -940,7 +961,10 @@ async function openMicStream() {
       audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
       video: false,
     });
-    audioCtx   = new AudioContext();
+    // Capture at the recognizer's rate (16 kHz) so the declared and actual
+    // sample rates can never disagree; Chrome resamples the mic natively.
+    try { audioCtx = new AudioContext({ sampleRate: 16000 }); }
+    catch (_) { audioCtx = new AudioContext(); }
     const src  = audioCtx.createMediaStreamSource(micStream);
     scriptProc = audioCtx.createScriptProcessor(4096, 1, 1);
     scriptProc.onaudioprocess = (e) => {
@@ -1010,7 +1034,10 @@ function evaluateVosk() {
     onRecognitionResult([...heardTranscripts]);
   } else {
     setMicState('ready');
-    onRecognitionFallback();
+    // A non-reader gets no feedback from a silently reset button — tell them.
+    if (gs.currentItem && !gs.awaitingResult) {
+      speak("I didn't hear you. Try again!", 1.0);
+    }
   }
 }
 
@@ -1022,20 +1049,37 @@ function normText(s) {
   return s.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
 }
 
+// True when `run` appears as a consecutive whole-token sequence in `tokens`.
+function containsTokenRun(tokens, run) {
+  outer:
+  for (let i = 0; i + run.length <= tokens.length; i++) {
+    for (let j = 0; j < run.length; j++) {
+      if (tokens[i + j] !== run[j]) continue outer;
+    }
+    return true;
+  }
+  return false;
+}
+
 function matchAnswer(transcripts, item) {
   if (!transcripts?.length) return false;
+  const acceptedRuns = item.accepted
+    .map(a => normText(a).split(' ').filter(Boolean))
+    .filter(r => r.length);
   for (const raw of transcripts) {
-    const t = normText(raw);
-    if (!t || t === '[unk]') continue;
-    for (const acc of item.accepted) {
-      if (t === normText(acc)) return true;
+    // normText turns "[unk]" into "unk"; drop those filler tokens so a
+    // transcript like "[unk] cat [unk]" still matches "cat".
+    const tokens = normText(raw).split(' ').filter(t => t && t !== 'unk');
+    if (!tokens.length) continue;
+    for (const run of acceptedRuns) {
+      if (containsTokenRun(tokens, run)) return true;
     }
   }
   return false;
 }
 
-// Single mutation path for accepted terms, shared by the in-practice
-// "add heard" button and the grown-up tuning screen. Returns true if added.
+// Single mutation path for accepted terms (grown-up tuning screen only).
+// Returns true if added.
 function addAcceptedTerm(item, rawTerm) {
   const term = normText(rawTerm);
   if (!term || term === '[unk]') return false;
@@ -1166,7 +1210,6 @@ const gs = {
   recycled:            new Set(),
   awaitingResult:      false,
   hearPressed:         false,
-  showingTranscripts:  [],
 };
 
 function startRound(set, level) {
@@ -1183,7 +1226,6 @@ function startRound(set, level) {
   gs.recycled            = new Set();
   gs.awaitingResult      = false;
   gs.hearPressed         = false;
-  gs.showingTranscripts  = [];
 
   setLevelBackground(level, set);
   showScreen('practice');
@@ -1199,7 +1241,6 @@ function nextItem() {
   gs.currentItem        = gs.queue.shift();
   gs.retryCount         = 0;
   gs.hearPressed        = false;
-  gs.showingTranscripts = [];
   gs.currentItem.lastSeenRound = roundNumber;
   gs.awaitingResult = false;
   presentItem(gs.currentItem);
@@ -1215,11 +1256,30 @@ function presentItem(item) {
     len <= 4  ? 'clamp(5rem, 20vmin, 10rem)' :
     len <= 7  ? 'clamp(4rem, 15vmin,  8rem)' :
                 'clamp(3rem, 11vmin,  5.5rem)';
-  el.textContent = item.display;
-  el.className   = 'word-display' + (item.kind === 'number' ? ' number-display' : '');
+  el.className = 'word-display' + (item.kind === 'number' ? ' number-display' : '');
+
+  // Each letter is tappable: it speaks its isolated phonetic sound ("sss" for
+  // s) and flashes colour, so the child can sound the word out himself.
+  el.innerHTML = '';
+  for (const ch of item.display) {
+    const span = document.createElement('span');
+    span.className   = 'letter';
+    span.textContent = ch;
+    const sound = letterSound(ch);
+    if (sound) {
+      span.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        if (gs.awaitingResult || micState === 'listening' || micState === 'evaluating') return;
+        span.classList.remove('tapped');
+        void span.offsetWidth;  // restart the flash animation
+        span.classList.add('tapped');
+        speak(sound, 0.8);
+      });
+    }
+    el.appendChild(span);
+  }
 
   clearHeardDisplay();
-  hideAddHeardBtn();
   DBG('presentItem', { id: item.id });
   setMicState('ready'); // mic and hear button ready immediately — child controls pacing
 }
@@ -1237,12 +1297,12 @@ function handleAnswer(correct) {
     item.successStreak++;
     item.lastResult = 'correct';
 
+    // Only a clean first-try answer without "Hear it" advances the unaided
+    // streak — but an aided correct answer no longer wipes it (misses still do).
     if (!gs.hearPressed && gs.retryCount === 0) {
       item.unaidedStreak++;
       item.silentCorrect++;
       gs.roundSilentCorrect++;
-    } else {
-      item.unaidedStreak = 0;
     }
 
     item.mastered = item.unaidedStreak >= stored.settings.masteryThreshold;
@@ -1331,14 +1391,6 @@ function onRecognitionResult(transcripts) {
   const best = transcripts.find(t => t && t !== '[unk]') || '';
   setHeardDisplay(best);
 
-  if (best && !matched) {
-    gs.showingTranscripts.push(best);
-    const counts = {};
-    for (const t of gs.showingTranscripts) counts[t] = (counts[t] || 0) + 1;
-    const repeated = Object.keys(counts).find(t => counts[t] >= 2);
-    showAddHeardBtn(repeated || null);
-  }
-
   handleAnswer(matched);
 }
 
@@ -1392,19 +1444,6 @@ function setHeardDisplay(text) {
   el.textContent = text ? `Heard: "${text}"` : '';
 }
 function clearHeardDisplay() { setHeardDisplay(''); }
-
-function showAddHeardBtn(transcript) {
-  const btn = document.getElementById('btn-add-heard');
-  if (!btn) return;
-  if (!transcript) { btn.classList.add('hidden'); return; }
-  btn.textContent = `Add "${transcript}" as accepted`;
-  btn.dataset.transcript = transcript;
-  btn.classList.remove('hidden');
-}
-function hideAddHeardBtn() {
-  const btn = document.getElementById('btn-add-heard');
-  if (btn) btn.classList.add('hidden');
-}
 
 function playPling() {
   try {
@@ -2196,12 +2235,6 @@ function setupEvents() {
     if (micState === 'listening') requestStopAndEvaluate();
   });
 
-  document.getElementById('btn-add-heard').addEventListener('click', () => {
-    const transcript = document.getElementById('btn-add-heard').dataset.transcript;
-    if (transcript && gs.currentItem) addAcceptedTerm(gs.currentItem, transcript);
-    hideAddHeardBtn();
-  });
-
   document.getElementById('tomorrow-text').addEventListener('click', () => {
     renderPicker();
     showScreen('picker');
@@ -2270,7 +2303,13 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v15 — custom items get per-level assignment. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v16 — token-run matching, tappable phonics letters, offline cache. Type rlDump() / rlExportAccepted().');
+
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(e => DBG('sw', 'register failed: ' + e.message));
+  }
+
   loadStored();
   if (!stored) return;
   loadVoices();
