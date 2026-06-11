@@ -1346,11 +1346,16 @@ function presentItem(item) {
   // The word is split into sound units — single letters and compound sounds
   // like "sh"/"ee"/"igh". Tapping one flashes the whole group and plays its
   // isolated phonetic sound, so the child can sound the word out himself.
+  // When a word contains a compound group, alternating units get a subtle
+  // tint so the child can see which letters belong together.
   el.innerHTML = '';
-  for (const seg of segmentDisplay(item.display)) {
+  const segs = segmentDisplay(item.display);
+  const hasGroups = segs.some(s => s.length > 1);
+  segs.forEach((seg, idx) => {
     const span = document.createElement('span');
     span.className   = 'letter';
     span.textContent = seg;
+    if (hasGroups && idx % 2 === 1) span.classList.add('alt');
     const key = seg.toLowerCase();
     if (soundFallback(key) || DIGIT_NAMES[key]) {
       span.addEventListener('pointerdown', (e) => {
@@ -1363,7 +1368,7 @@ function presentItem(item) {
       });
     }
     el.appendChild(span);
-  }
+  });
 
   clearHeardDisplay();
   DBG('presentItem', { id: item.id });
@@ -2389,7 +2394,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v18 — compound letter sounds (sh/ee/oo/igh…) with group highlight. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v19 — alternating tint marks sound-unit groups. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')

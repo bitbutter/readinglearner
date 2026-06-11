@@ -336,6 +336,12 @@ html, body {
   --letter-flash: #ffffff;
 }
 
+/* Alternating sound units get a subtle tint (only applied when the word
+   contains a compound group) so the child can see which letters go together. */
+.word-display .letter.alt {
+  color: #c7d9ff;
+}
+
 .word-display .letter.tapped {
   animation: letter-flash 0.9s ease-out;
 }
