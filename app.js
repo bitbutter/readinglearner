@@ -600,6 +600,15 @@ function showStorageError(msg) {
 // SPEECH SYNTHESIS
 // ============================================================
 
+let levelImages = {};
+
+async function loadImageManifest() {
+  try {
+    const resp = await fetch('./images/manifest.json');
+    if (resp.ok) levelImages = await resp.json();
+  } catch (_) {}
+}
+
 let voices = [];
 
 function loadVoices() {
@@ -1205,14 +1214,16 @@ const LEVEL_GRADIENTS = [
 
 function setLevelBackground(level) {
   const gradient = LEVEL_GRADIENTS[level] || LEVEL_GRADIENTS[1];
-  document.body.style.background = gradient;  // immediate fallback
-  const imgPath = `/images/l${level}.jpg`;
+  document.body.style.background = gradient;
+  const filename = levelImages[level] || levelImages[String(level)];
+  if (!filename) return;
+  const imgPath = `./images/${filename}`;
   const img = new Image();
   img.onload = () => {
     document.body.style.background =
       `linear-gradient(rgba(10,8,30,0.62), rgba(10,8,30,0.62)), url('${imgPath}') center/cover no-repeat`;
   };
-  img.src = imgPath; // triggers load; onerror just leaves gradient in place
+  img.src = imgPath;
 }
 
 function renderPicker() {
@@ -1624,7 +1635,7 @@ async function init() {
   setupEvents();
   showScreen('loading');
 
-  await initVosk();
+  await Promise.all([initVosk(), loadImageManifest()]);
 
   renderPicker();
   showScreen('picker');
