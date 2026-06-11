@@ -682,7 +682,8 @@ function openGrownUp() {
 
 function populateVoiceSelect() {
   const sel = document.getElementById('s-voice');
-  if (!sel) return;
+  // voiceschanged can fire before init() has loaded storage
+  if (!sel || !stored) return;
   sel.innerHTML = '<option value="">Auto (en-GB preferred)</option>';
   for (const v of voices) {
     if (!v.lang.startsWith('en')) continue;
@@ -882,9 +883,10 @@ function setupEvents() {
 // ============================================================
 
 function init() {
-  console.log('[ReadingLearner] build v4');
+  console.log('[ReadingLearner] build v5');
   loadStored();
   if (!stored) return; // storage error replaced body content
+  loadVoices(); // re-run: voiceschanged may have fired before storage existed
 
   // Flash overlay
   const flash = document.createElement('div');
