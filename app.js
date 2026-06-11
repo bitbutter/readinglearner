@@ -757,29 +757,35 @@ function renderProgress() {
 
 function setupGate() {
   const gate = document.getElementById('grownup-gate');
-  let timer  = null;
-  let active = false;
+  let timer     = null;
+  let pressedAt = 0;
 
   const start = (e) => {
     e.preventDefault();
-    active = true;
+    pressedAt = Date.now();
     gate.classList.add('holding');
+    clearTimeout(timer);
     timer = setTimeout(() => {
-      if (active) { gate.classList.remove('holding'); openGrownUp(); }
+      gate.classList.remove('holding');
+      pressedAt = 0;
+      openGrownUp();
     }, 2000);
   };
+
   const cancel = () => {
-    active = false;
     gate.classList.remove('holding');
     clearTimeout(timer);
+    // Released too early: teach the gesture instead of doing nothing
+    if (pressedAt && Date.now() - pressedAt < 2000) {
+      speak('Hold the gear button for two seconds to open the grown-up settings.', 1.0);
+    }
+    pressedAt = 0;
   };
 
-  gate.addEventListener('mousedown',   start);
-  gate.addEventListener('touchstart',  start, { passive: false });
-  gate.addEventListener('mouseup',     cancel);
-  gate.addEventListener('mouseleave',  cancel);
-  gate.addEventListener('touchend',    cancel);
-  gate.addEventListener('touchcancel', cancel);
+  gate.addEventListener('pointerdown',   start);
+  gate.addEventListener('pointerup',     cancel);
+  gate.addEventListener('pointerleave',  cancel);
+  gate.addEventListener('pointercancel', cancel);
 }
 
 // ============================================================
@@ -883,7 +889,7 @@ function setupEvents() {
 // ============================================================
 
 function init() {
-  console.log('[ReadingLearner] build v5');
+  console.log('[ReadingLearner] build v6');
   loadStored();
   if (!stored) return; // storage error replaced body content
   loadVoices(); // re-run: voiceschanged may have fired before storage existed
