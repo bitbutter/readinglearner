@@ -1,6 +1,29 @@
 'use strict';
 
 // ============================================================
+// DEBUG LOGGING
+// Paste window.rlDump() output back to share a full trace.
+// ============================================================
+
+const DBG_BUF = [];
+const DBG_T0  = Date.now();
+
+function DBG(tag, info) {
+  const line = `+${String(Date.now() - DBG_T0).padStart(6)}ms [${tag}]` +
+               (info !== undefined ? ' ' + (typeof info === 'string' ? info : JSON.stringify(info)) : '');
+  DBG_BUF.push(line);
+  if (DBG_BUF.length > 500) DBG_BUF.shift();
+  console.log(line);
+}
+
+window.rlDump = function () {
+  const text = DBG_BUF.join('\n');
+  try { console.log('%c===== ReadingLearner debug dump =====', 'font-weight:bold'); } catch (_) {}
+  console.log(text);
+  return text;
+};
+
+// ============================================================
 // CONTENT
 // ============================================================
 
@@ -214,26 +237,30 @@ function getVoice() {
 let currentUtterance = null;
 
 function speak(text, rate, onEnd) {
-  if (!window.speechSynthesis) { onEnd?.(); return; }
+  const snippet = text.length > 24 ? text.slice(0, 24) + '…' : text;
+  if (!window.speechSynthesis) { DBG('speak', 'NO speechSynthesis: ' + snippet); onEnd?.(); return; }
   speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
   currentUtterance = utt;
-  utt.voice  = getVoice();
+  const v = getVoice();
+  utt.voice  = v;
   utt.rate   = rate ?? stored?.settings?.speechRate ?? 0.9;
   utt.pitch  = 1.1;
   utt.volume = 1;
+  DBG('speak.start', { text: snippet, voice: v ? v.name : 'NONE' });
 
   let done = false;
-  const finish = () => {
+  const finish = (how) => {
     if (done) return;
     done = true;
     clearTimeout(watchdog);
     if (currentUtterance === utt) currentUtterance = null;
+    DBG('speak.end', { text: snippet, how });
     onEnd?.();
   };
-  utt.onend   = finish;
-  utt.onerror = finish;
-  const watchdog = setTimeout(finish, 3000 + text.length * 250);
+  utt.onend   = () => finish('onend');
+  utt.onerror = (ev) => finish('onerror:' + (ev.error || '?'));
+  const watchdog = setTimeout(() => finish('WATCHDOG'), 3000 + text.length * 250);
 
   speechSynthesis.speak(utt);
 }
@@ -261,7 +288,10 @@ let sessionMicBlocked = false; // mic denied this session — not persisted
 let micState = 'waiting';
 
 function initRecognition() {
-  if (!SpeechRecognitionAPI) return;
+  if (!SpeechRecognitionAPI) {
+    DBG('initRecognition', 'NO SpeechRecognition API in this browser');
+    return;
+  }
   recognition = new SpeechRecognitionAPI();
   recognition.lang = 'en-GB';
   // Chrome needs ~0.5 s to spin up the mic and only finalizes results after a
@@ -270,9 +300,28 @@ function initRecognition() {
   recognition.continuous      = true;
   recognition.interimResults  = true;
   recognition.maxAlternatives = 5;
+  DBG('initRecognition', 'ok (continuous+interim)');
+
+  recognition.onstart      = () => DBG('rec.onstart');
+  recognition.onaudiostart = () => DBG('rec.onaudiostart');
+  recognition.onspeechstart= () => DBG('rec.onspeechstart');
+  recognition.onspeechend  = () => DBG('rec.onspeechend');
+  recognition.onaudioend   = () => DBG('rec.onaudioend');
+  recognition.onnomatch    = () => DBG('rec.onnomatch');
 
   recognition.onresult = (e) => {
-    if (micState !== 'listening' && micState !== 'evaluating') return;
+    const fresh = [];
+    for (let r = 0; r < e.results.length; r++) {
+      for (let a = 0; a < e.results[r].length; a++) {
+        const t = e.results[r][a].transcript?.trim();
+        if (t) fresh.push((e.results[r].isFinal ? 'F:' : 'i:') + t);
+      }
+    }
+    DBG('rec.onresult', { micState, results: e.results.length, fresh });
+    if (micState !== 'listening' && micState !== 'evaluating') {
+      DBG('rec.onresult', 'IGNORED (wrong state)');
+      return;
+    }
     for (let r = 0; r < e.results.length; r++) {
       for (let a = 0; a < e.results[r].length; a++) {
         const t = e.results[r][a].transcript?.trim();
@@ -284,6 +333,7 @@ function initRecognition() {
   };
 
   recognition.onerror = (e) => {
+    DBG('rec.onerror', { error: e.error, micState });
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
       listenEvaluated = true;
       clearTimeout(settleTimer);
@@ -295,21 +345,27 @@ function initRecognition() {
     evaluateListen();
   };
 
-  recognition.onend = () => evaluateListen();
+  recognition.onend = () => {
+    DBG('rec.onend', { micState, listenEvaluated, heard: heardTranscripts.length });
+    evaluateListen();
+  };
 }
 
 function startListening() {
-  if (sessionMicBlocked || stored.settings.grownUpDecides) { showFallback(); return; }
-  if (!recognition) { onRecognitionFallback(); return; }
+  DBG('startListening', { sessionMicBlocked, grownUpDecides: stored.settings.grownUpDecides, hasRecognition: !!recognition });
+  if (sessionMicBlocked || stored.settings.grownUpDecides) { DBG('startListening', 'blocked -> fallback'); showFallback(); return; }
+  if (!recognition) { DBG('startListening', 'no recognition -> fallback'); onRecognitionFallback(); return; }
 
   heardTranscripts = [];
   listenEvaluated  = false;
   try {
     recognition.start();
+    DBG('startListening', 'recognition.start() OK');
     setMicState('listening');
-    maxListenTimer = setTimeout(requestStopAndEvaluate, 10000);
+    maxListenTimer = setTimeout(() => { DBG('maxListenTimer', 'FIRED (10s cap)'); requestStopAndEvaluate(); }, 10000);
   } catch (e) {
     // InvalidStateError: previous session still closing — kill it and re-arm.
+    DBG('startListening', 'start() THREW: ' + e.name + ' ' + e.message);
     listenEvaluated = true;
     try { recognition.abort(); } catch (_) {}
     setMicState('ready');
@@ -319,25 +375,29 @@ function startListening() {
 // Child released (or tapped again in toggle mode): stop capturing, then give
 // Chrome a moment to flush the final transcript before judging.
 function requestStopAndEvaluate() {
-  if (micState !== 'listening') return;
+  DBG('requestStopAndEvaluate', { micState, heard: heardTranscripts.length });
+  if (micState !== 'listening') { DBG('requestStopAndEvaluate', 'IGNORED (not listening)'); return; }
   clearTimeout(maxListenTimer);
   setMicState('evaluating');
   try { recognition.stop(); } catch (_) {}
-  settleTimer = setTimeout(evaluateListen, 1500);
+  settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED (1.5s grace)'); evaluateListen(); }, 1500);
 }
 
 function evaluateListen() {
-  if (listenEvaluated) return;
-  if (micState !== 'listening' && micState !== 'evaluating') return;
+  DBG('evaluateListen', { micState, listenEvaluated, heard: heardTranscripts.slice() });
+  if (listenEvaluated) { DBG('evaluateListen', 'IGNORED (already evaluated)'); return; }
+  if (micState !== 'listening' && micState !== 'evaluating') { DBG('evaluateListen', 'IGNORED (wrong state)'); return; }
   listenEvaluated = true;
   clearTimeout(settleTimer);
   clearTimeout(maxListenTimer);
   try { recognition.stop(); } catch (_) {}
 
   if (heardTranscripts.length) {
+    DBG('evaluateListen', 'HAS transcripts -> judge');
     setMicState('waiting');
     onRecognitionResult([...heardTranscripts]);
   } else {
+    DBG('evaluateListen', 'NO transcripts -> fallback');
     setMicState('ready'); // child can immediately try again by voice
     onRecognitionFallback();
   }
@@ -483,11 +543,13 @@ function presentItem(item) {
   el.textContent = item.display;
   el.className   = 'word-display' + (item.mode === 'audio' ? ' audio-mode' : '');
 
+  DBG('presentItem', { id: item.id, mode: item.mode });
   if (item.mode === 'audio') {
     speakWord(item.display, () => {
-      if (gs.currentItem !== item) return;
+      if (gs.currentItem !== item) { DBG('presentItem', 'word cb stale, abort'); return; }
       setTimeout(() => speak("Your turn!", 1.0, () => {
         if (gs.currentItem === item && !gs.awaitingResult) setMicState('ready');
+        else DBG('presentItem', 'your-turn cb stale/awaiting, no ready');
       }), 200);
     });
   } else {
@@ -581,10 +643,13 @@ function endRound() {
 // ============================================================
 
 function onRecognitionResult(transcripts) {
-  handleAnswer(matchAnswer(transcripts, gs.currentItem));
+  const matched = matchAnswer(transcripts, gs.currentItem);
+  DBG('judge', { expected: gs.currentItem?.display, heard: transcripts, matched });
+  handleAnswer(matched);
 }
 
 function onRecognitionFallback() {
+  DBG('onRecognitionFallback', { awaitingResult: gs.awaitingResult });
   if (gs.awaitingResult) return;
   speak("I didn't quite hear that. Did they say it right?", 0.9);
   showFallback();
@@ -609,6 +674,7 @@ function showScreen(name) {
 }
 
 function setMicState(state) {
+  DBG('micState', `${micState} -> ${state}`);
   micState = state;
   const btn = document.getElementById('mic-button');
   const lbl = document.getElementById('mic-status');
@@ -807,6 +873,7 @@ function setupEvents() {
 
   micBtn.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+    DBG('pointerdown', { micState, type: e.pointerType });
     try { micBtn.setPointerCapture(e.pointerId); } catch (_) {}
     if (micState === 'ready') {
       holdStart = Date.now();
@@ -818,14 +885,17 @@ function setupEvents() {
   });
 
   micBtn.addEventListener('pointerup', () => {
+    const held = Date.now() - holdStart;
+    DBG('pointerup', { micState, heldMs: held });
     if (micState !== 'listening') return;
-    if (Date.now() - holdStart >= 250) {
+    if (held >= 250) {
       requestStopAndEvaluate();        // hold-release: evaluate what was said
     }
     // quick tap (< 250 ms): stay green — child speaks, then taps again to submit
   });
 
   micBtn.addEventListener('pointercancel', () => {
+    DBG('pointercancel', { micState });
     if (micState === 'listening') requestStopAndEvaluate();
   });
 
@@ -889,7 +959,7 @@ function setupEvents() {
 // ============================================================
 
 function init() {
-  console.log('[ReadingLearner] build v6');
+  console.log('[ReadingLearner] build v7 — debug logging on. Type rlDump() in console to copy the trace.');
   loadStored();
   if (!stored) return; // storage error replaced body content
   loadVoices(); // re-run: voiceschanged may have fired before storage existed
