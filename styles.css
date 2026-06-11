@@ -754,6 +754,7 @@ html, body {
 .progress-cell.learning { background: rgba(0,201,177,0.18);   color: var(--teal); }
 .progress-cell.unaided  { background: rgba(255,190,11,0.18);  color: var(--amber); }
 .progress-cell.mastered { background: rgba(82,232,155,0.18);  color: var(--mint); }
+.progress-cell.excluded { background: rgba(255,82,82,0.1);    color: rgba(255,120,120,0.7); text-decoration: line-through; }
 
 .progress-summary {
   font-size: 0.82rem;
@@ -979,6 +980,25 @@ html, body {
 }
 
 .tune-display.is-number { color: var(--amber); }
+
+/* Soft-excluded rows: clearly colour-marked in the back-end list */
+.tune-row.excluded { background: rgba(255,82,82,0.07); border-radius: 0.5rem; }
+.tune-row.excluded .tune-display { color: var(--coral); opacity: 0.8; }
+
+.tune-hidden-badge {
+  display: none;
+  font-size: 0.58rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--coral);
+  background: rgba(255,82,82,0.18);
+  padding: 0.12rem 0.4rem;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.tune-row.excluded .tune-hidden-badge { display: inline-block; }
 
 .tune-terms {
   display: flex;

@@ -197,6 +197,7 @@ const WORDS_CONTENT = [
   { id: 'word:where',   display: 'where',   accepted: ['where','wear','were'],   level: 1 },
   { id: 'word:yellow',  display: 'yellow',  accepted: ['yellow'],                level: 1 },
   { id: 'word:you',     display: 'you',     accepted: ['you'],                   level: 1 },
+  { id: 'word:beowulf', display: 'Beowulf', accepted: ['beowulf'],               level: 1 },
   // Level 2: Dolch Primer
   { id: 'word:all',     display: 'all',     accepted: ['all'],                   level: 2 },
   { id: 'word:am',      display: 'am',      accepted: ['am'],                    level: 2 },
@@ -501,8 +502,54 @@ const WORDS_CONTENT = [
 // edit all terms", then run rlExportAccepted() in the console (or tap Export on
 // that screen) and paste the `acceptedAdditions` entries below.
 const ACCEPTED_OVERRIDES = {
-  // 'word:three': ['free', 'tree'],
-  // 'num:3':      ['free'],
+  // Promoted from dev-machine auditioning. Items that end up with more than
+  // MAX_ACCEPTED_FOR_ACTIVE accepted forms are auto-hidden from practice.
+  // Pure-digit number matches from the export were dropped: the practice grammar
+  // only emits [a-z] tokens, so a digit string can never be returned.
+  'word:and':    ['at'],
+  'word:can':    ['cap', 'cant'],
+  'word:find':   ['for', 'fine', 'try'],
+  'word:for':    ['fall'],
+  'word:funny':  ['front'],
+  'word:i':      ['oh'],
+  'word:in':     ['a', 'and'],
+  'word:is':     ['a', 'his', 'if', 'this'],
+  'word:jump':   ['john'],
+  'word:not':    ['now'],
+  'word:one':    ['what'],
+  'word:red':    ['right'],
+  'word:three':  ['free'],
+  'word:to':     ['so'],
+  'word:up':     ['okay', 'oh'],
+  'word:where':  ['well'],
+  'word:yellow': ['yeah flow', 'joe', 'yeah low', 'yeah', 'jello', 'hello'],
+  'word:you':    ['yeah'],
+  'word:all':    ['oh'],
+  'word:am':     ['im', 'my', 'am i', 'month', 'ah', 'up', 'by', 'back'],
+  'word:are':    ['ah', 'our'],
+  'word:ate':    ['eight'],
+  'word:be':     ['the'],
+  'word:came':   ['game'],
+  'word:eat':    ['it', 'a', 'eight', 'he'],
+  'word:four':   ['fall'],
+  'word:have':   ['ha', 'tough'],
+  'word:into':   ['and to'],
+  'word:must':   ['most'],
+  'word:new':    ['near'],
+  'word:no':     ['now'],
+  'word:out':    ['oh'],
+  'word:ran':    ['rap', 'run', 'right', 'ram'],
+  'word:ride':   ['right'],
+  'word:saw':    ['so', 'saul'],
+  'word:soon':   ['so'],
+  'word:that':   ['the'],
+  'word:there':  ['that', 'the'],
+  'word:under':  ['on the', 'honda'],
+  'word:well':   ['wow'],
+  'word:white':  ['why'],
+  'word:will':   ['well'],
+  'word:with':   ['well', 'quiz', 'wheres'],
+  'word:yes':    ['yeah'],
 };
 
 function applyAcceptedOverrides(items) {
@@ -578,6 +625,17 @@ const DEFAULT_SETTINGS = {
 };
 
 const MAX_LEVEL = 10;
+
+// Items needing more than this many accepted forms are too ambiguous for the
+// recognizer to verify, so they are "soft excluded": kept in the app (and in the
+// tuning list) but hidden from practice rounds, left out of the practice grammar,
+// and not counted toward level completion. Prune an item's accepted list back to
+// <= this in the tuning screen to bring it back.
+const MAX_ACCEPTED_FOR_ACTIVE = 2;
+
+function isItemActive(item) {
+  return (item.accepted ? item.accepted.length : 0) <= MAX_ACCEPTED_FOR_ACTIVE;
+}
 
 function makeItem(c, kind) {
   return {
@@ -801,6 +859,7 @@ function buildGrammar(set) {
   const tokens = new Set(['[unk]']);
   for (const item of Object.values(stored.items)) {
     if (item.kind !== kind) continue;
+    if (!isItemActive(item)) continue;  // hidden items don't shape the grammar
     for (const acc of item.accepted) {
       for (const token of acc.toLowerCase().split(/\s+/)) {
         if (token && /^[a-z]+$/.test(token)) tokens.add(token);
@@ -1031,7 +1090,7 @@ let roundNumber = 0;
 function buildRound(set, level) {
   roundNumber++;
   const kind = set === 'numbers' ? 'number' : 'word';
-  const all  = Object.values(stored.items).filter(i => i.kind === kind && i.level === level);
+  const all  = Object.values(stored.items).filter(i => i.kind === kind && i.level === level && isItemActive(i));
   const size = Math.min(stored.settings.roundSize, all.length);
 
   const missed     = shuffle(all.filter(i => i.lastResult === 'miss' && !i.mastered));
@@ -1220,7 +1279,8 @@ function checkLevelComplete() {
   const levelKey = gs.currentSet === 'numbers' ? 'numberLevel' : 'wordLevel';
   const kind     = gs.currentSet === 'numbers' ? 'number' : 'word';
   const level    = gs.currentLevel;
-  const items    = Object.values(stored.items).filter(i => i.kind === kind && i.level === level);
+  const items    = Object.values(stored.items).filter(i => i.kind === kind && i.level === level && isItemActive(i));
+  if (!items.length) return null;
   if (!items.every(i => i.mastered)) return null;
   if (level >= MAX_LEVEL) return 'all_defeated';
   stored.settings[levelKey] = level + 1;
@@ -1698,6 +1758,11 @@ function buildTuneRow(item, isCustom) {
   disp.className   = 'tune-display' + (item.kind === 'number' ? ' is-number' : '');
   disp.textContent = item.display;
 
+  const badge = document.createElement('span');
+  badge.className   = 'tune-hidden-badge';
+  badge.textContent = 'hidden';
+  badge.title       = 'Hidden from practice (more than ' + MAX_ACCEPTED_FOR_ACTIVE + ' accepted answers)';
+
   const terms = document.createElement('div');
   terms.className = 'tune-terms';
   fillTermChips(terms, item);
@@ -1723,7 +1788,7 @@ function buildTuneRow(item, isCustom) {
   const result = document.createElement('span');
   result.className = 'tune-result';
 
-  row.append(preview, disp, terms, addTerm, audi);
+  row.append(preview, disp, badge, terms, addTerm, audi);
 
   if (isCustom) {
     const del = document.createElement('button');
@@ -1735,6 +1800,7 @@ function buildTuneRow(item, isCustom) {
   }
 
   row.append(result);  // full-width, must stay last so it wraps cleanly
+  refreshRowExcluded(row, item);
   return row;
 }
 
@@ -1759,6 +1825,13 @@ function fillTermChips(container, item) {
     chip.appendChild(x);
     container.appendChild(chip);
   }
+  const row = container.closest('.tune-row');
+  if (row) refreshRowExcluded(row, item);
+}
+
+// Colour-mark rows whose item is soft-excluded (too many accepted answers).
+function refreshRowExcluded(row, item) {
+  row.classList.toggle('excluded', !isItemActive(item));
 }
 
 function revealTermInput(row, item) {
@@ -1916,7 +1989,7 @@ function renderProgress() {
   const summary = document.getElementById('progress-summary');
   if (!grid || !summary) return;
 
-  let counts = { new: 0, learning: 0, unaided: 0, mastered: 0 };
+  let counts = { new: 0, learning: 0, unaided: 0, mastered: 0, hidden: 0 };
   grid.innerHTML = '';
 
   for (const item of Object.values(stored.items)) {
@@ -1925,7 +1998,9 @@ function renderProgress() {
     cell.title     = item.display;
     cell.textContent = item.display.length <= 4 ? item.display : item.display.slice(0, 4);
 
-    if (item.mastered) {
+    if (!isItemActive(item)) {
+      cell.classList.add('excluded'); counts.hidden++;
+    } else if (item.mastered) {
       cell.classList.add('mastered'); counts.mastered++;
     } else if (item.totalAttempts === 0) {
       cell.classList.add('new');      counts.new++;
@@ -1941,7 +2016,8 @@ function renderProgress() {
     ⬜ New: ${counts.new} &nbsp;
     📖 Learning: ${counts.learning} &nbsp;
     🎯 Unaided: ${counts.unaided} &nbsp;
-    ⭐ Mastered: ${counts.mastered}
+    ⭐ Mastered: ${counts.mastered} &nbsp;
+    🚫 Hidden: ${counts.hidden}
   `;
 }
 
@@ -2107,7 +2183,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v12 — tuning + accepted-term export/overrides. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v13 — overrides baked in + soft-exclude (>2 accepted). Type rlDump() / rlExportAccepted().');
   loadStored();
   if (!stored) return;
   loadVoices();
