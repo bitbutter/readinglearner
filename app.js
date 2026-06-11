@@ -1,8 +1,7 @@
 'use strict';
 
 // ============================================================
-// DEBUG LOGGING
-// Paste window.rlDump() output back to share a full trace.
+// DEBUG
 // ============================================================
 
 const DBG_BUF = [];
@@ -24,30 +23,46 @@ window.rlDump = function () {
 };
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+function numberToWords(n) {
+  const ones = ['','one','two','three','four','five','six','seven','eight','nine',
+                 'ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen',
+                 'seventeen','eighteen','nineteen'];
+  const tens = ['','','twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+  if (n < 20) return ones[n];
+  if (n < 100) return tens[n / 10 | 0] + (n % 10 ? ' ' + ones[n % 10] : '');
+  const h = n / 100 | 0;
+  const r = n % 100;
+  return ones[h] + ' hundred' + (r ? ' and ' + numberToWords(r) : '');
+}
+
+// ============================================================
 // CONTENT
 // ============================================================
 
 const NUMBERS_CONTENT = [
-  { id: 'num:1',  display: '1',  accepted: ['one','won','1'] },
-  { id: 'num:2',  display: '2',  accepted: ['two','to','too','2'] },
-  { id: 'num:3',  display: '3',  accepted: ['three','3'] },
-  { id: 'num:4',  display: '4',  accepted: ['four','for','fore','4'] },
-  { id: 'num:5',  display: '5',  accepted: ['five','5'] },
-  { id: 'num:6',  display: '6',  accepted: ['six','6'] },
-  { id: 'num:7',  display: '7',  accepted: ['seven','7'] },
-  { id: 'num:8',  display: '8',  accepted: ['eight','ate','8'] },
-  { id: 'num:9',  display: '9',  accepted: ['nine','9'] },
-  { id: 'num:10', display: '10', accepted: ['ten','10'] },
-  { id: 'num:11', display: '11', accepted: ['eleven','11'] },
-  { id: 'num:12', display: '12', accepted: ['twelve','12'] },
-  { id: 'num:13', display: '13', accepted: ['thirteen','13'] },
-  { id: 'num:14', display: '14', accepted: ['fourteen','14'] },
-  { id: 'num:15', display: '15', accepted: ['fifteen','15'] },
-  { id: 'num:16', display: '16', accepted: ['sixteen','16'] },
-  { id: 'num:17', display: '17', accepted: ['seventeen','17'] },
-  { id: 'num:18', display: '18', accepted: ['eighteen','18'] },
-  { id: 'num:19', display: '19', accepted: ['nineteen','19'] },
-  { id: 'num:20', display: '20', accepted: ['twenty','20'] },
+  { id: 'num:1',  display: '1',  accepted: ['one','won'] },
+  { id: 'num:2',  display: '2',  accepted: ['two','to','too'] },
+  { id: 'num:3',  display: '3',  accepted: ['three'] },
+  { id: 'num:4',  display: '4',  accepted: ['four','for','fore'] },
+  { id: 'num:5',  display: '5',  accepted: ['five'] },
+  { id: 'num:6',  display: '6',  accepted: ['six'] },
+  { id: 'num:7',  display: '7',  accepted: ['seven'] },
+  { id: 'num:8',  display: '8',  accepted: ['eight','ate'] },
+  { id: 'num:9',  display: '9',  accepted: ['nine'] },
+  { id: 'num:10', display: '10', accepted: ['ten'] },
+  { id: 'num:11', display: '11', accepted: ['eleven'] },
+  { id: 'num:12', display: '12', accepted: ['twelve'] },
+  { id: 'num:13', display: '13', accepted: ['thirteen'] },
+  { id: 'num:14', display: '14', accepted: ['fourteen'] },
+  { id: 'num:15', display: '15', accepted: ['fifteen'] },
+  { id: 'num:16', display: '16', accepted: ['sixteen'] },
+  { id: 'num:17', display: '17', accepted: ['seventeen'] },
+  { id: 'num:18', display: '18', accepted: ['eighteen'] },
+  { id: 'num:19', display: '19', accepted: ['nineteen'] },
+  { id: 'num:20', display: '20', accepted: ['twenty'] },
 ];
 
 const WORDS_CONTENT = [
@@ -114,10 +129,10 @@ const DEFAULT_SETTINGS = {
   speechRate: 0.9,
 };
 
-function makeItem(c) {
+function makeItem(c, kind) {
   return {
     id: c.id,
-    kind: c.id.startsWith('num:') ? 'number' : 'word',
+    kind: kind || (c.id.startsWith('num:') ? 'number' : 'word'),
     display: c.display,
     accepted: [...c.accepted],
     mode: 'audio',
@@ -133,8 +148,8 @@ function makeItem(c) {
 
 function freshState() {
   const items = {};
-  for (const c of NUMBERS_CONTENT) items[c.id] = makeItem(c);
-  for (const c of WORDS_CONTENT)   items[c.id] = makeItem(c);
+  for (const c of NUMBERS_CONTENT) items[c.id] = makeItem(c, 'number');
+  for (const c of WORDS_CONTENT)   items[c.id] = makeItem(c, 'word');
   return {
     version: 1,
     createdAt: new Date().toISOString(),
@@ -152,14 +167,16 @@ function loadStored() {
     if (!raw) { stored = freshState(); saveStored(); return; }
     const parsed = JSON.parse(raw);
     if (!parsed || parsed.version !== 1) throw new Error('Unexpected storage version.');
-    // Merge any new content items not yet in storage
     const fresh = freshState();
     for (const id of Object.keys(fresh.items)) {
       if (!parsed.items[id]) parsed.items[id] = fresh.items[id];
     }
-    // Merge missing settings keys
     for (const k of Object.keys(DEFAULT_SETTINGS)) {
       if (parsed.settings[k] === undefined) parsed.settings[k] = DEFAULT_SETTINGS[k];
+    }
+    // Ensure all items have a kind field (migration from v7)
+    for (const item of Object.values(parsed.items)) {
+      if (!item.kind) item.kind = item.id.startsWith('num:') ? 'number' : 'word';
     }
     stored = parsed;
   } catch (e) {
@@ -182,10 +199,6 @@ function showStorageError(msg) {
       gap:1.5rem;font-family:sans-serif;text-align:center;max-width:480px;margin:auto;">
       <h2 style="font-size:1.5rem">Something went wrong</h2>
       <p style="color:#a0a0c0;font-size:0.95rem">${msg}</p>
-      <p style="color:#a0a0c0;font-size:0.85rem">
-        A grown-up can reset all progress using the button below.<br>
-        Storage key: <code style="color:#e94560">${STORAGE_KEY}</code>
-      </p>
       <button
         onclick="localStorage.removeItem('${STORAGE_KEY}');location.reload()"
         style="padding:1rem 2rem;background:#e94560;color:white;border:none;
@@ -210,35 +223,28 @@ if (window.speechSynthesis) {
   if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = loadVoices;
   }
-  // Chrome loads voices asynchronously; Safari loads them synchronously
   loadVoices();
 }
 
 function getVoice() {
-  // Explicit user choice
   if (stored?.settings?.voiceName) {
     const v = voices.find(v => v.name === stored.settings.voiceName);
     if (v) return v;
   }
-  // Prefer en-GB (UK accent)
   const gbFemale = voices.find(v =>
     v.lang === 'en-GB' && /female|serena|kate|emily|fiona|amy/i.test(v.name)
   );
   if (gbFemale) return gbFemale;
   const gb = voices.find(v => v.lang === 'en-GB');
   if (gb) return gb;
-  // Fall back to any English voice
   return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
 }
 
-// Chrome garbage-collects utterances whose only reference is local, and then
-// never fires onend — keep a live reference, and add a watchdog so a dropped
-// onend can't stall the app (e.g. mic stuck in 'waiting' forever).
 let currentUtterance = null;
 
 function speak(text, rate, onEnd) {
   const snippet = text.length > 24 ? text.slice(0, 24) + '…' : text;
-  if (!window.speechSynthesis) { DBG('speak', 'NO speechSynthesis: ' + snippet); onEnd?.(); return; }
+  if (!window.speechSynthesis) { DBG('speak', 'NO speechSynthesis'); onEnd?.(); return; }
   speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
   currentUtterance = utt;
@@ -265,140 +271,157 @@ function speak(text, rate, onEnd) {
   speechSynthesis.speak(utt);
 }
 
-const speakWord     = (w, cb) => speak(w, stored.settings.speechRate, cb);
-const speakPraise   = (cb)    => speak(PRAISE[Math.random() * PRAISE.length | 0], 1.1, cb);
-const speakCorrect  = (w, cb) => speak(`Good try! This says ${w}. Now you try.`, 0.85, cb);
+const speakWord   = (w, cb) => speak(w, stored.settings.speechRate, cb);
+const speakPraise = (cb)    => speak(PRAISE[Math.random() * PRAISE.length | 0], 1.1, cb);
+const speakCorrect = (w, cb) => speak(`Good try! This says ${w}. Now you try.`, 0.85, cb);
 
 // ============================================================
-// SPEECH RECOGNITION
+// VOSK SPEECH RECOGNITION
 // ============================================================
 
-const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition       = null;
-let heardTranscripts  = []; // everything heard during the current listen (interim + final)
+let voskModel       = null;
+let voskRecognizer  = null;
+let micStream       = null;
+let audioCtx        = null;
+let scriptProc      = null;
+let voskReady       = false;
+let micOpening      = false;
+
+let heardTranscripts  = [];
 let listenEvaluated   = false;
-let settleTimer       = null; // grace period after release for late final results
-let maxListenTimer    = null; // hard cap on a single listen
-let sessionMicBlocked = false; // mic denied this session — not persisted
+let settleTimer       = null;
+let maxListenTimer    = null;
+let sessionMicBlocked = false;
 
-// 'waiting':    TTS playing or processing — button disabled
-// 'ready':      child's turn — button enabled (red)
-// 'listening':  mic open — button green
-// 'evaluating': released, waiting for recognition to flush final results
+// 'waiting' | 'ready' | 'listening' | 'evaluating'
 let micState = 'waiting';
 
-function initRecognition() {
-  if (!SpeechRecognitionAPI) {
-    DBG('initRecognition', 'NO SpeechRecognition API in this browser');
-    return;
+async function initVosk() {
+  if (!window.Vosk) { DBG('vosk', 'Vosk not loaded'); return; }
+  try {
+    DBG('vosk', 'loading model…');
+    const modelUrl = new URL('./model.tar.gz', window.location.href).href;
+    voskModel = await Vosk.createModel(modelUrl);
+    voskModel.setLogLevel(-1);
+    voskReady = true;
+    DBG('vosk', 'model ready');
+  } catch (e) {
+    DBG('vosk', 'load FAILED: ' + e.message);
   }
-  recognition = new SpeechRecognitionAPI();
-  recognition.lang = 'en-GB';
-  // Chrome needs ~0.5 s to spin up the mic and only finalizes results after a
-  // silence gap. continuous + interim lets us buffer everything said during
-  // the hold instead of losing it when stop() lands too early.
-  recognition.continuous      = true;
-  recognition.interimResults  = true;
-  recognition.maxAlternatives = 5;
-  DBG('initRecognition', 'ok (continuous+interim)');
+}
 
-  recognition.onstart      = () => DBG('rec.onstart');
-  recognition.onaudiostart = () => DBG('rec.onaudiostart');
-  recognition.onspeechstart= () => DBG('rec.onspeechstart');
-  recognition.onspeechend  = () => DBG('rec.onspeechend');
-  recognition.onaudioend   = () => DBG('rec.onaudioend');
-  recognition.onnomatch    = () => DBG('rec.onnomatch');
-
-  recognition.onresult = (e) => {
-    const fresh = [];
-    for (let r = 0; r < e.results.length; r++) {
-      for (let a = 0; a < e.results[r].length; a++) {
-        const t = e.results[r][a].transcript?.trim();
-        if (t) fresh.push((e.results[r].isFinal ? 'F:' : 'i:') + t);
+function buildGrammar(set) {
+  const kind = set === 'numbers' ? 'number' : 'word';
+  const tokens = new Set(['[unk]']);
+  for (const item of Object.values(stored.items)) {
+    if (item.kind !== kind) continue;
+    for (const acc of item.accepted) {
+      for (const token of acc.toLowerCase().split(/\s+/)) {
+        if (token && /^[a-z]+$/.test(token)) tokens.add(token);
       }
     }
-    DBG('rec.onresult', { micState, results: e.results.length, fresh });
-    if (micState !== 'listening' && micState !== 'evaluating') {
-      DBG('rec.onresult', 'IGNORED (wrong state)');
-      return;
-    }
-    for (let r = 0; r < e.results.length; r++) {
-      for (let a = 0; a < e.results[r].length; a++) {
-        const t = e.results[r][a].transcript?.trim();
-        if (t && !heardTranscripts.includes(t)) heardTranscripts.push(t);
-      }
-    }
-    // A final result can land after the child released — evaluate right away.
-    if (micState === 'evaluating') evaluateListen();
-  };
+  }
+  return JSON.stringify([...tokens]);
+}
 
-  recognition.onerror = (e) => {
-    DBG('rec.onerror', { error: e.error, micState });
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-      listenEvaluated = true;
-      clearTimeout(settleTimer);
-      clearTimeout(maxListenTimer);
+function createRoundRecognizer(set) {
+  if (voskRecognizer) { try { voskRecognizer.remove(); } catch (_) {} voskRecognizer = null; }
+  if (!voskReady) return;
+
+  const grammar = buildGrammar(set);
+  DBG('vosk', 'grammar tokens: ' + JSON.parse(grammar).length);
+  voskRecognizer = new voskModel.KaldiRecognizer(16000, grammar);
+
+  voskRecognizer.on('result', (msg) => {
+    const text = (msg.result.text || '').trim();
+    DBG('vosk.result', { text, micState });
+    if (micState !== 'listening' && micState !== 'evaluating') return;
+    if (text && text !== '[unk]' && !heardTranscripts.includes(text)) {
+      heardTranscripts.push(text);
+    }
+    if (micState === 'evaluating') evaluateVosk();
+  });
+
+  voskRecognizer.on('partialresult', (msg) => {
+    DBG('vosk.partial', (msg.result.partial || ''));
+  });
+}
+
+async function openMicStream() {
+  if (micStream || micOpening) return;
+  micOpening = true;
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+      video: false,
+    });
+    audioCtx   = new AudioContext();
+    const src  = audioCtx.createMediaStreamSource(micStream);
+    scriptProc = audioCtx.createScriptProcessor(4096, 1, 1);
+    scriptProc.onaudioprocess = (e) => {
+      if (micState !== 'listening' || !voskRecognizer) return;
+      try { voskRecognizer.acceptWaveform(e.inputBuffer); } catch (_) {}
+    };
+    src.connect(scriptProc);
+    scriptProc.connect(audioCtx.destination);
+    DBG('mic', 'open sampleRate=' + audioCtx.sampleRate);
+  } catch (e) {
+    DBG('mic', 'getUserMedia failed: ' + e.name);
+    micStream = null;
+    if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+      sessionMicBlocked = true;
       onMicDenied();
-      return;
     }
-    // no-speech / aborted / network: judge whatever was buffered (often nothing)
-    evaluateListen();
-  };
+  } finally {
+    micOpening = false;
+  }
+}
 
-  recognition.onend = () => {
-    DBG('rec.onend', { micState, listenEvaluated, heard: heardTranscripts.length });
-    evaluateListen();
-  };
+function closeMicStream() {
+  if (scriptProc) { try { scriptProc.disconnect(); } catch (_) {} scriptProc = null; }
+  if (audioCtx)   { try { audioCtx.close(); } catch (_) {} audioCtx = null; }
+  if (micStream)  { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  if (voskRecognizer) { try { voskRecognizer.remove(); } catch (_) {} voskRecognizer = null; }
+  DBG('mic', 'closed');
 }
 
 function startListening() {
-  DBG('startListening', { sessionMicBlocked, grownUpDecides: stored.settings.grownUpDecides, hasRecognition: !!recognition });
-  if (sessionMicBlocked || stored.settings.grownUpDecides) { DBG('startListening', 'blocked -> fallback'); showFallback(); return; }
-  if (!recognition) { DBG('startListening', 'no recognition -> fallback'); onRecognitionFallback(); return; }
-
+  DBG('startListening', { sessionMicBlocked, grownUpDecides: stored.settings.grownUpDecides, voskReady });
+  if (sessionMicBlocked || stored.settings.grownUpDecides) { showFallback(); return; }
+  if (!voskReady || !voskRecognizer) { onRecognitionFallback(); return; }
+  if (!micStream) {
+    // Mic opened in the background at round start; if still pending, show fallback
+    onRecognitionFallback();
+    return;
+  }
   heardTranscripts = [];
   listenEvaluated  = false;
-  try {
-    recognition.start();
-    DBG('startListening', 'recognition.start() OK');
-    setMicState('listening');
-    maxListenTimer = setTimeout(() => { DBG('maxListenTimer', 'FIRED (10s cap)'); requestStopAndEvaluate(); }, 10000);
-  } catch (e) {
-    // InvalidStateError: previous session still closing — kill it and re-arm.
-    DBG('startListening', 'start() THREW: ' + e.name + ' ' + e.message);
-    listenEvaluated = true;
-    try { recognition.abort(); } catch (_) {}
-    setMicState('ready');
-  }
+  setMicState('listening');
+  maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
 }
 
-// Child released (or tapped again in toggle mode): stop capturing, then give
-// Chrome a moment to flush the final transcript before judging.
 function requestStopAndEvaluate() {
-  DBG('requestStopAndEvaluate', { micState, heard: heardTranscripts.length });
-  if (micState !== 'listening') { DBG('requestStopAndEvaluate', 'IGNORED (not listening)'); return; }
+  DBG('requestStopAndEvaluate', { micState });
+  if (micState !== 'listening') return;
   clearTimeout(maxListenTimer);
   setMicState('evaluating');
-  try { recognition.stop(); } catch (_) {}
-  settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED (1.5s grace)'); evaluateListen(); }, 1500);
+  if (voskRecognizer) voskRecognizer.retrieveFinalResult();
+  settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 2000);
 }
 
-function evaluateListen() {
-  DBG('evaluateListen', { micState, listenEvaluated, heard: heardTranscripts.slice() });
-  if (listenEvaluated) { DBG('evaluateListen', 'IGNORED (already evaluated)'); return; }
-  if (micState !== 'listening' && micState !== 'evaluating') { DBG('evaluateListen', 'IGNORED (wrong state)'); return; }
+function evaluateVosk() {
+  DBG('evaluateVosk', { listenEvaluated, heard: heardTranscripts.slice() });
+  if (listenEvaluated) return;
+  if (micState !== 'evaluating' && micState !== 'listening') return;
   listenEvaluated = true;
   clearTimeout(settleTimer);
   clearTimeout(maxListenTimer);
-  try { recognition.stop(); } catch (_) {}
 
   if (heardTranscripts.length) {
-    DBG('evaluateListen', 'HAS transcripts -> judge');
     setMicState('waiting');
     onRecognitionResult([...heardTranscripts]);
   } else {
-    DBG('evaluateListen', 'NO transcripts -> fallback');
-    setMicState('ready'); // child can immediately try again by voice
+    setMicState('ready');
     onRecognitionFallback();
   }
 }
@@ -406,21 +429,6 @@ function evaluateListen() {
 // ============================================================
 // ANSWER MATCHING
 // ============================================================
-
-function editDist(a, b) {
-  if (a === b) return 0;
-  const m = a.length, n = b.length;
-  const dp = Array.from({ length: m + 1 }, (_, i) => i);
-  for (let j = 1; j <= n; j++) {
-    let prev = dp[0]; dp[0] = j;
-    for (let i = 1; i <= m; i++) {
-      const cur = dp[i];
-      dp[i] = a[i-1] === b[j-1] ? prev : 1 + Math.min(prev, dp[i], dp[i-1]);
-      prev = cur;
-    }
-  }
-  return dp[m];
-}
 
 function normText(s) {
   return s.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
@@ -430,13 +438,9 @@ function matchAnswer(transcripts, item) {
   if (!transcripts?.length) return false;
   for (const raw of transcripts) {
     const t = normText(raw);
-    if (!t) continue;
+    if (!t || t === '[unk]') continue;
     for (const acc of item.accepted) {
-      const a = normText(acc);
-      if (t === a) return true;
-      if (t.includes(a)) return true;
-      // 1-char tolerance for words 4+ chars
-      if (a.length >= 4 && editDist(t, a) <= 1) return true;
+      if (t === normText(acc)) return true;
     }
   }
   return false;
@@ -459,8 +463,8 @@ let roundNumber = 0;
 
 function buildRound(set) {
   roundNumber++;
-  const prefix = set === 'numbers' ? 'num:' : 'word:';
-  const all = Object.values(stored.items).filter(i => i.id.startsWith(prefix));
+  const kind = set === 'numbers' ? 'number' : 'word';
+  const all  = Object.values(stored.items).filter(i => i.kind === kind);
   const size = stored.settings.roundSize;
 
   const missed     = shuffle(all.filter(i => i.lastResult === 'miss' && !i.mastered));
@@ -481,7 +485,6 @@ function buildRound(set) {
   addUp(inProgress, size);
   addUp(mastered,   Math.ceil(size * 0.2));
 
-  // Fill remainder from anything
   if (round.length < Math.min(size, all.length)) addUp(shuffle(all), size);
 
   return shuffle(round.slice(0, size));
@@ -492,15 +495,15 @@ function buildRound(set) {
 // ============================================================
 
 const gs = {
-  currentSet:    null,
-  queue:         [],
-  originalSize:  0,
-  completedCount:0,
-  roundCorrect:  0,
-  currentItem:   null,
-  retryCount:    0,
-  recycled:      new Set(),
-  awaitingResult:false,
+  currentSet:     null,
+  queue:          [],
+  originalSize:   0,
+  completedCount: 0,
+  roundCorrect:   0,
+  currentItem:    null,
+  retryCount:     0,
+  recycled:       new Set(),
+  awaitingResult: false,
 };
 
 function startRound(set) {
@@ -516,6 +519,8 @@ function startRound(set) {
   gs.awaitingResult = false;
 
   showScreen('practice');
+  createRoundRecognizer(set);
+  if (!stored.settings.grownUpDecides) openMicStream(); // pre-open; fire and forget
   nextItem();
 }
 
@@ -525,15 +530,14 @@ function nextItem() {
   gs.retryCount  = 0;
   gs.currentItem.lastSeenRound = roundNumber;
   gs.awaitingResult = false;
-  presentItem(gs.currentItem); // presentItem owns mic state from here
+  presentItem(gs.currentItem);
 }
 
 function presentItem(item) {
   renderDots();
-  setMicState('waiting'); // block mic until TTS is done
   hideFallback();
 
-  const el = document.getElementById('word-display');
+  const el  = document.getElementById('word-display');
   const len = item.display.length;
   el.style.fontSize =
     len <= 2  ? 'clamp(6rem, 25vmin, 14rem)' :
@@ -543,25 +547,18 @@ function presentItem(item) {
   el.textContent = item.display;
   el.className   = 'word-display' + (item.mode === 'audio' ? ' audio-mode' : '');
 
+  // Dim hear button in silent mode so child tries on their own first
+  const hearBtn = document.getElementById('hear-button');
+  if (hearBtn) hearBtn.classList.toggle('silent-mode', item.mode === 'silent');
+
   DBG('presentItem', { id: item.id, mode: item.mode });
-  if (item.mode === 'audio') {
-    speakWord(item.display, () => {
-      if (gs.currentItem !== item) { DBG('presentItem', 'word cb stale, abort'); return; }
-      setTimeout(() => speak("Your turn!", 1.0, () => {
-        if (gs.currentItem === item && !gs.awaitingResult) setMicState('ready');
-        else DBG('presentItem', 'your-turn cb stale/awaiting, no ready');
-      }), 200);
-    });
-  } else {
-    // Silent mode: no TTS — mic is ready immediately
-    setMicState('ready');
-  }
+  setMicState('ready'); // mic and hear button ready immediately — child controls pacing
 }
 
 function handleAnswer(correct) {
   if (gs.awaitingResult) return;
   gs.awaitingResult = true;
-  setMicState('waiting'); // block mic while praise/correction TTS plays
+  setMicState('waiting');
   hideFallback();
 
   const item = gs.currentItem;
@@ -596,7 +593,7 @@ function handleAnswer(correct) {
     item.lastResult    = 'miss';
 
     if (item.mode === 'silent') {
-      item.mode        = 'audio';
+      item.mode          = 'audio';
       item.silentCorrect = 0;
     }
 
@@ -610,11 +607,10 @@ function handleAnswer(correct) {
         presentItem(item);
       });
     } else {
-      // Cap reached: say word warmly, recycle once, move on
       gs.completedCount++;
       if (!gs.recycled.has(item.id)) {
         gs.recycled.add(item.id);
-        gs.queue.push(item); // comes back later this round
+        gs.queue.push(item);
       }
       speak(`This says ${item.display}.`, 0.85, () => {
         gs.awaitingResult = false;
@@ -628,13 +624,14 @@ function handleAnswer(correct) {
 
 function endRound() {
   stored.rounds.push({
-    id:         new Date().toISOString(),
-    set:        gs.currentSet,
-    endedAt:    new Date().toISOString(),
-    correct:    gs.roundCorrect,
-    total:      gs.completedCount,
+    id:      new Date().toISOString(),
+    set:     gs.currentSet,
+    endedAt: new Date().toISOString(),
+    correct: gs.roundCorrect,
+    total:   gs.completedCount,
   });
   saveStored();
+  closeMicStream();
   showAllDone();
 }
 
@@ -656,7 +653,6 @@ function onRecognitionFallback() {
 }
 
 function onMicDenied() {
-  // Session-only: a transient denial must not permanently disable the mic.
   sessionMicBlocked = true;
   setMicState('ready');
   speak("Microphone not available. Please use the buttons below.", 0.9);
@@ -676,9 +672,11 @@ function showScreen(name) {
 function setMicState(state) {
   DBG('micState', `${micState} -> ${state}`);
   micState = state;
-  const btn = document.getElementById('mic-button');
-  const lbl = document.getElementById('mic-status');
+  const btn     = document.getElementById('mic-button');
+  const lbl     = document.getElementById('mic-status');
+  const hearBtn = document.getElementById('hear-button');
   btn.classList.remove('listening', 'waiting');
+  if (hearBtn) hearBtn.classList.toggle('disabled', state !== 'ready');
   if (state === 'listening') {
     btn.classList.add('listening');
     lbl.textContent = 'Listening…';
@@ -693,8 +691,8 @@ function setMicState(state) {
   }
 }
 
-function showFallback()  { document.getElementById('fallback-controls').classList.remove('hidden'); }
-function hideFallback()  { document.getElementById('fallback-controls').classList.add('hidden'); }
+function showFallback() { document.getElementById('fallback-controls').classList.remove('hidden'); }
+function hideFallback() { document.getElementById('fallback-controls').classList.add('hidden'); }
 
 let flashTimer = null;
 function flashScreen(correct) {
@@ -726,7 +724,7 @@ function showAllDone() {
   const total   = gs.completedCount;
   const stars   = Math.max(1, Math.round((correct / Math.max(total, 1)) * 5));
 
-  document.getElementById('stars-burst').textContent  = '⭐'.repeat(stars);
+  document.getElementById('stars-burst').textContent   = '⭐'.repeat(stars);
   document.getElementById('alldone-title').textContent = shuffle(['Amazing work!','Well done!','Great job!','You did it!','Fantastic!'])[0];
   document.getElementById('alldone-score').textContent = `${correct} out of ${total}`;
 
@@ -736,43 +734,124 @@ function showAllDone() {
 }
 
 // ============================================================
+// CUSTOM WORDS
+// ============================================================
+
+function addCustomWord(displayText) {
+  const display = displayText.trim();
+  if (!display) return;
+  const lower = display.toLowerCase();
+  const dupe  = Object.values(stored.items).find(i => i.kind === 'word' && i.display.toLowerCase() === lower);
+  if (dupe) { speak('That word is already in the list.', 1.0); return; }
+
+  const id = 'custom:word:' + lower.replace(/[^a-z0-9]/g, '_');
+  stored.items[id] = {
+    id, kind: 'word', display,
+    accepted: [lower],
+    mode: 'audio', successStreak: 0, silentCorrect: 0,
+    totalCorrect: 0, totalAttempts: 0, mastered: false,
+    lastSeenRound: null, lastResult: null,
+  };
+  saveStored();
+  renderCustomItems();
+}
+
+function addCustomNumber(numStr) {
+  const num = parseInt(numStr, 10);
+  if (isNaN(num) || num < 1 || num > 999) { speak('Please enter a number between 1 and 999.', 1.0); return; }
+  const dupe = Object.values(stored.items).find(i => i.kind === 'number' && i.display === String(num));
+  if (dupe) { speak('That number is already in the list.', 1.0); return; }
+
+  const id = 'custom:num:' + num;
+  const spoken = numberToWords(num);
+  stored.items[id] = {
+    id, kind: 'number', display: String(num),
+    accepted: [spoken],
+    mode: 'audio', successStreak: 0, silentCorrect: 0,
+    totalCorrect: 0, totalAttempts: 0, mastered: false,
+    lastSeenRound: null, lastResult: null,
+  };
+  saveStored();
+  renderCustomItems();
+}
+
+function removeCustomItem(id) {
+  if (!id.startsWith('custom:')) return;
+  delete stored.items[id];
+  saveStored();
+  renderCustomItems();
+}
+
+function renderCustomItems() {
+  const wordsList = document.getElementById('s-custom-words-list');
+  const numsList  = document.getElementById('s-custom-nums-list');
+  if (!wordsList || !numsList) return;
+
+  const customWords = Object.values(stored.items).filter(i => i.kind === 'word' && i.id.startsWith('custom:'));
+  const customNums  = Object.values(stored.items).filter(i => i.kind === 'number' && i.id.startsWith('custom:'));
+
+  wordsList.innerHTML = '';
+  numsList.innerHTML  = '';
+
+  for (const item of customWords) {
+    wordsList.appendChild(makeChip(item));
+  }
+  for (const item of customNums) {
+    numsList.appendChild(makeChip(item));
+  }
+}
+
+function makeChip(item) {
+  const chip = document.createElement('span');
+  chip.className = 'custom-chip';
+  chip.textContent = item.display + ' ';
+  const del = document.createElement('button');
+  del.className   = 'custom-chip-del';
+  del.textContent = '×';
+  del.setAttribute('aria-label', 'Remove ' + item.display);
+  del.addEventListener('click', () => removeCustomItem(item.id));
+  chip.appendChild(del);
+  return chip;
+}
+
+// ============================================================
 // GROWN-UP SETTINGS
 // ============================================================
 
 function openGrownUp() {
   renderSettings();
   renderProgress();
+  renderCustomItems();
   populateVoiceSelect();
   showScreen('grownup');
 }
 
 function populateVoiceSelect() {
   const sel = document.getElementById('s-voice');
-  // voiceschanged can fire before init() has loaded storage
   if (!sel || !stored) return;
   sel.innerHTML = '<option value="">Auto (en-GB preferred)</option>';
   for (const v of voices) {
     if (!v.lang.startsWith('en')) continue;
     const opt = document.createElement('option');
-    opt.value    = v.name;
+    opt.value       = v.name;
     opt.textContent = `${v.name} (${v.lang})`;
-    opt.selected = v.name === stored.settings.voiceName;
+    opt.selected    = v.name === stored.settings.voiceName;
     sel.appendChild(opt);
   }
 }
 
 function renderSettings() {
   const s = stored.settings;
-  document.getElementById('s-round-size').value      = s.roundSize;
-  document.getElementById('s-fade-threshold').value  = s.audioFadeThreshold;
-  document.getElementById('s-retry-cap').value       = s.retryCap;
-  document.getElementById('s-grownup-decides').checked = s.grownUpDecides;
-  document.getElementById('s-speech-rate').value     = s.speechRate;
-  document.getElementById('s-rate-value').textContent = s.speechRate + '×';
+  document.getElementById('s-round-size').value         = s.roundSize;
+  document.getElementById('s-fade-threshold').value     = s.audioFadeThreshold;
+  document.getElementById('s-retry-cap').value          = s.retryCap;
+  document.getElementById('s-grownup-decides').checked  = s.grownUpDecides;
+  document.getElementById('s-speech-rate').value        = s.speechRate;
+  document.getElementById('s-rate-value').textContent   = s.speechRate + '×';
 }
 
 function saveSettings() {
-  const s   = stored.settings;
+  const s = stored.settings;
   s.roundSize          = Math.max(4, parseInt(document.getElementById('s-round-size').value)     || 10);
   s.audioFadeThreshold = Math.max(1, parseInt(document.getElementById('s-fade-threshold').value) || 3);
   s.retryCap           = Math.max(1, parseInt(document.getElementById('s-retry-cap').value)      || 2);
@@ -791,11 +870,10 @@ function renderProgress() {
   grid.innerHTML = '';
 
   for (const item of Object.values(stored.items)) {
-    const cell = document.createElement('div');
+    const cell     = document.createElement('div');
     cell.className = 'progress-cell';
     cell.title     = item.display;
-    const label    = item.display.length <= 4 ? item.display : item.display.slice(0, 4);
-    cell.textContent = label;
+    cell.textContent = item.display.length <= 4 ? item.display : item.display.slice(0, 4);
 
     if (item.mastered) {
       cell.classList.add('mastered'); counts.mastered++;
@@ -818,7 +896,7 @@ function renderProgress() {
 }
 
 // ============================================================
-// GROWN-UP GATE (hold gear icon for 2 s)
+// GROWN-UP GATE
 // ============================================================
 
 function setupGate() {
@@ -841,7 +919,6 @@ function setupGate() {
   const cancel = () => {
     gate.classList.remove('holding');
     clearTimeout(timer);
-    // Released too early: teach the gesture instead of doing nothing
     if (pressedAt && Date.now() - pressedAt < 2000) {
       speak('Hold the gear button for two seconds to open the grown-up settings.', 1.0);
     }
@@ -859,7 +936,6 @@ function setupGate() {
 // ============================================================
 
 function setupEvents() {
-  // Picker
   document.getElementById('btn-numbers').addEventListener('click', () => {
     speak('Numbers!', 1.0, () => startRound('numbers'));
   });
@@ -867,7 +943,16 @@ function setupEvents() {
     speak('Words!', 1.0, () => startRound('words'));
   });
 
-  // Mic button — push-and-hold (primary) + tap-to-toggle (accommodation)
+  // Hear button — tap to speak the current word/number
+  const hearBtn = document.getElementById('hear-button');
+  hearBtn.addEventListener('click', () => {
+    if (micState !== 'ready' || !gs.currentItem) return;
+    setMicState('waiting');
+    speakWord(gs.currentItem.display, () => {
+      if (gs.currentItem && !gs.awaitingResult) setMicState('ready');
+    });
+  });
+
   const micBtn = document.getElementById('mic-button');
   let holdStart = 0;
 
@@ -877,21 +962,18 @@ function setupEvents() {
     try { micBtn.setPointerCapture(e.pointerId); } catch (_) {}
     if (micState === 'ready') {
       holdStart = Date.now();
-      startListening();                // green immediately on press-down
+      startListening();
     } else if (micState === 'listening') {
-      requestStopAndEvaluate();        // second tap of toggle mode: submit
+      requestStopAndEvaluate();
     }
-    // 'waiting'/'evaluating': ignore
   });
 
   micBtn.addEventListener('pointerup', () => {
     const held = Date.now() - holdStart;
     DBG('pointerup', { micState, heldMs: held });
     if (micState !== 'listening') return;
-    if (held >= 250) {
-      requestStopAndEvaluate();        // hold-release: evaluate what was said
-    }
-    // quick tap (< 250 ms): stay green — child speaks, then taps again to submit
+    if (held >= 250) requestStopAndEvaluate();
+    // quick tap stays green: child speaks, taps again to submit
   });
 
   micBtn.addEventListener('pointercancel', () => {
@@ -899,33 +981,27 @@ function setupEvents() {
     if (micState === 'listening') requestStopAndEvaluate();
   });
 
-  // Grown-up fallback
   document.getElementById('btn-correct').addEventListener('click', () => {
-    hideFallback();
-    handleAnswer(true);
+    hideFallback(); handleAnswer(true);
   });
   document.getElementById('btn-retry').addEventListener('click', () => {
     hideFallback();
     setMicState('waiting');
-    // Re-speak the word, then hand the turn back to the child
     speakWord(gs.currentItem.display, () => {
       setMicState('ready');
       if (sessionMicBlocked || stored.settings.grownUpDecides) showFallback();
     });
   });
 
-  // All-done
   document.getElementById('btn-tomorrow').addEventListener('click', () => {
     speak('See you next time! Bye bye!', 0.9, () => showScreen('picker'));
   });
 
-  // Grown-up back
   document.getElementById('btn-back').addEventListener('click', () => {
     saveSettings();
     showScreen('picker');
   });
 
-  // Settings live-save
   document.getElementById('s-speech-rate').addEventListener('input', (e) => {
     document.getElementById('s-rate-value').textContent = parseFloat(e.target.value).toFixed(1) + '×';
     saveSettings();
@@ -936,11 +1012,9 @@ function setupEvents() {
   document.getElementById('s-grownup-decides').addEventListener('change', saveSettings);
   document.getElementById('s-voice').addEventListener('change', () => {
     saveSettings();
-    // Preview selected voice
     speak('Hello! This is how I sound.', 0.9);
   });
 
-  // Reset
   document.getElementById('btn-reset').addEventListener('click', () => {
     if (!confirm(`This will erase all progress in "${STORAGE_KEY}". Are you sure?`)) return;
     localStorage.removeItem(STORAGE_KEY);
@@ -948,7 +1022,27 @@ function setupEvents() {
     saveStored();
     renderSettings();
     renderProgress();
+    renderCustomItems();
     speak('All progress has been reset. Ready to start fresh!', 0.9);
+  });
+
+  // Custom words
+  const wordInput = document.getElementById('s-custom-word-input');
+  document.getElementById('s-custom-word-add').addEventListener('click', () => {
+    addCustomWord(wordInput.value);
+    wordInput.value = '';
+  });
+  wordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { addCustomWord(wordInput.value); wordInput.value = ''; }
+  });
+
+  const numInput = document.getElementById('s-custom-num-input');
+  document.getElementById('s-custom-num-add').addEventListener('click', () => {
+    addCustomNumber(numInput.value);
+    numInput.value = '';
+  });
+  numInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { addCustomNumber(numInput.value); numInput.value = ''; }
   });
 
   setupGate();
@@ -958,20 +1052,22 @@ function setupEvents() {
 // INIT
 // ============================================================
 
-function init() {
-  console.log('[ReadingLearner] build v7 — debug logging on. Type rlDump() in console to copy the trace.');
+async function init() {
+  console.log('[ReadingLearner] build v8 — Vosk in-browser recognition. Type rlDump() for trace.');
   loadStored();
-  if (!stored) return; // storage error replaced body content
-  loadVoices(); // re-run: voiceschanged may have fired before storage existed
+  if (!stored) return;
+  loadVoices();
 
-  // Flash overlay
   const flash = document.createElement('div');
   flash.id        = 'flash-overlay';
   flash.className = 'flash-overlay';
   document.body.appendChild(flash);
 
-  initRecognition();
   setupEvents();
+  showScreen('loading');
+
+  await initVosk();
+
   showScreen('picker');
 }
 

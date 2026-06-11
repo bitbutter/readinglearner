@@ -7,12 +7,19 @@
   <meta name="theme-color" content="#0f0c29">
   <title>Reading Learner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎤</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
 
+  <!-- Loading -->
+  <div id="screen-loading" class="screen">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Getting ready…</p>
+    <p id="loading-sub" class="loading-sub">Loading speech engine</p>
+  </div>
+
   <!-- Picker -->
-  <div id="screen-picker" class="screen">
+  <div id="screen-picker" class="screen hidden">
     <p class="greeting">What would you like to practice?</p>
     <div class="picker-buttons">
       <button class="picker-btn numbers-btn" id="btn-numbers" aria-label="Numbers">
@@ -31,11 +38,17 @@
   <div id="screen-practice" class="screen hidden">
     <div id="round-progress" class="round-progress" aria-label="Round progress"></div>
     <div id="word-display" class="word-display" aria-live="polite"></div>
-    <button id="mic-button" class="mic-button" aria-label="Tap to speak">
-      <div class="mic-ripple" aria-hidden="true"></div>
-      <span class="mic-icon" aria-hidden="true">🎤</span>
-      <span class="mic-status" id="mic-status">Tap to speak</span>
-    </button>
+    <div class="practice-buttons">
+      <button id="hear-button" class="hear-button" aria-label="Hear the word">
+        <span class="hear-icon" aria-hidden="true">🔊</span>
+        <span class="hear-label">Hear it</span>
+      </button>
+      <button id="mic-button" class="mic-button" aria-label="Say the word">
+        <div class="mic-ripple" aria-hidden="true"></div>
+        <span class="mic-icon" aria-hidden="true">🎤</span>
+        <span class="mic-status" id="mic-status">Hold and speak</span>
+      </button>
+    </div>
     <div id="fallback-controls" class="fallback-controls hidden" role="group" aria-label="Grown-up judgement">
       <p class="fallback-label">Did they say it right?</p>
       <div class="fallback-buttons">
@@ -100,6 +113,22 @@
           <p id="progress-summary" class="progress-summary"></p>
         </section>
 
+        <section class="settings-group">
+          <h3>Custom Words</h3>
+          <div class="custom-add-row">
+            <input type="text" id="s-custom-word-input" placeholder="e.g. Peppa" maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false">
+            <button id="s-custom-word-add" class="custom-add-btn">Add</button>
+          </div>
+          <div id="s-custom-words-list" class="custom-chip-list"></div>
+
+          <h3 style="margin-top:0.9rem">Custom Numbers</h3>
+          <div class="custom-add-row">
+            <input type="number" id="s-custom-num-input" placeholder="e.g. 21" min="1" max="999">
+            <button id="s-custom-num-add" class="custom-add-btn">Add</button>
+          </div>
+          <div id="s-custom-nums-list" class="custom-chip-list"></div>
+        </section>
+
         <section class="settings-group danger-group">
           <button id="btn-reset" class="reset-btn">Reset all progress</button>
         </section>
@@ -110,6 +139,7 @@
 
   <!-- Flash overlay (appended by JS) -->
 
-  <script src="app.js?v=7"></script>
+  <script src="vosk/vosk.js"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

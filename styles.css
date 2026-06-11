@@ -185,6 +185,61 @@ html, body {
   padding-bottom: 0.05em;
 }
 
+/* ── Practice buttons layout ── */
+
+.practice-buttons {
+  display: flex;
+  gap: 1.4rem;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Hear Button ── */
+
+.hear-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  width:  min(140px, 28vmin);
+  height: min(140px, 28vmin);
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 6px 24px rgba(67,97,238,0.4);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.12s, opacity 0.2s;
+}
+
+.hear-button:active { transform: scale(0.93); }
+
+.hear-button.disabled {
+  opacity: 0.25;
+  cursor: default;
+  box-shadow: none;
+}
+
+.hear-button.disabled:active { transform: none; }
+
+.hear-button.silent-mode {
+  opacity: 0.18;
+}
+
+.hear-icon {
+  font-size: clamp(2rem, 7vmin, 3.5rem);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.hear-label {
+  font-size: clamp(0.7rem, 2vmin, 0.9rem);
+  font-weight: 700;
+  pointer-events: none;
+}
+
 /* ── Mic Button ── */
 
 .mic-button {
@@ -555,10 +610,108 @@ html, body {
 
 @media (max-height: 600px) {
   .word-display  { font-size: clamp(3rem, 13vmin, 6rem) !important; }
-  :root          { --mic-size: min(150px, 28vmin); }
-  .screen        { gap: 1rem; }
+  :root          { --mic-size: min(130px, 26vmin); }
+  .hear-button   { width: min(110px, 22vmin) !important; height: min(110px, 22vmin) !important; }
+  .screen        { gap: 0.8rem; }
 }
 
 @media (max-width: 380px) {
   .picker-btn { width: min(46vw, 160px); height: min(46vw, 160px); }
 }
+
+/* ============================================================
+   LOADING SCREEN
+   ============================================================ */
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 5px solid rgba(255,255,255,0.12);
+  border-top-color: var(--pink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white;
+}
+
+.loading-sub {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ============================================================
+   CUSTOM WORDS
+   ============================================================ */
+
+.custom-add-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.custom-add-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 0.5rem;
+  color: white;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.custom-add-btn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.85rem;
+  background: var(--blue);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.custom-add-btn:active { opacity: 0.75; }
+
+.custom-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  min-height: 0.5rem;
+}
+
+.custom-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem 0.2rem 0.65rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 100px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.custom-chip-del {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.1s;
+}
+
+.custom-chip-del:hover { color: var(--pink); }
