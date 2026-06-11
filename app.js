@@ -208,16 +208,33 @@ function getVoice() {
   return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
 }
 
+// Chrome garbage-collects utterances whose only reference is local, and then
+// never fires onend — keep a live reference, and add a watchdog so a dropped
+// onend can't stall the app (e.g. mic stuck in 'waiting' forever).
+let currentUtterance = null;
+
 function speak(text, rate, onEnd) {
   if (!window.speechSynthesis) { onEnd?.(); return; }
   speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
+  currentUtterance = utt;
   utt.voice  = getVoice();
   utt.rate   = rate ?? stored?.settings?.speechRate ?? 0.9;
   utt.pitch  = 1.1;
   utt.volume = 1;
-  if (onEnd) utt.onend = onEnd;
-  utt.onerror = () => onEnd?.();
+
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    clearTimeout(watchdog);
+    if (currentUtterance === utt) currentUtterance = null;
+    onEnd?.();
+  };
+  utt.onend   = finish;
+  utt.onerror = finish;
+  const watchdog = setTimeout(finish, 3000 + text.length * 250);
+
   speechSynthesis.speak(utt);
 }
 
@@ -231,96 +248,99 @@ const speakCorrect  = (w, cb) => speak(`Good try! This says ${w}. Now you try.`,
 
 const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition       = null;
-let recognitionActive = false;
-let recogTimeout      = null;
-let resultHandled     = false;
+let heardTranscripts  = []; // everything heard during the current listen (interim + final)
+let listenEvaluated   = false;
+let settleTimer       = null; // grace period after release for late final results
+let maxListenTimer    = null; // hard cap on a single listen
+let sessionMicBlocked = false; // mic denied this session — not persisted
 
-// 'waiting': TTS playing or processing — button disabled
-// 'ready':   child's turn — button enabled (red)
-// 'listening': mic open — button enabled (green)
+// 'waiting':    TTS playing or processing — button disabled
+// 'ready':      child's turn — button enabled (red)
+// 'listening':  mic open — button green
+// 'evaluating': released, waiting for recognition to flush final results
 let micState = 'waiting';
 
 function initRecognition() {
   if (!SpeechRecognitionAPI) return;
   recognition = new SpeechRecognitionAPI();
-  recognition.lang            = 'en-GB';
-  recognition.continuous      = false;
-  recognition.interimResults  = false;
+  recognition.lang = 'en-GB';
+  // Chrome needs ~0.5 s to spin up the mic and only finalizes results after a
+  // silence gap. continuous + interim lets us buffer everything said during
+  // the hold instead of losing it when stop() lands too early.
+  recognition.continuous      = true;
+  recognition.interimResults  = true;
   recognition.maxAlternatives = 5;
 
   recognition.onresult = (e) => {
-    if (resultHandled) return;
-    resultHandled = true;
-    clearTimeout(recogTimeout);
-    recognitionActive = false;
-    setMicState('waiting');
-    const transcripts = Array.from({ length: e.results[0].length }, (_, i) => e.results[0][i].transcript);
-    onRecognitionResult(transcripts);
+    if (micState !== 'listening' && micState !== 'evaluating') return;
+    for (let r = 0; r < e.results.length; r++) {
+      for (let a = 0; a < e.results[r].length; a++) {
+        const t = e.results[r][a].transcript?.trim();
+        if (t && !heardTranscripts.includes(t)) heardTranscripts.push(t);
+      }
+    }
+    // A final result can land after the child released — evaluate right away.
+    if (micState === 'evaluating') evaluateListen();
   };
 
   recognition.onerror = (e) => {
-    clearTimeout(recogTimeout);
-    resultHandled     = true; // prevent onend from double-firing
-    recognitionActive = false;
-    setMicState('ready');
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      listenEvaluated = true;
+      clearTimeout(settleTimer);
+      clearTimeout(maxListenTimer);
       onMicDenied();
-    } else {
-      onRecognitionFallback();
+      return;
     }
+    // no-speech / aborted / network: judge whatever was buffered (often nothing)
+    evaluateListen();
   };
 
-  recognition.onend = () => {
-    clearTimeout(recogTimeout);
-    if (resultHandled) return; // already handled by onresult or onerror
-    recognitionActive = false;
-    setMicState('ready');
-    onRecognitionFallback();
-  };
+  recognition.onend = () => evaluateListen();
 }
 
 function startListening() {
-  if (stored.settings.grownUpDecides) { showFallback(); return; }
-  if (!recognition)                   { onRecognitionFallback(); return; }
+  if (sessionMicBlocked || stored.settings.grownUpDecides) { showFallback(); return; }
+  if (!recognition) { onRecognitionFallback(); return; }
 
-  resultHandled = false;
+  heardTranscripts = [];
+  listenEvaluated  = false;
   try {
     recognition.start();
-    recognitionActive = true;
     setMicState('listening');
-    // Safety: give up after 8 s. Set resultHandled first so onend doesn't double-fire.
-    recogTimeout = setTimeout(() => {
-      if (recognitionActive) {
-        resultHandled     = true;
-        recognitionActive = false;
-        try { recognition.stop(); } catch(_) {}
-        setMicState('ready');
-        onRecognitionFallback();
-      }
-    }, 8000);
+    maxListenTimer = setTimeout(requestStopAndEvaluate, 10000);
   } catch (e) {
+    // InvalidStateError: previous session still closing — kill it and re-arm.
+    listenEvaluated = true;
+    try { recognition.abort(); } catch (_) {}
     setMicState('ready');
-    onRecognitionFallback();
   }
 }
 
-function stopListeningManually() {
+// Child released (or tapped again in toggle mode): stop capturing, then give
+// Chrome a moment to flush the final transcript before judging.
+function requestStopAndEvaluate() {
   if (micState !== 'listening') return;
-  clearTimeout(recogTimeout);
-  resultHandled     = true; // prevent onend from firing fallback
-  recognitionActive = false;
-  try { recognition.stop(); } catch(_) {}
-  setMicState('ready'); // child cancelled — no fallback
+  clearTimeout(maxListenTimer);
+  setMicState('evaluating');
+  try { recognition.stop(); } catch (_) {}
+  settleTimer = setTimeout(evaluateListen, 1500);
 }
 
-// Stop and let recognition evaluate what was heard (hold-release path).
-// Does NOT set resultHandled — onresult/onend decide the outcome naturally.
-function stopAndEvaluate() {
-  if (micState !== 'listening') return;
-  clearTimeout(recogTimeout);
-  recognitionActive = false;
-  try { recognition.stop(); } catch(_) {}
-  // Stay green until onresult/onend updates state
+function evaluateListen() {
+  if (listenEvaluated) return;
+  if (micState !== 'listening' && micState !== 'evaluating') return;
+  listenEvaluated = true;
+  clearTimeout(settleTimer);
+  clearTimeout(maxListenTimer);
+  try { recognition.stop(); } catch (_) {}
+
+  if (heardTranscripts.length) {
+    setMicState('waiting');
+    onRecognitionResult([...heardTranscripts]);
+  } else {
+    setMicState('ready'); // child can immediately try again by voice
+    onRecognitionFallback();
+  }
 }
 
 // ============================================================
@@ -571,8 +591,9 @@ function onRecognitionFallback() {
 }
 
 function onMicDenied() {
-  stored.settings.grownUpDecides = true;
-  saveStored();
+  // Session-only: a transient denial must not permanently disable the mic.
+  sessionMicBlocked = true;
+  setMicState('ready');
   speak("Microphone not available. Please use the buttons below.", 0.9);
   showFallback();
 }
@@ -595,11 +616,14 @@ function setMicState(state) {
   if (state === 'listening') {
     btn.classList.add('listening');
     lbl.textContent = 'Listening…';
+  } else if (state === 'evaluating') {
+    btn.classList.add('waiting');
+    lbl.textContent = '…';
   } else if (state === 'waiting') {
     btn.classList.add('waiting');
     lbl.textContent = '';
   } else {
-    lbl.textContent = 'Tap to speak';
+    lbl.textContent = 'Hold and speak';
   }
 }
 
@@ -776,27 +800,26 @@ function setupEvents() {
 
   micBtn.addEventListener('pointerdown', (e) => {
     e.preventDefault();
-    micBtn.setPointerCapture(e.pointerId);
+    try { micBtn.setPointerCapture(e.pointerId); } catch (_) {}
     if (micState === 'ready') {
       holdStart = Date.now();
       startListening();                // green immediately on press-down
     } else if (micState === 'listening') {
-      stopListeningManually();         // second tap cancels → ready, no fallback
+      requestStopAndEvaluate();        // second tap of toggle mode: submit
     }
-    // 'waiting': TTS is playing — ignore
+    // 'waiting'/'evaluating': ignore
   });
 
   micBtn.addEventListener('pointerup', () => {
     if (micState !== 'listening') return;
-    const held = Date.now() - holdStart;
-    if (held >= 150) {
-      stopAndEvaluate();               // hold-release: evaluate what was said
+    if (Date.now() - holdStart >= 250) {
+      requestStopAndEvaluate();        // hold-release: evaluate what was said
     }
-    // quick tap (< 150 ms): stay green — child speaks, then taps again to submit
+    // quick tap (< 250 ms): stay green — child speaks, then taps again to submit
   });
 
   micBtn.addEventListener('pointercancel', () => {
-    if (micState === 'listening') stopAndEvaluate();
+    if (micState === 'listening') requestStopAndEvaluate();
   });
 
   // Grown-up fallback
@@ -806,9 +829,11 @@ function setupEvents() {
   });
   document.getElementById('btn-retry').addEventListener('click', () => {
     hideFallback();
-    // Re-speak the word and wait for child to tap mic again
+    setMicState('waiting');
+    // Re-speak the word, then hand the turn back to the child
     speakWord(gs.currentItem.display, () => {
-      if (stored.settings.grownUpDecides) showFallback();
+      setMicState('ready');
+      if (sessionMicBlocked || stored.settings.grownUpDecides) showFallback();
     });
   });
 
@@ -857,6 +882,7 @@ function setupEvents() {
 // ============================================================
 
 function init() {
+  console.log('[ReadingLearner] build v4');
   loadStored();
   if (!stored) return; // storage error replaced body content
 
