@@ -8,6 +8,12 @@
 # glides or gets cut too short. Bump AUDIO_VERSION in app.js after re-running.
 #
 # Usage:  powershell -File logs\tools\convert_letter_sounds.ps1
+#         powershell -File logs\tools\convert_letter_sounds.ps1 -NoCaps
+#
+# Use -NoCaps for human recordings (e.g. from record.html): the tail caps
+# exist to cut Hazel's synthetic schwa glide and would clip a natural voice.
+
+param([switch]$NoCaps)
 
 $ErrorActionPreference = 'Stop'
 $ffmpeg = 'C:\Program Files\ImageMagick-7.1.0-Q16-HDRI\ffmpeg.exe'
@@ -28,16 +34,17 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $dir      = Join-Path $repoRoot 'audio\letters'
 
 foreach ($f in Get-ChildItem "$dir\*.wav") {
-  $key = [IO.Path]::GetFileNameWithoutExtension($f.Name)
-  $out = [IO.Path]::ChangeExtension($f.FullName, '.mp3')
-  $af  = $silence
-  if ($caps.ContainsKey($key)) {
+  $key    = [IO.Path]::GetFileNameWithoutExtension($f.Name)
+  $out    = [IO.Path]::ChangeExtension($f.FullName, '.mp3')
+  $af     = $silence
+  $capped = (-not $NoCaps -and $caps.ContainsKey($key))
+  if ($capped) {
     $cap = $caps[$key]
     $st  = [math]::Round($cap - $fade, 3)
     $af  = "$silence,atrim=0:$cap,afade=t=out:st=${st}:d=$fade"
   }
   & $ffmpeg -y -loglevel error -i $f.FullName -af $af -codec:a libmp3lame -q:a 5 $out
-  Write-Host ("  {0}.mp3{1}" -f $key, $(if ($caps.ContainsKey($key)) { ' (tail-capped ' + $caps[$key] + 's)' } else { '' }))
+  Write-Host ("  {0}.mp3{1}" -f $key, $(if ($capped) { ' (tail-capped ' + $caps[$key] + 's)' } else { '' }))
 }
 
 Write-Host 'Done. Delete the wavs when satisfied, bump AUDIO_VERSION in app.js, commit.'

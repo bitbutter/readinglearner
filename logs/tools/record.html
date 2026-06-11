@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Letter-sound recorder</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 1.2rem; background: #14111f; color: #eee;
+    font-family: system-ui, sans-serif; max-width: 760px; margin-inline: auto;
+  }
+  h1 { font-size: 1.3rem; margin: 0 0 0.4rem; }
+  .help { color: #9a93b8; font-size: 0.86rem; line-height: 1.5; margin-bottom: 1rem; }
+  .help b { color: #cfc8ea; }
+  .topbar { display: flex; gap: 0.8rem; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .pick-btn {
+    padding: 0.7rem 1.2rem; font-size: 0.95rem; font-weight: 800; border: none;
+    border-radius: 0.6rem; background: #2dd4a8; color: #06281e; cursor: pointer;
+  }
+  #dir-status { font-size: 0.85rem; color: #9a93b8; }
+  #dir-status.ok { color: #2dd4a8; font-weight: 700; }
+  .row {
+    display: flex; align-items: center; gap: 0.7rem; padding: 0.45rem 0.6rem;
+    border-radius: 0.6rem; margin-bottom: 0.3rem; background: rgba(255,255,255,0.04);
+  }
+  .row.saved { background: rgba(45,212,168,0.10); }
+  .key { font-size: 1.7rem; font-weight: 900; width: 3.2rem; text-align: center; }
+  .hint { flex: 1; font-size: 0.85rem; color: #b9b2d6; }
+  .hint b { color: #fff; }
+  button.act {
+    padding: 0.55rem 0.8rem; font-size: 0.85rem; font-weight: 700; border: none;
+    border-radius: 0.5rem; cursor: pointer; background: #393352; color: #ddd;
+    user-select: none; -webkit-user-select: none; touch-action: none;
+  }
+  button.act:disabled { opacity: 0.35; cursor: default; }
+  button.rec { background: #b3315f; color: #fff; min-width: 7.5rem; }
+  button.rec.live { background: #ff2d6f; animation: pulse 0.9s infinite; }
+  @keyframes pulse { 50% { filter: brightness(1.4); } }
+  .status { width: 4.6rem; font-size: 0.78rem; color: #9a93b8; text-align: right; }
+  .status.ok { color: #2dd4a8; font-weight: 800; }
+  .group-h { margin: 1.1rem 0 0.4rem; font-size: 0.75rem; letter-spacing: 0.1em;
+             text-transform: uppercase; color: #6f6794; font-weight: 800; }
+</style>
+</head>
+<body>
+<h1>🎙 Letter-sound recorder</h1>
+<p class="help">
+  Records your own voice for every sound the app uses and writes
+  <b>&lt;sound&gt;.wav</b> straight into the folder you pick (choose the repo's
+  <b>audio\letters</b> folder). <b>Hold</b> the record button, say the
+  <i>sound</i> (not the letter name — "sss", not "ess"), release. Review with ▶,
+  re-record as often as you like.<br><br>
+  When you're done: run <b>convert_letter_sounds.ps1 -NoCaps</b>, delete the
+  wavs, bump <b>AUDIO_VERSION</b> in app.js, commit. (Requires Chrome/Edge for
+  folder access; without it, takes download to your Downloads folder instead.)
+</p>
+<div class="topbar">
+  <button class="pick-btn" id="btn-pick">📁 Choose audio\letters folder</button>
+  <span id="dir-status">No folder chosen — takes will download instead.</span>
+</div>
+<div id="list"></div>
+
+<script>
+'use strict';
+
+const SOUNDS = [
+  ['a','"a" as in <b>a</b>pple'], ['b','"b" as in <b>b</b>at — short!'],
+  ['c','"k" as in <b>c</b>at'], ['d','"d" as in <b>d</b>og'],
+  ['e','"e" as in <b>e</b>gg'], ['f','"fff" as in <b>f</b>ish — long'],
+  ['g','"g" as in <b>g</b>oat — short!'], ['h','"h" as in <b>h</b>at'],
+  ['i','"i" as in <b>i</b>nk'], ['j','"j" as in <b>j</b>am'],
+  ['k','"k" as in <b>k</b>ite'], ['l','"lll" as in <b>l</b>eg — long'],
+  ['m','"mmm" as in <b>m</b>ouse — long'], ['n','"nnn" as in <b>n</b>et — long'],
+  ['o','"o" as in <b>o</b>ctopus'], ['p','"p" as in <b>p</b>ig — short!'],
+  ['q','"kw" as in <b>q</b>ueen'], ['r','"rrr" as in <b>r</b>at — long'],
+  ['s','"sss" as in <b>s</b>nake — long'], ['t','"t" as in <b>t</b>ap — short!'],
+  ['u','"u" as in <b>u</b>mbrella'], ['v','"vvv" as in <b>v</b>an — long'],
+  ['w','"w" as in <b>w</b>et'], ['x','"ks" as in bo<b>x</b>'],
+  ['y','"y" as in <b>y</b>es'], ['z','"zzz" as in <b>z</b>ip — long'],
+  ['sh','"shh" as in <b>sh</b>ip — long'], ['ch','"ch" as in <b>ch</b>air'],
+  ['th','"th" as in <b>th</b>umb — long'], ['ng','"ng" as in ri<b>ng</b> — long'],
+  ['ee','"ee" as in s<b>ee</b>'], ['oo','"oo" as in m<b>oo</b>n'],
+  ['qu','"kw" as in <b>qu</b>een'], ['ay','"ay" as in pl<b>ay</b>'],
+  ['oa','"oa" as in b<b>oa</b>t'], ['oy','"oy" as in t<b>oy</b>'],
+  ['oi','"oy" as in c<b>oi</b>n'], ['ar','"ar" as in c<b>ar</b>'],
+  ['or','"or" as in f<b>or</b>k'], ['er','"er" as in h<b>er</b>'],
+  ['ir','"er" as in b<b>ir</b>d'], ['igh','"igh" as in n<b>igh</b>t'],
+  ['air','"air" as in ch<b>air</b>'], ['wh','"w" as in <b>wh</b>en'],
+  ['ck','"k" as in du<b>ck</b> — short!'], ['ll','"lll" as in be<b>ll</b> — long'],
+  ['ss','"sss" as in mi<b>ss</b> — long'], ['tt','"t" as in li<b>tt</b>le — short!'],
+];
+
+let dirHandle = null;
+let micStream = null, audioCtx = null, proc = null;
+let recording = false, chunks = [], recKey = null;
+const takes = {};   // key -> { blob, url }
+const rows  = {};   // key -> { row, playBtn, status }
+
+function markRecorded(key, statusText) {
+  const r = rows[key];
+  if (!r) return;
+  r.playBtn.disabled = false;
+  r.status.textContent = statusText;
+  r.status.className = 'status ok';
+  r.row.classList.add('saved');
+}
+
+// Scan the picked folder for takes that already exist (<key>.wav) so the page
+// shows what's recorded and can play it back.
+async function scanExisting() {
+  let found = 0;
+  for (const key of Object.keys(rows)) {
+    try {
+      const fh   = await dirHandle.getFileHandle(key + '.wav');
+      const file = await fh.getFile();
+      if (takes[key]) URL.revokeObjectURL(takes[key].url);
+      takes[key] = { blob: file, url: URL.createObjectURL(file) };
+      markRecorded(key, '✓ on disk');
+      found++;
+    } catch (_) { /* not recorded yet */ }
+  }
+  return found;
+}
+
+document.getElementById('btn-pick').addEventListener('click', async () => {
+  if (!window.showDirectoryPicker) {
+    alert('Folder access needs Chrome or Edge. Takes will download instead.');
+    return;
+  }
+  try {
+    dirHandle = await showDirectoryPicker({ mode: 'readwrite' });
+    if (await dirHandle.requestPermission({ mode: 'readwrite' }) !== 'granted') { dirHandle = null; return; }
+    const st = document.getElementById('dir-status');
+    const found = await scanExisting();
+    st.textContent = '✓ writing to "' + dirHandle.name + '"' +
+                     (found ? ' — ' + found + ' already recorded' : '');
+    st.className = 'ok';
+  } catch (_) {}
+});
+
+async function ensureMic() {
+  if (micStream) return true;
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false },
+    });
+    audioCtx = new AudioContext();
+    const src = audioCtx.createMediaStreamSource(micStream);
+    proc = audioCtx.createScriptProcessor(4096, 1, 1);
+    proc.onaudioprocess = (e) => {
+      if (recording) chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+    };
+    src.connect(proc);
+    proc.connect(audioCtx.destination);
+    return true;
+  } catch (e) {
+    alert('Microphone not available: ' + e.name);
+    return false;
+  }
+}
+
+function encodeWav(buffers, sampleRate) {
+  let len = 0;
+  for (const b of buffers) len += b.length;
+  const pcm = new Int16Array(len);
+  let o = 0;
+  for (const b of buffers) {
+    for (let i = 0; i < b.length; i++) {
+      const s = Math.max(-1, Math.min(1, b[i]));
+      pcm[o++] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+  }
+  const buf = new ArrayBuffer(44 + pcm.length * 2);
+  const v = new DataView(buf);
+  const wstr = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
+  wstr(0, 'RIFF'); v.setUint32(4, 36 + pcm.length * 2, true); wstr(8, 'WAVE');
+  wstr(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true); v.setUint32(24, sampleRate, true);
+  v.setUint32(28, sampleRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  wstr(36, 'data'); v.setUint32(40, pcm.length * 2, true);
+  new Int16Array(buf, 44).set(pcm);
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
+async function saveTake(key, blob) {
+  if (dirHandle) {
+    try {
+      const fh = await dirHandle.getFileHandle(key + '.wav', { create: true });
+      const w  = await fh.createWritable();
+      await w.write(blob);
+      await w.close();
+      markRecorded(key, '✓ saved');
+      return;
+    } catch (e) {
+      rows[key].status.textContent = 'write failed';
+      console.error(e);
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = key + '.wav';
+  a.click();
+  markRecorded(key, '⬇ downloaded');
+}
+
+function buildRow(key, hint) {
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  const k = document.createElement('div');
+  k.className = 'key'; k.textContent = key;
+
+  const h = document.createElement('div');
+  h.className = 'hint'; h.innerHTML = hint;
+
+  const cur = document.createElement('button');
+  cur.className = 'act'; cur.textContent = '▶ now';
+  cur.title = 'Play the clip the app currently ships';
+  cur.addEventListener('click', () => new Audio('../../audio/letters/' + key + '.mp3').play().catch(() => {}));
+
+  const rec = document.createElement('button');
+  rec.className = 'act rec'; rec.textContent = '● hold to record';
+  rec.addEventListener('pointerdown', async (e) => {
+    e.preventDefault();
+    try { rec.setPointerCapture(e.pointerId); } catch (_) {}
+    if (recording || !(await ensureMic())) return;
+    chunks = []; recKey = key; recording = true;
+    rec.classList.add('live'); rec.textContent = '● recording…';
+  });
+  const stop = async () => {
+    if (!recording || recKey !== key) return;
+    recording = false;
+    rec.classList.remove('live'); rec.textContent = '● hold to record';
+    if (!chunks.length) return;
+    const blob = encodeWav(chunks, audioCtx.sampleRate);
+    if (takes[key]) URL.revokeObjectURL(takes[key].url);
+    takes[key] = { blob, url: URL.createObjectURL(blob) };
+    await saveTake(key, blob);
+  };
+  rec.addEventListener('pointerup', stop);
+  rec.addEventListener('pointercancel', stop);
+
+  const play = document.createElement('button');
+  play.className = 'act'; play.textContent = '▶ take';
+  play.disabled = true;
+  play.title = 'Play your latest recording';
+  play.addEventListener('click', () => { if (takes[key]) new Audio(takes[key].url).play(); });
+
+  const status = document.createElement('div');
+  status.className = 'status';
+
+  row.append(k, h, cur, rec, play, status);
+  rows[key] = { row, playBtn: play, status };
+  return row;
+}
+
+const list = document.getElementById('list');
+let header = document.createElement('div');
+header.className = 'group-h'; header.textContent = 'Single letters';
+list.appendChild(header);
+SOUNDS.forEach(([key, hint], i) => {
+  if (key.length > 1 && SOUNDS[i - 1] && SOUNDS[i - 1][0].length === 1) {
+    const h2 = document.createElement('div');
+    h2.className = 'group-h'; h2.textContent = 'Compound sounds';
+    list.appendChild(h2);
+  }
+  list.appendChild(buildRow(key, hint));
+});
+</script>
+</body>
+</html>
