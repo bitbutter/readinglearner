@@ -258,6 +258,8 @@ html, body {
   transition: opacity 0.15s;
 }
 
+.word-display.number-display { color: #fbbf24; }
+
 /* ── Practice buttons layout ── */
 
 .practice-buttons {
@@ -453,13 +455,6 @@ html, body {
 /* ============================================================
    ALL DONE
    ============================================================ */
-
-.stars-burst {
-  font-size: clamp(2.5rem, 10vw, 5rem);
-  text-align: center;
-  line-height: 1.4;
-  animation: pop-in 0.5s cubic-bezier(0.34,1.56,0.64,1);
-}
 
 @keyframes pop-in {
   from { transform: scale(0.2); opacity: 0; }

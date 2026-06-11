@@ -963,7 +963,7 @@ function presentItem(item) {
     len <= 7  ? 'clamp(4rem, 15vmin,  8rem)' :
                 'clamp(3rem, 11vmin,  5.5rem)';
   el.textContent = item.display;
-  el.className   = 'word-display';
+  el.className   = 'word-display' + (item.kind === 'number' ? ' number-display' : '');
 
   DBG('presentItem', { id: item.id });
   setMicState('ready'); // mic and hear button ready immediately — child controls pacing
@@ -1161,7 +1161,6 @@ function showAllDone(levelResult) {
     (silent > 0 ? silent : gs.roundCorrect) / Math.max(total, 1) * 5
   ));
 
-  document.getElementById('stars-burst').textContent = '⭐'.repeat(stars);
   document.getElementById('alldone-title').textContent = `You practised ${total} ${noun}${total !== 1 ? 's' : ''}`;
 
   let scoreText, speakText;
