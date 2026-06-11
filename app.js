@@ -51,35 +51,97 @@ const LETTER_SOUNDS = {
   y: 'yuh', z: 'zzz',
 };
 
+// Compound letter sounds (digraphs/trigraphs) with a reasonably unambiguous
+// pronunciation. Each has its own clip in audio/letters/ and a TTS fallback.
+// Deliberately left out as too ambiguous in this app's vocabulary:
+// ea (eat/weather), ow (now/show), ou (out/your), ai (said/again), ur (our/hour).
+const DIGRAPH_TTS = {
+  igh: 'eye',  air: 'air',
+  sh: 'shh',  ch: 'chuh', th: 'thh', ng: 'ng',  ee: 'eee',  oo: 'ooo',
+  qu: 'kwuh', ay: 'ay',   oa: 'oh',  oy: 'oy',  oi: 'oy',   ar: 'ar',
+  or: 'or',   er: 'er',   ir: 'er',  wh: 'wuh', ck: 'kuh',  ll: 'lll',
+  ss: 'sss',  tt: 'tuh',
+};
+
+// Longest first so 'igh'/'air' win over their 2- and 1-letter prefixes.
+const DIGRAPHS = Object.keys(DIGRAPH_TTS).sort((a, b) => b.length - a.length);
+
+// Words whose greedy left-to-right segmentation would group letters that do
+// NOT make that sound there (the 'ch' in school, the 'er' in here/there, the
+// 'igh' hiding inside eight…). Spelled-out segmentations, lowercase.
+const SEGMENT_OVERRIDES = {
+  school:   ['s', 'c', 'h', 'oo', 'l'],
+  who:      ['w', 'h', 'o'],
+  door:     ['d', 'o', 'o', 'r'],
+  floor:    ['f', 'l', 'o', 'o', 'r'],
+  around:   ['a', 'r', 'o', 'u', 'n', 'd'],
+  carry:    ['c', 'a', 'r', 'r', 'y'],
+  warm:     ['w', 'a', 'r', 'm'],
+  work:     ['w', 'o', 'r', 'k'],
+  tomorrow: ['t', 'o', 'm', 'o', 'r', 'r', 'o', 'w'],
+  here:     ['h', 'e', 'r', 'e'],
+  there:    ['th', 'e', 'r', 'e'],
+  where:    ['wh', 'e', 'r', 'e'],
+  wherever: ['wh', 'e', 'r', 'e', 'v', 'er'],
+  their:    ['th', 'e', 'i', 'r'],
+  very:     ['v', 'e', 'r', 'y'],
+  every:    ['e', 'v', 'e', 'r', 'y'],
+  eight:    ['e', 'i', 'g', 'h', 't'],
+  going:    ['g', 'o', 'i', 'ng'],
+  year:     ['y', 'e', 'a', 'r'],
+  earth:    ['e', 'a', 'r', 'th'],
+};
+
+// Split a display word into tappable sound units, preserving original casing.
+function segmentDisplay(display) {
+  const lower = display.toLowerCase();
+  const override = SEGMENT_OVERRIDES[lower];
+  const segs = [];
+  if (override) {
+    let pos = 0;
+    for (const o of override) { segs.push(display.slice(pos, pos + o.length)); pos += o.length; }
+    return segs;
+  }
+  let i = 0;
+  while (i < lower.length) {
+    const d = DIGRAPHS.find(d => lower.startsWith(d, i));
+    const len = d ? d.length : 1;
+    segs.push(display.slice(i, i + len));
+    i += len;
+  }
+  return segs;
+}
+
 const DIGIT_NAMES = {
   0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four',
   5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine',
 };
 
-function letterSound(ch) {
-  const c = ch.toLowerCase();
-  return LETTER_SOUNDS[c] || DIGIT_NAMES[c] || null;
+// TTS fallback string for a sound unit, or null if the unit isn't speakable.
+function soundFallback(key) {
+  return LETTER_SOUNDS[key] || DIGRAPH_TTS[key] || null;
 }
 
 const letterAudioCache = {};
 
-function playLetterSound(ch) {
-  const c = ch.toLowerCase();
-  if (LETTER_SOUNDS[c]) {
-    let a = letterAudioCache[c];
+function playLetterSound(seg) {
+  const key = seg.toLowerCase();
+  const fallback = soundFallback(key);
+  if (fallback) {
+    let a = letterAudioCache[key];
     if (!a) {
-      a = new Audio('./audio/letters/' + c + '.mp3');
-      letterAudioCache[c] = a;
+      a = new Audio('./audio/letters/' + key + '.mp3');
+      letterAudioCache[key] = a;
     }
     try { speechSynthesis.cancel(); } catch (_) {}
     a.currentTime = 0;
     a.play().catch((e) => {
-      DBG('letterAudio', c + ' failed: ' + e.name + ' — falling back to TTS');
-      speak(LETTER_SOUNDS[c], 0.8);
+      DBG('letterAudio', key + ' failed: ' + e.name + ' — falling back to TTS');
+      speak(fallback, 0.8);
     });
     return;
   }
-  if (DIGIT_NAMES[c]) speak(DIGIT_NAMES[c], 0.8);
+  if (DIGIT_NAMES[key]) speak(DIGIT_NAMES[key], 0.8);
 }
 
 // ============================================================
@@ -1281,22 +1343,23 @@ function presentItem(item) {
                 'clamp(3rem, 11vmin,  5.5rem)';
   el.className = 'word-display' + (item.kind === 'number' ? ' number-display' : '');
 
-  // Each letter is tappable: it speaks its isolated phonetic sound ("sss" for
-  // s) and flashes colour, so the child can sound the word out himself.
+  // The word is split into sound units — single letters and compound sounds
+  // like "sh"/"ee"/"igh". Tapping one flashes the whole group and plays its
+  // isolated phonetic sound, so the child can sound the word out himself.
   el.innerHTML = '';
-  for (const ch of item.display) {
+  for (const seg of segmentDisplay(item.display)) {
     const span = document.createElement('span');
     span.className   = 'letter';
-    span.textContent = ch;
-    const sound = letterSound(ch);
-    if (sound) {
+    span.textContent = seg;
+    const key = seg.toLowerCase();
+    if (soundFallback(key) || DIGIT_NAMES[key]) {
       span.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         if (gs.awaitingResult || micState === 'listening' || micState === 'evaluating') return;
         span.classList.remove('tapped');
         void span.offsetWidth;  // restart the flash animation
         span.classList.add('tapped');
-        playLetterSound(ch);
+        playLetterSound(seg);
       });
     }
     el.appendChild(span);
@@ -2326,7 +2389,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v17 — bespoke IPA-generated letter-sound audio. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v18 — compound letter sounds (sh/ee/oo/igh…) with group highlight. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
