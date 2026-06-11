@@ -633,8 +633,20 @@ const MAX_LEVEL = 10;
 // <= this in the tuning screen to bring it back.
 const MAX_ACCEPTED_FOR_ACTIVE = 3;
 
+// Items where the adult's audition attempts consistently yield low Vosk confidence
+// are also soft-excluded. Requires at least MIN_CONF_ATTEMPTS recorded results
+// before the exclusion kicks in.
+const MIN_CONF_ATTEMPTS  = 3;
+const MIN_CONF_THRESHOLD = 0.45;
+
 function isItemActive(item) {
-  return (item.accepted ? item.accepted.length : 0) <= MAX_ACCEPTED_FOR_ACTIVE;
+  if ((item.accepted ? item.accepted.length : 0) > MAX_ACCEPTED_FOR_ACTIVE) return false;
+  const confs = item.auditionConfs || [];
+  if (confs.length >= MIN_CONF_ATTEMPTS) {
+    const mean = confs.reduce((s, c) => s + c, 0) / confs.length;
+    if (mean < MIN_CONF_THRESHOLD) return false;
+  }
+  return true;
 }
 
 function makeItem(c, kind) {
@@ -652,6 +664,7 @@ function makeItem(c, kind) {
     mastered: false,
     lastSeenRound: null,
     lastResult: null,
+    auditionConfs: [],
   };
 }
 
@@ -691,6 +704,7 @@ function loadStored() {
       if (item.unaidedStreak === undefined) {
         item.unaidedStreak = item.mastered ? threshold : (item.silentCorrect || 0);
       }
+      if (!item.auditionConfs) item.auditionConfs = [];
     }
     applyAcceptedOverrides(parsed.items);
     stored = parsed;
@@ -836,6 +850,7 @@ let auditionRecognizer = null;
 let auditionState      = 'idle';   // 'idle' | 'listening' | 'evaluating'
 let auditionRowId      = null;
 let auditionHeard      = [];
+let auditionConfScores = [];   // mean Vosk conf per result event this session
 let auditionEvaluated  = false;
 let auditionMaxTimer   = null;
 let auditionSettleTimer = null;
@@ -905,6 +920,10 @@ function createAuditionRecognizer() {
     DBG('audition.result', { text, auditionState });
     if (auditionState !== 'listening' && auditionState !== 'evaluating') return;
     if (text && text !== '[unk]' && !auditionHeard.includes(text)) auditionHeard.push(text);
+    const words = (msg.result.result || []).filter(w => w.conf != null);
+    if (words.length) {
+      auditionConfScores.push(words.reduce((s, w) => s + w.conf, 0) / words.length);
+    }
     if (auditionState === 'evaluating') finishAudition();
   });
 }
@@ -1035,9 +1054,10 @@ function armAudition(itemId) {
     setRowResult(itemId, 'miss', 'no microphone');
     return;
   }
-  auditionRowId     = itemId;
-  auditionHeard     = [];
-  auditionEvaluated = false;
+  auditionRowId      = itemId;
+  auditionHeard      = [];
+  auditionConfScores = [];
+  auditionEvaluated  = false;
   auditionState     = 'listening';
   setRowListening(itemId, true);
   auditionMaxTimer  = setTimeout(stopAudition, 6000);
@@ -1048,7 +1068,7 @@ function stopAudition() {
   clearTimeout(auditionMaxTimer);
   auditionState = 'evaluating';
   if (auditionRecognizer) auditionRecognizer.retrieveFinalResult();
-  auditionSettleTimer = setTimeout(finishAudition, 1500);
+  auditionSettleTimer = setTimeout(finishAudition, 2500);
 }
 
 function finishAudition() {
@@ -1068,8 +1088,17 @@ function finishAudition() {
   const heard   = [...auditionHeard];
   const best    = heard.find(t => t && t !== '[unk]') || '';
   const matched = matchAnswer(heard, item);
-  DBG('audition.judge', { id, best, matched });
-  renderAuditionResult(id, best, matched, item);
+
+  let sessionConf = null;
+  if (auditionConfScores.length) {
+    sessionConf = auditionConfScores.reduce((s, c) => s + c, 0) / auditionConfScores.length;
+    item.auditionConfs.push(Math.round(sessionConf * 100) / 100);
+    if (item.auditionConfs.length > 20) item.auditionConfs.splice(0, item.auditionConfs.length - 20);
+    saveStored();
+  }
+
+  DBG('audition.judge', { id, best, matched, sessionConf });
+  renderAuditionResult(id, best, matched, item, sessionConf);
 }
 
 // ============================================================
@@ -1766,7 +1795,13 @@ function buildTuneRow(item, isCustom) {
   const badge = document.createElement('span');
   badge.className   = 'tune-hidden-badge';
   badge.textContent = 'hidden';
-  badge.title       = 'Hidden from practice (more than ' + MAX_ACCEPTED_FOR_ACTIVE + ' accepted answers)';
+  const confs = item.auditionConfs || [];
+  const lowConf = confs.length >= MIN_CONF_ATTEMPTS &&
+    confs.reduce((s, c) => s + c, 0) / confs.length < MIN_CONF_THRESHOLD;
+  badge.title = lowConf
+    ? 'Hidden from practice (recognizer confidence too low — avg ' +
+      Math.round(confs.reduce((s, c) => s + c, 0) / confs.length * 100) + '% across ' + confs.length + ' tries)'
+    : 'Hidden from practice (more than ' + MAX_ACCEPTED_FOR_ACTIVE + ' accepted answers)';
 
   const terms = document.createElement('div');
   terms.className = 'tune-terms';
@@ -1943,24 +1978,37 @@ function setRowResult(id, cls, text) {
   r.textContent = text;
 }
 
-function renderAuditionResult(id, best, matched, item) {
+function confLabel(conf) {
+  if (conf == null) return '';
+  const pct = Math.round(conf * 100);
+  return ' (' + pct + '% conf)';
+}
+
+function meanConfLabel(item) {
+  const confs = item.auditionConfs || [];
+  if (!confs.length) return '';
+  const mean = confs.reduce((s, c) => s + c, 0) / confs.length;
+  return ' avg ' + Math.round(mean * 100) + '%';
+}
+
+function renderAuditionResult(id, best, matched, item, sessionConf) {
   const row = tuneRowEl(id);
   if (!row) return;
   const r = row.querySelector('.tune-result');
   r.innerHTML = '';
   if (!best) {
     r.className   = 'tune-result miss';
-    r.textContent = '— nothing heard';
+    r.textContent = '— nothing heard' + meanConfLabel(item);
     return;
   }
   if (matched) {
     r.className   = 'tune-result ok';
-    r.textContent = '✓ “' + best + '”';
+    r.textContent = '✓ “' + best + '”' + confLabel(sessionConf) + meanConfLabel(item);
     return;
   }
   r.className = 'tune-result miss';
   const span = document.createElement('span');
-  span.textContent = '✗ “' + best + '” ';
+  span.textContent = '✗ “' + best + '”' + confLabel(sessionConf) + meanConfLabel(item) + ' ';
   const add = document.createElement('button');
   add.className   = 'tune-result-add';
   add.textContent = 'Add';
