@@ -1644,7 +1644,12 @@ function renderSettingsLevelRow(containerId, levelKey) {
 // CUSTOM ITEMS
 // ============================================================
 
-function addCustomWord(displayText) {
+function clampLevel(level) {
+  const n = parseInt(level, 10);
+  return Math.min(MAX_LEVEL, Math.max(1, isNaN(n) ? 1 : n));
+}
+
+function addCustomWord(displayText, level) {
   const display = displayText.trim();
   if (!display) return;
   const lower = display.toLowerCase();
@@ -1652,19 +1657,19 @@ function addCustomWord(displayText) {
   if (dupe) { speak('That word is already in the list.', 1.0); return; }
 
   const id = 'custom:word:' + lower.replace(/[^a-z0-9]/g, '_');
-  stored.items[id] = makeItem({ id, display, accepted: [lower], level: 1 }, 'word');
+  stored.items[id] = makeItem({ id, display, accepted: [lower], level: clampLevel(level) }, 'word');
   saveStored();
   renderTuneList();
 }
 
-function addCustomNumber(numStr) {
+function addCustomNumber(numStr, level) {
   const num = parseInt(numStr, 10);
   if (isNaN(num) || num < 1 || num > 999) { speak('Please enter a number between 1 and 999.', 1.0); return; }
   const dupe = Object.values(stored.items).find(i => i.kind === 'number' && i.display === String(num));
   if (dupe) { speak('That number is already in the list.', 1.0); return; }
 
   const id = 'custom:num:' + num;
-  stored.items[id] = makeItem({ id, display: String(num), accepted: [numberToWords(num)], level: 1 }, 'number');
+  stored.items[id] = makeItem({ id, display: String(num), accepted: [numberToWords(num)], level: clampLevel(level) }, 'number');
   saveStored();
   renderTuneList();
 }
@@ -1788,7 +1793,19 @@ function buildTuneRow(item, isCustom) {
   const result = document.createElement('span');
   result.className = 'tune-result';
 
-  row.append(preview, disp, badge, terms, addTerm, audi);
+  row.append(preview, disp, badge);
+
+  if (isCustom) {
+    const lvlSel = makeLevelSelect(item.level || 1);
+    lvlSel.title = 'Level this custom item is practised in';
+    lvlSel.addEventListener('change', () => {
+      item.level = clampLevel(lvlSel.value);
+      saveStored();
+    });
+    row.append(lvlSel);
+  }
+
+  row.append(terms, addTerm, audi);
 
   if (isCustom) {
     const del = document.createElement('button');
@@ -1802,6 +1819,19 @@ function buildTuneRow(item, isCustom) {
   row.append(result);  // full-width, must stay last so it wraps cleanly
   refreshRowExcluded(row, item);
   return row;
+}
+
+function makeLevelSelect(selected) {
+  const sel = document.createElement('select');
+  sel.className = 'tune-level-select';
+  for (let l = 1; l <= MAX_LEVEL; l++) {
+    const o = document.createElement('option');
+    o.value = String(l);
+    o.textContent = 'L' + l;
+    if (l === selected) o.selected = true;
+    sel.appendChild(o);
+  }
+  return sel;
 }
 
 function fillTermChips(container, item) {
@@ -1871,17 +1901,22 @@ function buildCustomAddRow(kind) {
     input.type = 'text'; input.maxLength = 30; input.placeholder = 'e.g. Peppa';
     input.autocomplete = 'off'; input.spellcheck = false;
   }
+  const defaultLevel = kind === 'number' ? stored.settings.numberLevel : stored.settings.wordLevel;
+  const levelSel = makeLevelSelect(clampLevel(defaultLevel));
+  levelSel.title = 'Level the new item goes into';
+
   const btn = document.createElement('button');
   btn.className   = 'custom-add-btn';
   btn.textContent = 'Add';
   const add = () => {
-    if (kind === 'number') addCustomNumber(input.value);
-    else                   addCustomWord(input.value);
+    const lvl = clampLevel(levelSel.value);
+    if (kind === 'number') addCustomNumber(input.value, lvl);
+    else                   addCustomWord(input.value, lvl);
     input.value = '';
   };
   btn.addEventListener('click', add);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
-  wrap.append(input, btn);
+  wrap.append(input, levelSel, btn);
   return wrap;
 }
 
@@ -2183,7 +2218,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v14 — overrides baked in + soft-exclude (>3 accepted). Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v15 — custom items get per-level assignment. Type rlDump() / rlExportAccepted().');
   loadStored();
   if (!stored) return;
   loadVoices();

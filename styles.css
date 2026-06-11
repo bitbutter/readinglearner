@@ -1119,3 +1119,18 @@ html, body {
   font-family: inherit;
   font-weight: 600;
 }
+
+.tune-level-select {
+  flex-shrink: 0;
+  padding: 0.3rem 0.4rem;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 0.5rem;
+  color: white;
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.tune-level-select option { background: #0f0d1c; color: white; }
