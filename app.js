@@ -703,6 +703,15 @@ let sessionMicBlocked = false;
 // 'waiting' | 'ready' | 'listening' | 'evaluating'
 let micState = 'waiting';
 
+// ── Audition (grown-up tuning screen) — open-vocabulary recognizer ──
+let auditionRecognizer = null;
+let auditionState      = 'idle';   // 'idle' | 'listening' | 'evaluating'
+let auditionRowId      = null;
+let auditionHeard      = [];
+let auditionEvaluated  = false;
+let auditionMaxTimer   = null;
+let auditionSettleTimer = null;
+
 async function initVosk() {
   if (!window.Vosk) { DBG('vosk', 'Vosk not loaded'); return; }
   try {
@@ -754,6 +763,23 @@ function createRoundRecognizer(set) {
   });
 }
 
+// Open-vocabulary recognizer (no grammar) used only on the tuning screen, so
+// the grown-up hears what Vosk *actually* detects — including mishearings that
+// aren't yet in any accepted list and so can't appear under the practice grammar.
+function createAuditionRecognizer() {
+  if (auditionRecognizer) { try { auditionRecognizer.remove(); } catch (_) {} auditionRecognizer = null; }
+  if (!voskReady) return;
+  auditionRecognizer = new voskModel.KaldiRecognizer(16000);
+
+  auditionRecognizer.on('result', (msg) => {
+    const text = (msg.result.text || '').trim();
+    DBG('audition.result', { text, auditionState });
+    if (auditionState !== 'listening' && auditionState !== 'evaluating') return;
+    if (text && text !== '[unk]' && !auditionHeard.includes(text)) auditionHeard.push(text);
+    if (auditionState === 'evaluating') finishAudition();
+  });
+}
+
 async function openMicStream() {
   if (micStream || micOpening) return;
   micOpening = true;
@@ -766,6 +792,10 @@ async function openMicStream() {
     const src  = audioCtx.createMediaStreamSource(micStream);
     scriptProc = audioCtx.createScriptProcessor(4096, 1, 1);
     scriptProc.onaudioprocess = (e) => {
+      if (auditionState === 'listening' && auditionRecognizer) {
+        try { auditionRecognizer.acceptWaveform(e.inputBuffer); } catch (_) {}
+        return;
+      }
       if (micState !== 'listening' || !voskRecognizer) return;
       try { voskRecognizer.acceptWaveform(e.inputBuffer); } catch (_) {}
     };
@@ -850,6 +880,67 @@ function matchAnswer(transcripts, item) {
     }
   }
   return false;
+}
+
+// Single mutation path for accepted terms, shared by the in-practice
+// "add heard" button and the grown-up tuning screen. Returns true if added.
+function addAcceptedTerm(item, rawTerm) {
+  const term = normText(rawTerm);
+  if (!term || term === '[unk]') return false;
+  if (item.accepted.some(a => normText(a) === term)) return false;
+  item.accepted.push(term);
+  saveStored();
+  DBG('addAcceptedTerm', { id: item.id, term });
+  return true;
+}
+
+// ============================================================
+// AUDITION (grown-up tuning)
+// ============================================================
+
+function armAudition(itemId) {
+  DBG('armAudition', { itemId, auditionState });
+  if (auditionState !== 'idle') return;
+  if (sessionMicBlocked) { setRowResult(itemId, 'miss', 'microphone blocked'); return; }
+  if (!voskReady || !auditionRecognizer || !micStream) {
+    setRowResult(itemId, 'miss', 'no microphone');
+    return;
+  }
+  auditionRowId     = itemId;
+  auditionHeard     = [];
+  auditionEvaluated = false;
+  auditionState     = 'listening';
+  setRowListening(itemId, true);
+  auditionMaxTimer  = setTimeout(stopAudition, 6000);
+}
+
+function stopAudition() {
+  if (auditionState !== 'listening') return;
+  clearTimeout(auditionMaxTimer);
+  auditionState = 'evaluating';
+  if (auditionRecognizer) auditionRecognizer.retrieveFinalResult();
+  auditionSettleTimer = setTimeout(finishAudition, 1500);
+}
+
+function finishAudition() {
+  if (auditionEvaluated) return;
+  if (auditionState !== 'evaluating' && auditionState !== 'listening') return;
+  auditionEvaluated = true;
+  clearTimeout(auditionSettleTimer);
+  clearTimeout(auditionMaxTimer);
+
+  const id   = auditionRowId;
+  const item = stored.items[id];
+  auditionState = 'idle';
+  auditionRowId = null;
+  setRowListening(id, false);
+  if (!item) return;
+
+  const heard   = [...auditionHeard];
+  const best    = heard.find(t => t && t !== '[unk]') || '';
+  const matched = matchAnswer(heard, item);
+  DBG('audition.judge', { id, best, matched });
+  renderAuditionResult(id, best, matched, item);
 }
 
 // ============================================================
@@ -1420,7 +1511,7 @@ function renderSettingsLevelRow(containerId, levelKey) {
 }
 
 // ============================================================
-// CUSTOM WORDS
+// CUSTOM ITEMS
 // ============================================================
 
 function addCustomWord(displayText) {
@@ -1431,15 +1522,9 @@ function addCustomWord(displayText) {
   if (dupe) { speak('That word is already in the list.', 1.0); return; }
 
   const id = 'custom:word:' + lower.replace(/[^a-z0-9]/g, '_');
-  stored.items[id] = {
-    id, kind: 'word', display,
-    accepted: [lower],
-    successStreak: 0, silentCorrect: 0,
-    totalCorrect: 0, totalAttempts: 0, mastered: false,
-    lastSeenRound: null, lastResult: null,
-  };
+  stored.items[id] = makeItem({ id, display, accepted: [lower], level: 1 }, 'word');
   saveStored();
-  renderCustomItems();
+  renderTuneList();
 }
 
 function addCustomNumber(numStr) {
@@ -1449,61 +1534,264 @@ function addCustomNumber(numStr) {
   if (dupe) { speak('That number is already in the list.', 1.0); return; }
 
   const id = 'custom:num:' + num;
-  const spoken = numberToWords(num);
-  stored.items[id] = {
-    id, kind: 'number', display: String(num),
-    accepted: [spoken],
-    successStreak: 0, silentCorrect: 0,
-    totalCorrect: 0, totalAttempts: 0, mastered: false,
-    lastSeenRound: null, lastResult: null,
-  };
+  stored.items[id] = makeItem({ id, display: String(num), accepted: [numberToWords(num)], level: 1 }, 'number');
   saveStored();
-  renderCustomItems();
+  renderTuneList();
 }
 
 function removeCustomItem(id) {
   if (!id.startsWith('custom:')) return;
   delete stored.items[id];
   saveStored();
-  renderCustomItems();
+  renderTuneList();
 }
 
-function renderCustomItems() {
-  const wordsList = document.getElementById('s-custom-words-list');
-  const numsList  = document.getElementById('s-custom-nums-list');
-  if (!wordsList || !numsList) return;
+// ============================================================
+// TUNING LIST (audition every term, edit accepted lists)
+// ============================================================
 
-  const customWords = Object.values(stored.items).filter(i => i.kind === 'word' && i.id.startsWith('custom:'));
-  const customNums  = Object.values(stored.items).filter(i => i.kind === 'number' && i.id.startsWith('custom:'));
+let tuneTab    = 'words';
+let tuneSearch = '';
 
-  wordsList.innerHTML = '';
-  numsList.innerHTML  = '';
-
-  for (const item of customWords) {
-    wordsList.appendChild(makeChip(item));
-  }
-  for (const item of customNums) {
-    numsList.appendChild(makeChip(item));
-  }
+function openTuning() {
+  showScreen('tuning');
+  tuneSearch = '';
+  const search = document.getElementById('tune-search');
+  if (search) search.value = '';
+  renderTuneList();
+  createAuditionRecognizer();
+  openMicStream();
 }
 
-function makeChip(item) {
-  const chip = document.createElement('span');
-  chip.className = 'custom-chip';
-  chip.textContent = item.display + ' ';
+function closeTuning() {
+  if (auditionState === 'listening') stopAudition();
+  if (auditionRecognizer) { try { auditionRecognizer.remove(); } catch (_) {} auditionRecognizer = null; }
+  auditionState = 'idle';
+  closeMicStream();
+  openGrownUp();
+}
+
+function setTuneTab(tab) {
+  tuneTab = tab;
+  document.getElementById('tune-tab-words').classList.toggle('active', tab === 'words');
+  document.getElementById('tune-tab-numbers').classList.toggle('active', tab === 'numbers');
+  renderTuneList();
+}
+
+function renderTuneList() {
+  const list = document.getElementById('tune-list');
+  if (!list) return;
+  const kind = tuneTab === 'numbers' ? 'number' : 'word';
+  const q    = tuneSearch.trim().toLowerCase();
+  const scrollTop = list.scrollTop;
+  list.innerHTML = '';
+
+  const all       = Object.values(stored.items).filter(i => i.kind === kind);
+  const canonical = all.filter(i => !i.id.startsWith('custom:'));
+  const customs   = all.filter(i =>  i.id.startsWith('custom:'));
+  const matchesQ  = (i) => !q || i.display.toLowerCase().includes(q) ||
+                           i.accepted.some(a => a.toLowerCase().includes(q));
+
+  for (let lvl = 1; lvl <= MAX_LEVEL; lvl++) {
+    const items = canonical.filter(i => (i.level || 1) === lvl && matchesQ(i));
+    if (!items.length) continue;
+    list.appendChild(makeTuneHeader('Level ' + lvl));
+    for (const item of items) list.appendChild(buildTuneRow(item, false));
+  }
+
+  list.appendChild(makeTuneHeader(kind === 'number' ? 'Custom numbers' : 'Custom words'));
+  for (const item of customs.filter(matchesQ)) list.appendChild(buildTuneRow(item, true));
+  list.appendChild(buildCustomAddRow(kind));
+
+  list.scrollTop = scrollTop;
+}
+
+function makeTuneHeader(text) {
+  const h = document.createElement('div');
+  h.className   = 'tune-group-header';
+  h.textContent = text;
+  return h;
+}
+
+function buildTuneRow(item, isCustom) {
+  const row = document.createElement('div');
+  row.className   = 'tune-row';
+  row.dataset.id  = item.id;
+
   const preview = document.createElement('button');
-  preview.className   = 'custom-chip-preview';
+  preview.className   = 'tune-preview';
   preview.textContent = '🔊';
   preview.setAttribute('aria-label', 'Hear ' + item.display);
   preview.addEventListener('click', () => speakWord(item.display));
-  chip.appendChild(preview);
-  const del = document.createElement('button');
-  del.className   = 'custom-chip-del';
-  del.textContent = '×';
-  del.setAttribute('aria-label', 'Remove ' + item.display);
-  del.addEventListener('click', () => removeCustomItem(item.id));
-  chip.appendChild(del);
-  return chip;
+
+  const disp = document.createElement('span');
+  disp.className   = 'tune-display' + (item.kind === 'number' ? ' is-number' : '');
+  disp.textContent = item.display;
+
+  const terms = document.createElement('div');
+  terms.className = 'tune-terms';
+  fillTermChips(terms, item);
+
+  const addTerm = document.createElement('button');
+  addTerm.className   = 'tune-add-term';
+  addTerm.textContent = '＋';
+  addTerm.setAttribute('aria-label', 'Add accepted term to ' + item.display);
+  addTerm.addEventListener('click', () => revealTermInput(row, item));
+
+  const audi = document.createElement('button');
+  audi.className   = 'tune-audition';
+  audi.textContent = '🎤';
+  audi.setAttribute('aria-label', 'Audition ' + item.display);
+  audi.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    try { audi.setPointerCapture(e.pointerId); } catch (_) {}
+    armAudition(item.id);
+  });
+  audi.addEventListener('pointerup',     () => stopAudition());
+  audi.addEventListener('pointercancel', () => stopAudition());
+
+  const result = document.createElement('span');
+  result.className = 'tune-result';
+
+  row.append(preview, disp, terms, addTerm, audi);
+
+  if (isCustom) {
+    const del = document.createElement('button');
+    del.className   = 'tune-del';
+    del.textContent = '🗑';
+    del.setAttribute('aria-label', 'Delete ' + item.display);
+    del.addEventListener('click', () => removeCustomItem(item.id));
+    row.append(del);
+  }
+
+  row.append(result);  // full-width, must stay last so it wraps cleanly
+  return row;
+}
+
+function fillTermChips(container, item) {
+  container.innerHTML = '';
+  for (const term of item.accepted) {
+    const chip  = document.createElement('span');
+    chip.className = 'term-chip';
+    const label = document.createElement('span');
+    label.textContent = term;
+    chip.appendChild(label);
+    const x = document.createElement('button');
+    x.className   = 'term-chip-del';
+    x.textContent = '×';
+    x.setAttribute('aria-label', 'Remove ' + term);
+    x.addEventListener('click', () => {
+      if (item.accepted.length <= 1) { speak('Keep at least one accepted answer.', 1.0); return; }
+      item.accepted = item.accepted.filter(a => a !== term);
+      saveStored();
+      fillTermChips(container, item);
+    });
+    chip.appendChild(x);
+    container.appendChild(chip);
+  }
+}
+
+function revealTermInput(row, item) {
+  const existing = row.querySelector('.tune-term-input');
+  if (existing) { existing.focus(); return; }
+  const input = document.createElement('input');
+  input.type         = 'text';
+  input.className     = 'tune-term-input';
+  input.placeholder   = 'new term';
+  input.autocomplete = 'off';
+  input.spellcheck   = false;
+  let committed = false;
+  const commit = () => {
+    if (committed) return;
+    committed = true;
+    const val = input.value;
+    input.remove();
+    if (addAcceptedTerm(item, val)) fillTermChips(row.querySelector('.tune-terms'), item);
+  };
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') commit();
+    else if (e.key === 'Escape') { committed = true; input.remove(); }
+  });
+  input.addEventListener('blur', commit);
+  row.querySelector('.tune-terms').after(input);
+  input.focus();
+}
+
+function buildCustomAddRow(kind) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tune-custom-add';
+  const input = document.createElement('input');
+  input.className = 'tune-custom-input';
+  if (kind === 'number') {
+    input.type = 'number'; input.min = '1'; input.max = '999'; input.placeholder = 'e.g. 21';
+  } else {
+    input.type = 'text'; input.maxLength = 30; input.placeholder = 'e.g. Peppa';
+    input.autocomplete = 'off'; input.spellcheck = false;
+  }
+  const btn = document.createElement('button');
+  btn.className   = 'custom-add-btn';
+  btn.textContent = 'Add';
+  const add = () => {
+    if (kind === 'number') addCustomNumber(input.value);
+    else                   addCustomWord(input.value);
+    input.value = '';
+  };
+  btn.addEventListener('click', add);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
+  wrap.append(input, btn);
+  return wrap;
+}
+
+function tuneRowEl(id) {
+  return document.querySelector('.tune-row[data-id="' + CSS.escape(id) + '"]');
+}
+
+function setRowListening(id, on) {
+  const row = tuneRowEl(id);
+  if (!row) return;
+  row.querySelector('.tune-audition').classList.toggle('listening', on);
+  if (on) {
+    const r = row.querySelector('.tune-result');
+    r.className   = 'tune-result listening';
+    r.textContent = 'Listening…';
+  }
+}
+
+function setRowResult(id, cls, text) {
+  const row = tuneRowEl(id);
+  if (!row) return;
+  const r = row.querySelector('.tune-result');
+  r.className   = 'tune-result ' + cls;
+  r.textContent = text;
+}
+
+function renderAuditionResult(id, best, matched, item) {
+  const row = tuneRowEl(id);
+  if (!row) return;
+  const r = row.querySelector('.tune-result');
+  r.innerHTML = '';
+  if (!best) {
+    r.className   = 'tune-result miss';
+    r.textContent = '— nothing heard';
+    return;
+  }
+  if (matched) {
+    r.className   = 'tune-result ok';
+    r.textContent = '✓ “' + best + '”';
+    return;
+  }
+  r.className = 'tune-result miss';
+  const span = document.createElement('span');
+  span.textContent = '✗ “' + best + '” ';
+  const add = document.createElement('button');
+  add.className   = 'tune-result-add';
+  add.textContent = 'Add';
+  add.addEventListener('click', () => {
+    if (addAcceptedTerm(item, best)) fillTermChips(row.querySelector('.tune-terms'), item);
+    r.className   = 'tune-result ok';
+    r.textContent = '✓ added';
+  });
+  r.append(span, add);
 }
 
 // ============================================================
@@ -1514,7 +1802,6 @@ function openGrownUp() {
   renderSettings();
   renderSettingsLevelRows();
   renderProgress();
-  renderCustomItems();
   populateVoiceSelect();
   showScreen('grownup');
 }
@@ -1678,12 +1965,7 @@ function setupEvents() {
 
   document.getElementById('btn-add-heard').addEventListener('click', () => {
     const transcript = document.getElementById('btn-add-heard').dataset.transcript;
-    const item = gs.currentItem;
-    if (transcript && item && !item.accepted.includes(transcript)) {
-      item.accepted.push(transcript);
-      saveStored();
-      DBG('addHeard', { id: item.id, transcript });
-    }
+    if (transcript && gs.currentItem) addAcceptedTerm(gs.currentItem, transcript);
     hideAddHeardBtn();
   });
 
@@ -1722,27 +2004,18 @@ function setupEvents() {
     saveStored();
     renderSettings();
     renderProgress();
-    renderCustomItems();
+    renderTuneList();
     speak('All progress has been reset. Ready to start fresh!', 0.9);
   });
 
-  // Custom words
-  const wordInput = document.getElementById('s-custom-word-input');
-  document.getElementById('s-custom-word-add').addEventListener('click', () => {
-    addCustomWord(wordInput.value);
-    wordInput.value = '';
-  });
-  wordInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { addCustomWord(wordInput.value); wordInput.value = ''; }
-  });
-
-  const numInput = document.getElementById('s-custom-num-input');
-  document.getElementById('s-custom-num-add').addEventListener('click', () => {
-    addCustomNumber(numInput.value);
-    numInput.value = '';
-  });
-  numInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { addCustomNumber(numInput.value); numInput.value = ''; }
+  // Tuning screen (audition & edit every term)
+  document.getElementById('btn-open-tuning').addEventListener('click', openTuning);
+  document.getElementById('btn-tune-back').addEventListener('click', closeTuning);
+  document.getElementById('tune-tab-words').addEventListener('click', () => setTuneTab('words'));
+  document.getElementById('tune-tab-numbers').addEventListener('click', () => setTuneTab('numbers'));
+  document.getElementById('tune-search').addEventListener('input', (e) => {
+    tuneSearch = e.target.value;
+    renderTuneList();
   });
 
   setupGate();
@@ -1753,7 +2026,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v8 — Vosk in-browser recognition. Type rlDump() for trace.');
+  console.log('[ReadingLearner] build v11 — Vosk recognition + grown-up tuning. Type rlDump() for trace.');
   loadStored();
   if (!stored) return;
   loadVoices();

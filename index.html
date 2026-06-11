@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#110f21">
   <title>Reading Learner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎤</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
 
@@ -111,19 +111,9 @@
         </section>
 
         <section class="settings-group">
-          <h3>Custom Words</h3>
-          <div class="custom-add-row">
-            <input type="text" id="s-custom-word-input" placeholder="e.g. Peppa" maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false">
-            <button id="s-custom-word-add" class="custom-add-btn">Add</button>
-          </div>
-          <div id="s-custom-words-list" class="custom-chip-list"></div>
-
-          <h3 style="margin-top:0.9rem">Custom Numbers</h3>
-          <div class="custom-add-row">
-            <input type="number" id="s-custom-num-input" placeholder="e.g. 21" min="1" max="999">
-            <button id="s-custom-num-add" class="custom-add-btn">Add</button>
-          </div>
-          <div id="s-custom-nums-list" class="custom-chip-list"></div>
+          <h3>Words &amp; Numbers</h3>
+          <p class="settings-blurb">Audition how the recognizer hears every word and number in your own voice, add accepted answers, and add your own custom items.</p>
+          <button id="btn-open-tuning" class="open-tuning-btn">🎤 Audition &amp; edit all terms →</button>
         </section>
 
         <section class="settings-group danger-group">
@@ -131,6 +121,25 @@
         </section>
 
       </div>
+    </div>
+  </div>
+
+  <!-- Tuning (grown-up: audition & edit terms) -->
+  <div id="screen-tuning" class="screen hidden">
+    <div class="grownup-panel">
+      <div class="grownup-header">
+        <h2>Audition words &amp; numbers</h2>
+        <button id="btn-tune-back" class="back-btn" aria-label="Back to settings">✕</button>
+      </div>
+      <div class="tune-toolbar">
+        <div class="tune-tabs">
+          <button id="tune-tab-words" class="tune-tab active">📖 Words</button>
+          <button id="tune-tab-numbers" class="tune-tab">🔢 Numbers</button>
+        </div>
+        <input type="search" id="tune-search" class="tune-search" placeholder="Search…" autocomplete="off" spellcheck="false">
+      </div>
+      <p class="tune-hint">Hold 🎤 and say the item to hear what the recognizer detects. Tap <b>Add</b> on a miss, or ✕ to drop a term. Your child's voice may differ, so the in-practice "add heard" button stays as a backup.</p>
+      <div id="tune-list" class="tune-list"></div>
     </div>
   </div>
 
@@ -144,6 +153,6 @@
   <!-- Flash overlay (appended by JS) -->
 
   <script src="vosk/vosk.js"></script>
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>
