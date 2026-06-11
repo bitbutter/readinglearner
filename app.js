@@ -38,9 +38,11 @@ function numberToWords(n) {
   return ones[h] + ' hundred' + (r ? ' and ' + numberToWords(r) : '');
 }
 
-// Isolated phonetic sounds for letters (phonics sounds, not letter names —
-// "sss" for s, not "ess"). Spelled so the TTS voice produces roughly the right
-// phone; tune individual entries here if a voice mangles one.
+// Isolated phonetic letter sounds (phonics, not letter names — "sss" for s,
+// not "ess"). Primary source is the bespoke recordings in audio/letters/
+// (generated from IPA via logs/tools/generate_letter_sounds.ps1, so the sound
+// can't be "spelled out"). The strings below are only the TTS fallback if an
+// audio file fails to load, and they may be mangled by some voices.
 const LETTER_SOUNDS = {
   a: 'ah',  b: 'buh', c: 'kuh', d: 'duh', e: 'eh',  f: 'fff',
   g: 'guh', h: 'huh', i: 'ih',  j: 'juh', k: 'kuh', l: 'lll',
@@ -57,6 +59,27 @@ const DIGIT_NAMES = {
 function letterSound(ch) {
   const c = ch.toLowerCase();
   return LETTER_SOUNDS[c] || DIGIT_NAMES[c] || null;
+}
+
+const letterAudioCache = {};
+
+function playLetterSound(ch) {
+  const c = ch.toLowerCase();
+  if (LETTER_SOUNDS[c]) {
+    let a = letterAudioCache[c];
+    if (!a) {
+      a = new Audio('./audio/letters/' + c + '.mp3');
+      letterAudioCache[c] = a;
+    }
+    try { speechSynthesis.cancel(); } catch (_) {}
+    a.currentTime = 0;
+    a.play().catch((e) => {
+      DBG('letterAudio', c + ' failed: ' + e.name + ' — falling back to TTS');
+      speak(LETTER_SOUNDS[c], 0.8);
+    });
+    return;
+  }
+  if (DIGIT_NAMES[c]) speak(DIGIT_NAMES[c], 0.8);
 }
 
 // ============================================================
@@ -1273,7 +1296,7 @@ function presentItem(item) {
         span.classList.remove('tapped');
         void span.offsetWidth;  // restart the flash animation
         span.classList.add('tapped');
-        speak(sound, 0.8);
+        playLetterSound(ch);
       });
     }
     el.appendChild(span);
@@ -2303,7 +2326,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v16 — token-run matching, tappable phonics letters, offline cache. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v17 — bespoke IPA-generated letter-sound audio. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')

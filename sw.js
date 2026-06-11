@@ -7,7 +7,7 @@
 // updates immediately, with the cache as an offline fallback.
 const CACHE = 'rl-cache-v1';
 
-const CACHE_FIRST = /(?:model\.tar\.gz$|vosk\/vosk\.js$|\/images\/)/;
+const CACHE_FIRST = /(?:model\.tar\.gz$|vosk\/vosk\.js$|\/images\/|\/audio\/)/;
 
 self.addEventListener('install', () => self.skipWaiting());
 
