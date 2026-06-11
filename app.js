@@ -537,7 +537,7 @@ const ACCEPTED_OVERRIDES = {
   'word:in':     ['a', 'and'],
   'word:is':     ['a', 'his', 'if', 'this'],
   'word:jump':   ['john'],
-  'word:not':    ['now', 'the not'],
+  'word:not':    ['now'],  // 'the not' now covered by token-run matching
   'word:one':    ['what', 'why'],
   'word:red':    ['right'],
   'word:three':  ['free'],
@@ -547,7 +547,7 @@ const ACCEPTED_OVERRIDES = {
   'word:yellow': ['yeah flow', 'joe', 'yeah low', 'yeah', 'jello', 'hello'],
   'word:you':    ['yeah'],
   'word:all':    ['oh'],
-  'word:am':     ['im', 'my', 'am i', 'month', 'ah', 'up', 'by', 'back'],
+  'word:am':     ['im', 'my', 'month', 'ah', 'up', 'by', 'back'],  // 'am i' covered by token-run matching
   'word:are':    ['ah', 'our'],
   'word:ate':    ['eight'],
   'word:be':     ['the'],
