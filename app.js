@@ -122,10 +122,10 @@ function soundFallback(key) {
   return LETTER_SOUNDS[key] || DIGRAPH_TTS[key] || null;
 }
 
-// Build the tappable sound-unit spans for a display word: one span per unit,
-// alternating tint when the word contains a compound group, tap = flash the
-// whole group + play its sound. `guard` (optional) can veto taps.
-function buildSoundUnitSpans(display, guard) {
+// Build the sound-unit spans for a display word: one span per unit,
+// alternating tint when the word contains a compound group. Tap/drag handling
+// lives on the container via attachSoundUnitGestures.
+function buildSoundUnitSpans(display) {
   const frag = document.createDocumentFragment();
   const segs = segmentDisplay(display);
   const hasGroups = segs.some(s => s.length > 1);
@@ -135,19 +135,59 @@ function buildSoundUnitSpans(display, guard) {
     span.textContent = seg;
     if (hasGroups && idx % 2 === 1) span.classList.add('alt');
     const key = seg.toLowerCase();
-    if (soundFallback(key) || DIGIT_NAMES[key]) {
-      span.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        if (guard && !guard()) return;
-        span.classList.remove('tapped');
-        void span.offsetWidth;  // restart the flash animation
-        span.classList.add('tapped');
-        playLetterSound(seg);
-      });
-    }
+    if (soundFallback(key) || DIGIT_NAMES[key]) span.classList.add('tappable');
     frag.appendChild(span);
   });
   return frag;
+}
+
+function triggerSoundSpan(span) {
+  span.classList.remove('tapped');
+  void span.offsetWidth;  // restart the flash animation
+  span.classList.add('tapped');
+  playLetterSound(span.textContent);
+}
+
+// Tap OR drag: a finger dragged across the word triggers each letter/group
+// once as it is crossed (kids sound words out left-to-right this way).
+// Uses elementFromPoint because touch pointers are implicitly captured by the
+// pointerdown target, so pointermove would otherwise never retarget.
+function attachSoundUnitGestures(container, opts = {}) {
+  let tracking = false;
+  let lastSpan = null;
+
+  const spanAt = (x, y) => {
+    const el   = document.elementFromPoint(x, y);
+    const span = el && el.closest ? el.closest('.letter.tappable') : null;
+    return span && container.contains(span) ? span : null;
+  };
+
+  const fire = (span) => {
+    if (!span || span === lastSpan) return;
+    lastSpan = span;
+    triggerSoundSpan(span);
+    opts.onTrigger?.();
+  };
+
+  container.addEventListener('pointerdown', (e) => {
+    if (opts.guard && !opts.guard()) return;
+    const span = spanAt(e.clientX, e.clientY);
+    if (!span) return;
+    e.preventDefault();
+    tracking = true;
+    lastSpan = null;
+    fire(span);
+  });
+
+  container.addEventListener('pointermove', (e) => {
+    if (!tracking) return;
+    if (opts.guard && !opts.guard()) { tracking = false; return; }
+    fire(spanAt(e.clientX, e.clientY));
+  });
+
+  const stop = () => { tracking = false; lastSpan = null; };
+  container.addEventListener('pointerup', stop);
+  container.addEventListener('pointercancel', stop);
 }
 
 const letterAudioCache = {};
@@ -300,18 +340,12 @@ const WORDS_CONTENT = [
   { id: 'word:away',    display: 'away',    accepted: ['away'],                  level: 1 },
   { id: 'word:big',     display: 'big',     accepted: ['big'],                   level: 1 },
   { id: 'word:blue',    display: 'blue',    accepted: ['blue','blew'],           level: 1 },
-  { id: 'word:can',     display: 'can',     accepted: ['can'],                   level: 1 },
   { id: 'word:come',    display: 'come',    accepted: ['come'],                  level: 1 },
   { id: 'word:down',    display: 'down',    accepted: ['down'],                  level: 1 },
-  { id: 'word:find',    display: 'find',    accepted: ['find','fined'],          level: 1 },
-  { id: 'word:for',     display: 'for',     accepted: ['for','four','fore'],     level: 1 },
   { id: 'word:funny',   display: 'funny',   accepted: ['funny'],                 level: 1 },
   { id: 'word:go',      display: 'go',      accepted: ['go'],                    level: 1 },
   { id: 'word:help',    display: 'help',    accepted: ['help'],                  level: 1 },
   { id: 'word:here',    display: 'here',    accepted: ['here','hear'],           level: 1 },
-  { id: 'word:i',       display: 'I',       accepted: ['i','eye','ay'],          level: 1 },
-  { id: 'word:in',      display: 'in',      accepted: ['in','inn'],              level: 1 },
-  { id: 'word:is',      display: 'is',      accepted: ['is'],                    level: 1 },
   { id: 'word:it',      display: 'it',      accepted: ['it'],                    level: 1 },
   { id: 'word:jump',    display: 'jump',    accepted: ['jump'],                  level: 1 },
   { id: 'word:little',  display: 'little',  accepted: ['little'],                level: 1 },
@@ -320,7 +354,6 @@ const WORDS_CONTENT = [
   { id: 'word:me',      display: 'me',      accepted: ['me'],                    level: 1 },
   { id: 'word:my',      display: 'my',      accepted: ['my'],                    level: 1 },
   { id: 'word:not',     display: 'not',     accepted: ['not','knot'],            level: 1 },
-  { id: 'word:one',     display: 'one',     accepted: ['one','won'],             level: 1 },
   { id: 'word:play',    display: 'play',    accepted: ['play'],                  level: 1 },
   { id: 'word:red',     display: 'red',     accepted: ['red','read'],            level: 1 },
   { id: 'word:run',     display: 'run',     accepted: ['run'],                   level: 1 },
@@ -328,17 +361,12 @@ const WORDS_CONTENT = [
   { id: 'word:see',     display: 'see',     accepted: ['see','sea'],             level: 1 },
   { id: 'word:the',     display: 'the',     accepted: ['the','da','duh'],        level: 1 },
   { id: 'word:three',   display: 'three',   accepted: ['three'],                 level: 1 },
-  { id: 'word:to',      display: 'to',      accepted: ['to','two','too'],        level: 1 },
   { id: 'word:two',     display: 'two',     accepted: ['two','to','too'],        level: 1 },
   { id: 'word:up',      display: 'up',      accepted: ['up'],                    level: 1 },
   { id: 'word:we',      display: 'we',      accepted: ['we','wee'],              level: 1 },
-  { id: 'word:where',   display: 'where',   accepted: ['where','wear','were'],   level: 1 },
-  { id: 'word:yellow',  display: 'yellow',  accepted: ['yellow'],                level: 1 },
   { id: 'word:you',     display: 'you',     accepted: ['you'],                   level: 1 },
-  { id: 'word:beowulf', display: 'Beowulf', accepted: ['beowulf'],               level: 1 },
   // Level 2: Dolch Primer
   { id: 'word:all',     display: 'all',     accepted: ['all'],                   level: 2 },
-  { id: 'word:am',      display: 'am',      accepted: ['am'],                    level: 2 },
   { id: 'word:are',     display: 'are',     accepted: ['are'],                   level: 2 },
   { id: 'word:at',      display: 'at',      accepted: ['at'],                    level: 2 },
   { id: 'word:ate',     display: 'ate',     accepted: ['ate'],                   level: 2 },
@@ -349,8 +377,6 @@ const WORDS_CONTENT = [
   { id: 'word:came',    display: 'came',    accepted: ['came'],                  level: 2 },
   { id: 'word:did',     display: 'did',     accepted: ['did'],                   level: 2 },
   { id: 'word:do',      display: 'do',      accepted: ['do','dew','due'],        level: 2 },
-  { id: 'word:eat',     display: 'eat',     accepted: ['eat'],                   level: 2 },
-  { id: 'word:four',    display: 'four',    accepted: ['four','for','fore'],     level: 2 },
   { id: 'word:get',     display: 'get',     accepted: ['get'],                   level: 2 },
   { id: 'word:good',    display: 'good',    accepted: ['good'],                  level: 2 },
   { id: 'word:have',    display: 'have',    accepted: ['have'],                  level: 2 },
@@ -366,7 +392,6 @@ const WORDS_CONTENT = [
   { id: 'word:out',     display: 'out',     accepted: ['out'],                   level: 2 },
   { id: 'word:please',  display: 'please',  accepted: ['please'],                level: 2 },
   { id: 'word:pretty',  display: 'pretty',  accepted: ['pretty'],                level: 2 },
-  { id: 'word:ran',     display: 'ran',     accepted: ['ran'],                   level: 2 },
   { id: 'word:ride',    display: 'ride',    accepted: ['ride'],                  level: 2 },
   { id: 'word:saw',     display: 'saw',     accepted: ['saw'],                   level: 2 },
   { id: 'word:say',     display: 'say',     accepted: ['say'],                   level: 2 },
@@ -374,7 +399,6 @@ const WORDS_CONTENT = [
   { id: 'word:so',      display: 'so',      accepted: ['so','sew'],              level: 2 },
   { id: 'word:soon',    display: 'soon',    accepted: ['soon'],                  level: 2 },
   { id: 'word:that',    display: 'that',    accepted: ['that'],                  level: 2 },
-  { id: 'word:there',   display: 'there',   accepted: ['there','their'],         level: 2 },
   { id: 'word:they',    display: 'they',    accepted: ['they'],                  level: 2 },
   { id: 'word:this',    display: 'this',    accepted: ['this'],                  level: 2 },
   { id: 'word:too',     display: 'too',     accepted: ['too','to','two'],        level: 2 },
@@ -387,7 +411,6 @@ const WORDS_CONTENT = [
   { id: 'word:white',   display: 'white',   accepted: ['white'],                 level: 2 },
   { id: 'word:who',     display: 'who',     accepted: ['who'],                   level: 2 },
   { id: 'word:will',    display: 'will',    accepted: ['will'],                  level: 2 },
-  { id: 'word:with',    display: 'with',    accepted: ['with'],                  level: 2 },
   { id: 'word:yes',     display: 'yes',     accepted: ['yes'],                   level: 2 },
   // Level 3: Dolch Grade 1
   { id: 'word:after',   display: 'after',   accepted: ['after'],                 level: 3 },
@@ -640,56 +663,38 @@ const WORDS_CONTENT = [
 // edit all terms", then run rlExportAccepted() in the console (or tap Export on
 // that screen) and paste the `acceptedAdditions` entries below.
 const ACCEPTED_OVERRIDES = {
-  // Promoted from dev-machine auditioning. Items that end up with more than
-  // MAX_ACCEPTED_FOR_ACTIVE accepted forms are auto-hidden from practice.
-  // Pure-digit number matches from the export were dropped: the practice grammar
-  // only emits [a-z] tokens, so a digit string can never be returned.
+  // Promoted from dev-machine auditioning. Pure-digit number matches from the
+  // export were dropped: the practice grammar only emits [a-z] tokens, so a
+  // digit string can never be returned.
   'word:and':    ['at'],
   'word:big':    ['pick', 'pig'],
-  'word:can':    ['cap', 'cant', 'cat'],
-  'word:find':   ['for', 'fine', 'try'],
-  'word:for':    ['fall'],
   'word:funny':  ['front'],
-  'word:i':      ['oh'],
-  'word:in':     ['a', 'and'],
-  'word:is':     ['a', 'his', 'if', 'this'],
   'word:jump':   ['john'],
   'word:not':    ['now'],  // 'the not' now covered by token-run matching
-  'word:one':    ['what', 'why'],
   'word:red':    ['right'],
   'word:three':  ['free'],
-  'word:to':     ['so'],
   'word:up':     ['okay', 'oh'],
-  'word:where':  ['well'],
-  'word:yellow': ['yeah flow', 'joe', 'yeah low', 'yeah', 'jello', 'hello'],
   'word:you':    ['yeah'],
   'word:all':    ['oh'],
-  'word:am':     ['im', 'my', 'month', 'ah', 'up', 'by', 'back'],  // 'am i' covered by token-run matching
   'word:are':    ['ah', 'our'],
   'word:ate':    ['eight'],
   'word:be':     ['the'],
   'word:came':   ['game'],
-  'word:eat':    ['it', 'a', 'eight', 'he'],
-  'word:four':   ['fall'],
   'word:have':   ['ha', 'tough'],
   'word:into':   ['and to'],
   'word:must':   ['most'],
   'word:new':    ['near'],
   'word:no':     ['now'],
   'word:out':    ['oh'],
-  'word:ran':    ['rap', 'run', 'right', 'ram'],
   'word:ride':   ['right'],
   'word:saw':    ['so', 'saul'],
   'word:soon':   ['so'],
   'word:that':   ['the'],
-  'word:there':  ['that', 'the'],
   'word:under':  ['on the', 'honda'],
   'word:well':   ['wow'],
   'word:white':  ['why'],
   'word:will':   ['well'],
-  'word:with':   ['well', 'quiz', 'wheres'],
   'word:yes':    ['yeah'],
-  'word:beowulf': ['bell', 'the off', 'they were'],
   'word:help':   ['hell'],
   'word:play':   ['please'],
 };
@@ -759,7 +764,6 @@ const STORAGE_KEY = 'readingLearner.v1';
 const DEFAULT_SETTINGS = {
   roundSize: 10,
   retryCap: 2,
-  masteryThreshold: 3,
   wordLevel: 1,
   numberLevel: 1,
   voiceName: null,
@@ -767,29 +771,6 @@ const DEFAULT_SETTINGS = {
 };
 
 const MAX_LEVEL = 10;
-
-// Items needing more than this many accepted forms are too ambiguous for the
-// recognizer to verify, so they are "soft excluded": kept in the app (and in the
-// tuning list) but hidden from practice rounds, left out of the practice grammar,
-// and not counted toward level completion. Prune an item's accepted list back to
-// <= this in the tuning screen to bring it back.
-const MAX_ACCEPTED_FOR_ACTIVE = 3;
-
-// Items where the adult's audition attempts consistently yield low Vosk confidence
-// are also soft-excluded. Requires at least MIN_CONF_ATTEMPTS recorded results
-// before the exclusion kicks in.
-const MIN_CONF_ATTEMPTS  = 3;
-const MIN_CONF_THRESHOLD = 0.45;
-
-function isItemActive(item) {
-  if ((item.accepted ? item.accepted.length : 0) > MAX_ACCEPTED_FOR_ACTIVE) return false;
-  const confs = item.auditionConfs || [];
-  if (confs.length >= MIN_CONF_ATTEMPTS) {
-    const mean = confs.reduce((s, c) => s + c, 0) / confs.length;
-    if (mean < MIN_CONF_THRESHOLD) return false;
-  }
-  return true;
-}
 
 function makeItem(c, kind) {
   return {
@@ -836,16 +817,18 @@ function loadStored() {
     for (const id of Object.keys(fresh.items)) {
       if (!parsed.items[id]) parsed.items[id] = fresh.items[id];
     }
+    // Canonical items removed from the content lists disappear from existing
+    // saves too (custom items are untouched).
+    for (const id of Object.keys(parsed.items)) {
+      if (!id.startsWith('custom:') && !fresh.items[id]) delete parsed.items[id];
+    }
     for (const k of Object.keys(DEFAULT_SETTINGS)) {
       if (parsed.settings[k] === undefined) parsed.settings[k] = DEFAULT_SETTINGS[k];
     }
-    const threshold = parsed.settings.masteryThreshold || DEFAULT_SETTINGS.masteryThreshold;
     for (const item of Object.values(parsed.items)) {
       if (!item.kind) item.kind = item.id.startsWith('num:') ? 'number' : 'word';
       if (item.level === undefined) item.level = 1;
-      if (item.unaidedStreak === undefined) {
-        item.unaidedStreak = item.mastered ? threshold : (item.silentCorrect || 0);
-      }
+      if (item.unaidedStreak === undefined) item.unaidedStreak = item.silentCorrect || 0;
       if (!item.auditionConfs) item.auditionConfs = [];
     }
     applyAcceptedOverrides(parsed.items);
@@ -1016,7 +999,6 @@ function buildGrammar(set) {
   const tokens = new Set(['[unk]']);
   for (const item of Object.values(stored.items)) {
     if (item.kind !== kind) continue;
-    if (!isItemActive(item)) continue;  // hidden items don't shape the grammar
     for (const acc of item.accepted) {
       for (const token of acc.toLowerCase().split(/\s+/)) {
         if (token && /^[a-z]+$/.test(token)) tokens.add(token);
@@ -1284,30 +1266,16 @@ let roundNumber = 0;
 function buildRound(set, level) {
   roundNumber++;
   const kind = set === 'numbers' ? 'number' : 'word';
-  const all  = Object.values(stored.items).filter(i => i.kind === kind && i.level === level && isItemActive(i));
+  // Mastered items are done for good — they never appear again.
+  const all  = Object.values(stored.items).filter(i =>
+    i.kind === kind && i.level === level && !i.mastered);
   const size = Math.min(stored.settings.roundSize, all.length);
 
-  const missed     = shuffle(all.filter(i => i.lastResult === 'miss' && !i.mastered));
-  const newItems   = shuffle(all.filter(i => i.totalAttempts === 0));
-  const inProgress = shuffle(all.filter(i => i.totalAttempts > 0 && i.successStreak > 0 && !i.mastered && i.lastResult !== 'miss'));
-  const mastered   = shuffle(all.filter(i => i.mastered));
+  const missed   = shuffle(all.filter(i => i.lastResult === 'miss'));
+  const newItems = shuffle(all.filter(i => i.totalAttempts === 0));
+  const rest     = shuffle(all.filter(i => i.totalAttempts > 0 && i.lastResult !== 'miss'));
 
-  const round = [];
-  const addUp = (bucket, limit) => {
-    for (const item of bucket) {
-      if (round.length >= limit || round.includes(item)) continue;
-      round.push(item);
-    }
-  };
-
-  addUp(missed,     size);
-  addUp(newItems,   size);
-  addUp(inProgress, size);
-  addUp(mastered,   Math.ceil(size * 0.2));
-
-  if (round.length < Math.min(size, all.length)) addUp(shuffle(all), size);
-
-  return shuffle(round.slice(0, size));
+  return shuffle([...missed, ...newItems, ...rest].slice(0, size));
 }
 
 // ============================================================
@@ -1327,10 +1295,18 @@ const gs = {
   recycled:            new Set(),
   awaitingResult:      false,
   hearPressed:         false,
+  letterTaps:          0,
 };
 
 function startRound(set, level) {
   const items = buildRound(set, level);
+  if (!items.length) {
+    // Every word in this level is already mastered — nothing left to show.
+    speak(`You already know all of level ${level}! Amazing!`, 1.0);
+    renderPicker();
+    showScreen('picker');
+    return;
+  }
   gs.currentSet          = set;
   gs.currentLevel        = level;
   gs.queue               = [...items];
@@ -1343,6 +1319,7 @@ function startRound(set, level) {
   gs.recycled            = new Set();
   gs.awaitingResult      = false;
   gs.hearPressed         = false;
+  gs.letterTaps          = 0;
 
   setLevelBackground(level, set);
   showScreen('practice');
@@ -1376,11 +1353,11 @@ function presentItem(item) {
   el.className = 'word-display' + (item.kind === 'number' ? ' number-display' : '');
 
   // The word is split into sound units — single letters and compound sounds
-  // like "sh"/"ee"/"igh". Tapping one flashes the whole group and plays its
-  // isolated phonetic sound, so the child can sound the word out himself.
+  // like "sh"/"ee"/"igh". Tapping or dragging across them flashes each group
+  // and plays its isolated phonetic sound, so the child can sound the word out.
   el.innerHTML = '';
-  el.appendChild(buildSoundUnitSpans(item.display,
-    () => !(gs.awaitingResult || micState === 'listening' || micState === 'evaluating')));
+  el.appendChild(buildSoundUnitSpans(item.display));
+  gs.letterTaps = 0;
 
   clearHeardDisplay();
   DBG('presentItem', { id: item.id });
@@ -1400,32 +1377,42 @@ function handleAnswer(correct) {
     item.successStreak++;
     item.lastResult = 'correct';
 
-    // Only a clean first-try answer without "Hear it" advances the unaided
-    // streak — but an aided correct answer no longer wipes it (misses still do).
+    const unaided = !gs.hearPressed && gs.retryCount === 0 && gs.letterTaps < 2;
     if (!gs.hearPressed && gs.retryCount === 0) {
       item.unaidedStreak++;
       item.silentCorrect++;
       gs.roundSilentCorrect++;
     }
 
-    item.mastered = item.unaidedStreak >= stored.settings.masteryThreshold;
+    // Mastered = read correctly once, first try, no "Hear it", fewer than two
+    // letter taps. Mastery is permanent (until a full progress reset).
+    const newlyMastered = unaided && !item.mastered;
+    if (newlyMastered) item.mastered = true;
 
     gs.roundCorrect++;
     gs.completedCount++;
     saveStored();
-    playPling();
-    burstStars();
     flashScreen(true);
 
-    speakPraise(() => {
-      gs.awaitingResult = false;
-      nextItem();
-    });
+    if (newlyMastered) {
+      playMasteryChime();
+      burstStars(70);
+      speak(`${PRAISE[Math.random() * PRAISE.length | 0]} You know ${item.display} now!`, 1.05, () => {
+        gs.awaitingResult = false;
+        nextItem();
+      });
+    } else {
+      playPling();
+      burstStars();
+      speakPraise(() => {
+        gs.awaitingResult = false;
+        nextItem();
+      });
+    }
 
   } else {
     item.successStreak = 0;
     item.unaidedStreak = 0;
-    item.mastered      = false;
     item.lastResult    = 'miss';
 
     saveStored();
@@ -1475,7 +1462,7 @@ function checkLevelComplete() {
   const levelKey = gs.currentSet === 'numbers' ? 'numberLevel' : 'wordLevel';
   const kind     = gs.currentSet === 'numbers' ? 'number' : 'word';
   const level    = gs.currentLevel;
-  const items    = Object.values(stored.items).filter(i => i.kind === kind && i.level === level && isItemActive(i));
+  const items    = Object.values(stored.items).filter(i => i.kind === kind && i.level === level);
   if (!items.length) return null;
   if (!items.every(i => i.mastered)) return null;
   if (level >= MAX_LEVEL) return 'all_defeated';
@@ -1489,11 +1476,20 @@ function checkLevelComplete() {
 // ============================================================
 
 function onRecognitionResult(transcripts) {
-  const matched = matchAnswer(transcripts, gs.currentItem);
-  DBG('judge', { expected: gs.currentItem?.display, heard: transcripts, matched });
+  const item = gs.currentItem;
+  let matched = matchAnswer(transcripts, item);
   const best = transcripts.find(t => t && t !== '[unk]') || '';
-  setHeardDisplay(best);
 
+  // After "Hear it" the child has just heard the word and is repeating it, so
+  // whatever the recognizer hears is a sample of how THEY say this word:
+  // silently learn it as an accepted form and count the attempt as correct.
+  if (gs.hearPressed && best && !matched) {
+    addAcceptedTerm(item, best);
+    matched = true;
+  }
+
+  DBG('judge', { expected: item?.display, heard: transcripts, matched, hearPressed: gs.hearPressed });
+  setHeardDisplay(best);
   handleAnswer(matched);
 }
 
@@ -1570,7 +1566,31 @@ function playPling() {
   } catch (_) {}
 }
 
-function burstStars() {
+// A brighter ascending arpeggio for the one-time "you know this word now"
+// acknowledgement (vs. the regular pling chord).
+function playMasteryChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    // C5 E5 G5 C6 played as a quick rising arpeggio
+    [[523.25, 0], [659.25, 0.09], [784.0, 0.18], [1046.5, 0.27]].forEach(([freq, dt]) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t + dt);
+      gain.gain.setValueAtTime(0, t + dt);
+      gain.gain.linearRampToValueAtTime(0.25, t + dt + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dt + 0.6);
+      osc.start(t + dt);
+      osc.stop(t + dt + 0.7);
+    });
+    setTimeout(() => { try { ctx.close(); } catch (_) {} }, 1200);
+  } catch (_) {}
+}
+
+function burstStars(count = 40) {
   const wordEl = document.getElementById('word-display');
   if (!wordEl) return;
   const rect = wordEl.getBoundingClientRect();
@@ -1588,7 +1608,7 @@ function burstStars() {
   const GRAVITY  = 0.22;
   const DURATION = 1800;
 
-  const particles = Array.from({length: 40}, () => {
+  const particles = Array.from({length: count}, () => {
     const angle = Math.random() * Math.PI * 2;
     const speed = 3 + Math.random() * 9;
     return {
@@ -1938,17 +1958,6 @@ function buildTuneRow(item, isCustom) {
   disp.className   = 'tune-display' + (item.kind === 'number' ? ' is-number' : '');
   disp.textContent = item.display;
 
-  const badge = document.createElement('span');
-  badge.className   = 'tune-hidden-badge';
-  badge.textContent = 'hidden';
-  const confs = item.auditionConfs || [];
-  const lowConf = confs.length >= MIN_CONF_ATTEMPTS &&
-    confs.reduce((s, c) => s + c, 0) / confs.length < MIN_CONF_THRESHOLD;
-  badge.title = lowConf
-    ? 'Hidden from practice (recognizer confidence too low — avg ' +
-      Math.round(confs.reduce((s, c) => s + c, 0) / confs.length * 100) + '% across ' + confs.length + ' tries)'
-    : 'Hidden from practice (more than ' + MAX_ACCEPTED_FOR_ACTIVE + ' accepted answers)';
-
   const terms = document.createElement('div');
   terms.className = 'tune-terms';
   fillTermChips(terms, item);
@@ -1974,7 +1983,7 @@ function buildTuneRow(item, isCustom) {
   const result = document.createElement('span');
   result.className = 'tune-result';
 
-  row.append(preview, disp, badge);
+  row.append(preview, disp);
 
   if (isCustom) {
     const lvlSel = makeLevelSelect(item.level || 1);
@@ -1998,7 +2007,6 @@ function buildTuneRow(item, isCustom) {
   }
 
   row.append(result);  // full-width, must stay last so it wraps cleanly
-  refreshRowExcluded(row, item);
   return row;
 }
 
@@ -2036,13 +2044,6 @@ function fillTermChips(container, item) {
     chip.appendChild(x);
     container.appendChild(chip);
   }
-  const row = container.closest('.tune-row');
-  if (row) refreshRowExcluded(row, item);
-}
-
-// Colour-mark rows whose item is soft-excluded (too many accepted answers).
-function refreshRowExcluded(row, item) {
-  row.classList.toggle('excluded', !isItemActive(item));
 }
 
 function revealTermInput(row, item) {
@@ -2194,7 +2195,7 @@ function openSoundPreview() {
     }
     const w = document.createElement('div');
     w.className = 'preview-word';
-    w.appendChild(buildSoundUnitSpans(item.display, null));
+    w.appendChild(buildSoundUnitSpans(item.display));
     list.appendChild(w);
   }
 }
@@ -2231,7 +2232,6 @@ function renderSettings() {
   const s = stored.settings;
   document.getElementById('s-round-size').value        = s.roundSize;
   document.getElementById('s-retry-cap').value         = s.retryCap;
-  document.getElementById('s-mastery-threshold').value = s.masteryThreshold;
   document.getElementById('s-speech-rate').value       = s.speechRate;
   document.getElementById('s-rate-value').textContent  = s.speechRate + '×';
 }
@@ -2240,7 +2240,6 @@ function saveSettings() {
   const s = stored.settings;
   s.roundSize         = Math.max(4,  parseInt(document.getElementById('s-round-size').value)        || 10);
   s.retryCap          = Math.max(1,  parseInt(document.getElementById('s-retry-cap').value)         || 2);
-  s.masteryThreshold  = Math.max(1,  parseInt(document.getElementById('s-mastery-threshold').value) || 3);
   s.speechRate        = parseFloat(document.getElementById('s-speech-rate').value)                 || 0.9;
   s.voiceName         = document.getElementById('s-voice').value || null;
   saveStored();
@@ -2251,7 +2250,7 @@ function renderProgress() {
   const summary = document.getElementById('progress-summary');
   if (!grid || !summary) return;
 
-  let counts = { new: 0, learning: 0, unaided: 0, mastered: 0, hidden: 0 };
+  let counts = { new: 0, learning: 0, mastered: 0 };
   grid.innerHTML = '';
 
   for (const item of Object.values(stored.items)) {
@@ -2260,16 +2259,12 @@ function renderProgress() {
     cell.title     = item.display;
     cell.textContent = item.display.length <= 4 ? item.display : item.display.slice(0, 4);
 
-    if (!isItemActive(item)) {
-      cell.classList.add('excluded'); counts.hidden++;
-    } else if (item.mastered) {
+    if (item.mastered) {
       cell.classList.add('mastered'); counts.mastered++;
     } else if (item.totalAttempts === 0) {
       cell.classList.add('new');      counts.new++;
-    } else if (item.unaidedStreak === 0) {
-      cell.classList.add('learning'); counts.learning++;
     } else {
-      cell.classList.add('unaided');  counts.unaided++;
+      cell.classList.add('learning'); counts.learning++;
     }
     grid.appendChild(cell);
   }
@@ -2277,9 +2272,7 @@ function renderProgress() {
   summary.innerHTML = `
     ⬜ New: ${counts.new} &nbsp;
     📖 Learning: ${counts.learning} &nbsp;
-    🎯 Unaided: ${counts.unaided} &nbsp;
-    ⭐ Mastered: ${counts.mastered} &nbsp;
-    🚫 Hidden: ${counts.hidden}
+    ⭐ Mastered: ${counts.mastered}
   `;
 }
 
@@ -2324,6 +2317,13 @@ function setupGate() {
 // ============================================================
 
 function setupEvents() {
+
+  // Letter taps/drags on the practice word and on the preview list.
+  attachSoundUnitGestures(document.getElementById('word-display'), {
+    guard: () => !(gs.awaitingResult || micState === 'listening' || micState === 'evaluating'),
+    onTrigger: () => { gs.letterTaps++; },
+  });
+  attachSoundUnitGestures(document.getElementById('soundpreview-list'));
 
   document.getElementById('btn-mode-words').addEventListener('click', () => {
     startRound('words', stored.settings.wordLevel);
@@ -2391,7 +2391,7 @@ function setupEvents() {
     document.getElementById('s-rate-value').textContent = parseFloat(e.target.value).toFixed(1) + '×';
     saveSettings();
   });
-  for (const id of ['s-round-size','s-retry-cap','s-mastery-threshold']) {
+  for (const id of ['s-round-size','s-retry-cap']) {
     document.getElementById(id).addEventListener('change', saveSettings);
   }
   document.getElementById('s-voice').addEventListener('change', () => {
@@ -2443,7 +2443,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v22 — cleaned lip smacks from l/oo clips. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v23 — one-shot mastery, drag-to-sound-out, hear-then-learn, exclusion rules removed. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')

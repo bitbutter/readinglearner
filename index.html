@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#110f21">
   <title>Reading Learner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎤</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=23">
 </head>
 <body>
 
@@ -73,10 +73,6 @@
             <span>Retry limit on a miss</span>
             <input type="number" id="s-retry-cap" min="1" max="5">
           </label>
-          <label class="setting-row">
-            <span>Unaided streak to master</span>
-            <input type="number" id="s-mastery-threshold" min="1" max="10">
-          </label>
         </section>
 
         <section class="settings-group">
@@ -141,7 +137,7 @@
         </div>
         <input type="search" id="tune-search" class="tune-search" placeholder="Search…" autocomplete="off" spellcheck="false">
       </div>
-      <p class="tune-hint">Hold 🎤 and say the item to hear what the recognizer detects. Tap <b>Add</b> on a miss, or ✕ to drop a term. Items with more than 3 accepted answers are <b>hidden</b> from practice (too ambiguous to verify) — prune one back to 3 to bring it back. Your child's voice may differ from yours, so audition here together with them when you can.</p>
+      <p class="tune-hint">Hold 🎤 and say the item to hear what the recognizer detects. Tap <b>Add</b> on a miss, or ✕ to drop a term. The app also learns automatically during practice: after the child presses "Hear it", whatever they say next is added as an accepted form for that word.</p>
       <div id="tune-list" class="tune-list"></div>
     </div>
   </div>
@@ -168,6 +164,6 @@
   <!-- Flash overlay (appended by JS) -->
 
   <script src="vosk/vosk.js"></script>
-  <script src="app.js?v=22"></script>
+  <script src="app.js?v=23"></script>
 </body>
 </html>

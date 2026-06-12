@@ -324,7 +324,12 @@ html, body {
 }
 
 /* Tappable letters: flash colour on tap, then fade back to the word's own
-   colour (the keyframe only defines the start, so it eases back to normal). */
+   colour (the keyframe only defines the start, so it eases back to normal).
+   touch-action: the practice word owns its touches entirely (drag-to-sound-
+   out); preview words allow vertical panning so the list still scrolls. */
+.word-display { touch-action: none; }
+.preview-word { touch-action: pan-y; }
+
 .word-display .letter,
 .preview-word .letter {
   display: inline-block;
