@@ -970,12 +970,13 @@ let listenEvaluated   = false;
 // wsrResult: null = not yet arrived, '' = arrived but empty, else transcript
 // wsrPending: true = evaluateVosk is waiting on a WSR result
 const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-let wsrRecognizer = null;
-let wsrPending    = false;
-let wsrResult     = null;
-let wsrInterim    = null;  // last interim transcript; fallback when onend has no final
-let wsrGeneration = 0;     // closed over in handlers to discard stale events
-let wsrAudioLive  = false; // true once WSR's audio capture has actually begun
+let wsrRecognizer    = null;
+let wsrPending       = false;
+let wsrResult        = null;
+let wsrInterim       = null;  // last interim transcript; fallback when onend has no final
+let wsrInterimTimer  = null;  // short deadline to use interim when Chrome won't finalise
+let wsrGeneration    = 0;     // closed over in handlers to discard stale events
+let wsrAudioLive     = false; // true once WSR's audio capture has actually begun
 
 // Warm-up: Chrome's SpeechRecognition drops the first ~200-300ms after start.
 // We hold a visible "getting ready" state until audio is live AND a minimum
@@ -1013,8 +1014,22 @@ function startWSR() {
     if (!result.isFinal) {
       wsrInterim = text || null;
       DBG('wsr.interim', text);
+      // When already waiting for a final, arm a short deadline so we don't
+      // block for the full 6s safety timeout if Chrome never finalises.
+      if (wsrPending && wsrInterim && !wsrInterimTimer) {
+        wsrInterimTimer = setTimeout(() => {
+          wsrInterimTimer = null;
+          if (!wsrPending || !wsrInterim) return;
+          DBG('wsr', 'interim deadline — using: ' + wsrInterim);
+          if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
+          wsrPending = false;
+          setMicState('waiting');
+          onRecognitionResult([wsrInterim]);
+        }, 600);
+      }
       return;
     }
+    clearTimeout(wsrInterimTimer); wsrInterimTimer = null;
     DBG('wsr.result', { text, wsrPending });
     wsrResult = text || '';
     if (wsrPending) {
@@ -1236,6 +1251,7 @@ async function openMicStream() {
 function abortWSR() {
   wsrGeneration++;         // invalidate any in-flight handlers for this session
   wsrPending = false;
+  clearTimeout(wsrInterimTimer); wsrInterimTimer = null;
   if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
 }
 
@@ -1256,6 +1272,7 @@ function startListening() {
   wsrPending       = false;
   wsrResult        = null;
   wsrInterim       = null;
+  clearTimeout(wsrInterimTimer); wsrInterimTimer = null;
 
   if (WSR) {
     // WSR-primary: cloud recognizer holds its own mic — no AudioContext needed.
@@ -1327,14 +1344,21 @@ function evaluateVosk() {
   } else {
     // WSR still running — waiting for onresult / onend (natural end-of-speech).
     wsrPending = true;
-    // After 6s force-abort; onend will then fire and clean up via wsrPending.
+    // After 6s force-abort; use interim transcript if Chrome never finalised.
     setTimeout(() => {
       if (!wsrPending) return;
       DBG('wsr', 'safety timeout — aborting');
       if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
       wsrPending = false;
-      setMicState('ready');
-      if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+      const fallback = wsrInterim;
+      if (fallback) {
+        DBG('wsr', 'safety timeout used interim: ' + fallback);
+        setMicState('waiting');
+        onRecognitionResult([fallback]);
+      } else {
+        setMicState('ready');
+        if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+      }
     }, 6000);
     DBG('wsr', 'waiting for natural end-of-speech…');
   }
