@@ -1216,7 +1216,7 @@ function requestStopAndEvaluate() {
 }
 
 function evaluateVosk() {
-  DBG('evaluateVosk', { listenEvaluated, heard: heardTranscripts.slice(), wsrResult, wsrFailed });
+  DBG('evaluateVosk', { listenEvaluated, heard: heardTranscripts.slice(), wsrResult });
   if (listenEvaluated) return;
   if (micState !== 'evaluating' && micState !== 'listening') return;
   listenEvaluated = true;
@@ -2613,7 +2613,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v30 — WSR-primary; no stop() on release (let cloud finalise naturally); VOSK_ENABLED flag. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v30b — WSR-primary; no stop() on release; VOSK_ENABLED flag; fixed wsrFailed ReferenceError. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
