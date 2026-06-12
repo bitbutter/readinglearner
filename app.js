@@ -968,6 +968,7 @@ let micOpening      = false;
 
 let heardTranscripts  = [];
 let listenEvaluated   = false;
+let micHoldStart      = 0;   // set when startListening fires; read in no-result path
 
 // ── Web Speech API (primary recognizer) ──────────────────────────────────────
 // wsrResult: null = not yet arrived, '' = arrived but empty, else transcript
@@ -1049,8 +1050,7 @@ function startWSR() {
     wsrResult = '';
     if (wsrPending) {
       wsrPending = false;
-      setMicState('ready');
-      if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+      handleNoTranscript();
     }
   };
 
@@ -1071,8 +1071,7 @@ function startWSR() {
         setMicState('waiting');
         onRecognitionResult([wsrResult]);
       } else {
-        setMicState('ready');
-        if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+        handleNoTranscript();
       }
     }
   };
@@ -1270,6 +1269,7 @@ function closeMicStream() {
 function startListening() {
   DBG('startListening', { sessionMicBlocked, voskReady, wsrAvailable: !!WSR });
   if (sessionMicBlocked) { onMicDenied(); return; }
+  micHoldStart     = Date.now();
   heardTranscripts = [];
   listenEvaluated  = false;
   wsrPending       = false;
@@ -1328,8 +1328,7 @@ function evaluateVosk() {
       setMicState('waiting');
       onRecognitionResult([...heardTranscripts]);
     } else {
-      setMicState('ready');
-      if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+      handleNoTranscript();
     }
     return;
   }
@@ -1341,8 +1340,7 @@ function evaluateVosk() {
       setMicState('waiting');
       onRecognitionResult([wsrResult]);
     } else {
-      setMicState('ready');
-      if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+      handleNoTranscript();
     }
   } else {
     // WSR still running — waiting for onresult / onend (natural end-of-speech).
@@ -1373,8 +1371,7 @@ function evaluateVosk() {
         setMicState('waiting');
         onRecognitionResult([fallback]);
       } else {
-        setMicState('ready');
-        if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+        handleNoTranscript();
       }
     }, 6000);
     DBG('wsr', 'waiting for natural end-of-speech…');
@@ -1384,6 +1381,24 @@ function evaluateVosk() {
 // ============================================================
 // ANSWER MATCHING
 // ============================================================
+
+// Called in every "no transcript" path. If the child held the button for
+// >= 500 ms, Chrome simply failed to transcribe the word (common for very
+// short function words like "are"). Treat the hold as a correct attempt
+// rather than telling a child who clearly spoke that we didn't hear them.
+function handleNoTranscript() {
+  const item = gs.currentItem;
+  const held = Date.now() - micHoldStart;
+  DBG('noTranscript', { held, display: item?.display });
+  if (held >= 500 && item && !gs.awaitingResult) {
+    DBG('noTranscript', 'accepting on hold duration');
+    setHeardDisplay(item.display);
+    handleAnswer(true);
+  } else {
+    setMicState('ready');
+    if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+  }
+}
 
 function normText(s) {
   return s.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
