@@ -1004,8 +1004,13 @@ function startWSR() {
   r.onerror = (e) => {
     if (myGen !== wsrGeneration) return;
     DBG('wsr.error', { error: e.error, wsrStopped });
+    if (e.error === 'not-allowed') {
+      sessionMicBlocked = true;
+      onMicDenied();
+      return;
+    }
     if (!wsrStopped) {
-      // Fired before we called stop() — audio conflict or device error; ignore.
+      // Fired before we called stop() — audio conflict or device error.
       wsrFailed = true;
       return;
     }
@@ -1179,20 +1184,26 @@ function closeMicStream() {
 }
 
 function startListening() {
-  DBG('startListening', { sessionMicBlocked, voskReady });
+  DBG('startListening', { sessionMicBlocked, voskReady, wsrAvailable: !!WSR });
   if (sessionMicBlocked) { onMicDenied(); return; }
-  if (!voskReady || !voskRecognizer) { onRecognitionFallback(); return; }
-  if (!micStream) {
-    onRecognitionFallback();
-    return;
-  }
   heardTranscripts = [];
   listenEvaluated  = false;
   wsrPending       = false;
   wsrResult        = null;
+
+  if (WSR) {
+    // WSR-primary: cloud recognizer holds its own mic — no AudioContext needed.
+    setMicState('listening');
+    maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
+    startWSR();
+    return;
+  }
+
+  // Vosk-only fallback (browser has no SpeechRecognition API).
+  if (!voskReady || !voskRecognizer) { onRecognitionFallback(); return; }
+  if (!micStream)                    { onRecognitionFallback(); return; }
   setMicState('listening');
   maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
-  startWSR();
 }
 
 function requestStopAndEvaluate() {
@@ -1200,14 +1211,20 @@ function requestStopAndEvaluate() {
   if (micState !== 'listening') return;
   clearTimeout(maxListenTimer);
   setMicState('evaluating');
-  if (voskRecognizer) voskRecognizer.retrieveFinalResult();
-  // Signal WSR to finish streaming and deliver its result asynchronously.
-  if (wsrRecognizer) { try { wsrStopped = true; wsrRecognizer.stop(); } catch (_) {} }
-  settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 2000);
+  if (WSR) {
+    // WSR-primary: signal cloud recognizer to finalise and deliver result.
+    if (wsrRecognizer) { try { wsrStopped = true; wsrRecognizer.stop(); } catch (_) {} }
+    // Short settle — result arrives via onresult event, not via Vosk polling.
+    settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 500);
+  } else {
+    // Vosk-only: flush the recognizer buffer and wait for the final result.
+    if (voskRecognizer) voskRecognizer.retrieveFinalResult();
+    settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 2000);
+  }
 }
 
 function evaluateVosk() {
-  DBG('evaluateVosk', { listenEvaluated, heard: heardTranscripts.slice() });
+  DBG('evaluateVosk', { listenEvaluated, heard: heardTranscripts.slice(), wsrResult, wsrFailed });
   if (listenEvaluated) return;
   if (micState !== 'evaluating' && micState !== 'listening') return;
   listenEvaluated = true;
@@ -1215,19 +1232,9 @@ function evaluateVosk() {
   clearTimeout(maxListenTimer);
 
   const item = gs.currentItem;
-  const voskMatch = heardTranscripts.length && item && matchAnswer(heardTranscripts, item);
 
-  if (voskMatch) {
-    // Vosk fast path — result already confirmed, discard WSR result.
-    abortWSR();
-    setMicState('waiting');
-    onRecognitionResult([...heardTranscripts]);
-    return;
-  }
-
-  // Vosk missed — try WSR second pass unless WSR is unavailable or conflicted.
-  if (!WSR || wsrFailed) {
-    // WSR not available or terminated prematurely (e.g. Windows Chrome AudioContext conflict).
+  if (!WSR) {
+    // ── Vosk-only fallback ───────────────────────────────────────────────────
     if (heardTranscripts.length) {
       setMicState('waiting');
       onRecognitionResult([...heardTranscripts]);
@@ -1238,17 +1245,17 @@ function evaluateVosk() {
     return;
   }
 
+  // ── WSR-primary path ─────────────────────────────────────────────────────
+  if (wsrFailed) {
+    setMicState('ready');
+    if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+    return;
+  }
+
   if (wsrResult !== null) {
-    // WSR terminated with a controlled stop before evaluateVosk ran.
     if (wsrResult) {
-      // WSR got a real transcript — use it.
       setMicState('waiting');
       onRecognitionResult([wsrResult]);
-    } else if (heardTranscripts.length) {
-      // WSR got nothing (audio conflict or silence) but Vosk heard something —
-      // use the Vosk transcript so the child gets wrong-answer feedback.
-      setMicState('waiting');
-      onRecognitionResult([...heardTranscripts]);
     } else {
       setMicState('ready');
       if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
@@ -1256,7 +1263,6 @@ function evaluateVosk() {
   } else {
     // WSR still running — wait for onresult / onerror / onend.
     wsrPending = true;
-    // Safety timeout: if WSR hangs and never fires, unblock after 3s.
     setTimeout(() => {
       if (!wsrPending) return;
       wsrPending = false;
@@ -1456,7 +1462,7 @@ function startRound(set, level) {
   setLevelBackground(level, set);
   showScreen('practice');
   createRoundRecognizer(set);
-  openMicStream();
+  if (!WSR) openMicStream();  // WSR-primary: WSR manages its own mic; Vosk needs this
 
   // Announce the level at the start of the session
   speak(`Level ${level}!`, 1.1, () => nextItem());
@@ -2618,7 +2624,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v28b — WSR per-session isolation; wsrFailed conflict detection; Vosk-fallback when WSR ends empty; global unblock timer; faster speak watchdog. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v29 — WSR-primary recognition; Vosk retained for offline fallback and tuning audition only. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
