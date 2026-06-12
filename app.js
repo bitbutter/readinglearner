@@ -784,7 +784,9 @@ function makeItem(c, kind) {
     silentCorrect: 0,
     totalCorrect: 0,
     totalAttempts: 0,
-    mastered: false,
+    decoded: false,   // silver: sounded out with letter taps, no Hear it
+    mastered: false,  // gold: read with at most one letter tap, no Hear it
+    flawless: false,  // purple: read with no letter taps and no Hear it
     lastSeenRound: null,
     lastResult: null,
     auditionConfs: [],
@@ -829,6 +831,8 @@ function loadStored() {
       if (!item.kind) item.kind = item.id.startsWith('num:') ? 'number' : 'word';
       if (item.level === undefined) item.level = 1;
       if (item.unaidedStreak === undefined) item.unaidedStreak = item.silentCorrect || 0;
+      if (item.decoded === undefined)  item.decoded  = false;
+      if (item.flawless === undefined) item.flawless = false;
       if (!item.auditionConfs) item.auditionConfs = [];
     }
     applyAcceptedOverrides(parsed.items);
@@ -1305,6 +1309,7 @@ const gs = {
   awaitingResult:      false,
   hearPressed:         false,
   letterTaps:          0,
+  newTrophies:         0,
 };
 
 function startRound(set, level) {
@@ -1322,6 +1327,7 @@ function startRound(set, level) {
   gs.awaitingResult      = false;
   gs.hearPressed         = false;
   gs.letterTaps          = 0;
+  gs.newTrophies         = 0;
 
   setLevelBackground(level, set);
   showScreen('practice');
@@ -1360,6 +1366,7 @@ function presentItem(item) {
   el.innerHTML = '';
   el.appendChild(buildSoundUnitSpans(item.display));
   gs.letterTaps = 0;
+  renderTrophyRow(item);
 
   clearHeardDisplay();
   DBG('presentItem', { id: item.id });
@@ -1382,27 +1389,41 @@ function handleAnswer(correct) {
     item.successStreak++;
     item.lastResult = 'correct';
 
-    const unaided = !gs.hearPressed && gs.retryCount === 0 && gs.letterTaps < 2;
-    if (!gs.hearPressed && gs.retryCount === 0) {
+    const firstTry = !gs.hearPressed && gs.retryCount === 0;
+    if (firstTry) {
       item.unaidedStreak++;
       item.silentCorrect++;
       gs.roundSilentCorrect++;
     }
 
-    // Mastered = read correctly once, first try, no "Hear it", fewer than two
-    // letter taps. Mastery is permanent (until a full progress reset).
-    const newlyMastered = unaided && !item.mastered;
-    if (newlyMastered) item.mastered = true;
+    // Trophies (all permanent until a full progress reset):
+    //   >=2 letter taps -> silver (genuinely sounded it out)
+    //   <=1 letter tap  -> gold/mastered (word leaves the rotation)
+    //   0 letter taps   -> purple too (read entirely without help)
+    // The highest newly-earned tier gets the celebration.
+    let newTrophy = null;
+    if (firstTry) {
+      if (gs.letterTaps >= 2 && !item.decoded)  { item.decoded  = true; newTrophy = 'silver'; }
+      if (gs.letterTaps <= 1 && !item.mastered) { item.mastered = true; newTrophy = 'gold'; }
+      if (gs.letterTaps === 0 && !item.flawless) { item.flawless = true; newTrophy = 'purple'; }
+    }
 
     gs.roundCorrect++;
     gs.completedCount++;
     saveStored();
     flashScreen(true);
 
-    if (newlyMastered) {
-      playMasteryChime();
-      burstStars(70);
-      speak(`${PRAISE[Math.random() * PRAISE.length | 0]} You know ${item.display} now!`, 1.05, () => {
+    if (newTrophy) {
+      gs.newTrophies++;
+      renderTrophyRow(item, newTrophy);
+      playTrophyChime(newTrophy);
+      burstStars(70, TROPHY_PALETTES[newTrophy]);
+      const praise = PRAISE[Math.random() * PRAISE.length | 0];
+      const line =
+        newTrophy === 'purple' ? `Wow! You read ${item.display} all by yourself!` :
+        newTrophy === 'gold'   ? `${praise} You know ${item.display} now!` :
+                                 `${praise} You sounded it out!`;
+      speak(line, 1.05, () => {
         gs.awaitingResult = false;
         nextItem();
       });
@@ -1571,14 +1592,34 @@ function playPling() {
   } catch (_) {}
 }
 
-// A brighter ascending arpeggio for the one-time "you know this word now"
-// acknowledgement (vs. the regular pling chord).
-function playMasteryChime() {
+// ── Trophies ──
+// silver: sounded the word out with letter taps (>=2 taps, no Hear it)
+// gold:   read it with at most one tap (mastery — word leaves the rotation)
+// purple: read it with no taps at all (flawless)
+const TROPHY_DEFS = [
+  ['decoded',  'silver', 'Sounded it out'],
+  ['mastered', 'gold',   'Knows it'],
+  ['flawless', 'purple', 'Read it without help'],
+];
+
+const TROPHY_PALETTES = {
+  silver: ['#e6edf5', '#aebfd4', '#8fb8ff', '#ffffff', '#c0d8f0'],
+  gold:   ['#ffd166', '#ffbe0b', '#ff9f1c', '#fff3c4', '#f9c74f'],
+  purple: ['#b266ff', '#d29bff', '#8338ec', '#f0c4ff', '#ff66ff'],
+};
+
+// Rising arpeggios per trophy tier (the regular pling stays for plain praise).
+const TROPHY_NOTES = {
+  silver: [[659.25, 0], [987.77, 0.11]],
+  gold:   [[523.25, 0], [659.25, 0.09], [784.0, 0.18], [1046.5, 0.27]],
+  purple: [[523.25, 0], [659.25, 0.08], [784.0, 0.16], [1046.5, 0.24], [1318.5, 0.32]],
+};
+
+function playTrophyChime(tier) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const t = ctx.currentTime;
-    // C5 E5 G5 C6 played as a quick rising arpeggio
-    [[523.25, 0], [659.25, 0.09], [784.0, 0.18], [1046.5, 0.27]].forEach(([freq, dt]) => {
+    for (const [freq, dt] of TROPHY_NOTES[tier]) {
       const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -1590,12 +1631,28 @@ function playMasteryChime() {
       gain.gain.exponentialRampToValueAtTime(0.001, t + dt + 0.6);
       osc.start(t + dt);
       osc.stop(t + dt + 0.7);
-    });
-    setTimeout(() => { try { ctx.close(); } catch (_) {} }, 1200);
+    }
+    setTimeout(() => { try { ctx.close(); } catch (_) {} }, 1400);
   } catch (_) {}
 }
 
-function burstStars(count = 40) {
+// Show the word's earned trophies above it; `popTier` animates a fresh one.
+function renderTrophyRow(item, popTier) {
+  const el = document.getElementById('trophy-row');
+  if (!el) return;
+  el.innerHTML = '';
+  if (!item) return;
+  for (const [flag, tier, label] of TROPHY_DEFS) {
+    if (!item[flag]) continue;
+    const s = document.createElement('span');
+    s.className   = 'trophy ' + tier + (tier === popTier ? ' pop' : '');
+    s.textContent = '★';
+    s.title       = label;
+    el.appendChild(s);
+  }
+}
+
+function burstStars(count = 40, palette = null) {
   const wordEl = document.getElementById('word-display');
   if (!wordEl) return;
   const rect = wordEl.getBoundingClientRect();
@@ -1609,7 +1666,7 @@ function burstStars(count = 40) {
   document.body.appendChild(canvas);
   const c = canvas.getContext('2d');
 
-  const COLORS   = ['#ff6b6b','#ffd166','#06d6a0','#a78bfa','#ff9f1c','#4cc9f0','#f72585','#80ffdb','#ffbe0b'];
+  const COLORS   = palette || ['#ff6b6b','#ffd166','#06d6a0','#a78bfa','#ff9f1c','#4cc9f0','#f72585','#80ffdb','#ffbe0b'];
   const GRAVITY  = 0.22;
   const DURATION = 1800;
 
@@ -1712,6 +1769,13 @@ function showAllDone(levelResult) {
   } else {
     scoreText = "You're learning — keep it up!";
     speakText = `You practised ${total} ${noun}s today. See you again tomorrow!`;
+  }
+
+  if (gs.newTrophies > 0) {
+    const n = gs.newTrophies;
+    scoreText += ` ★ ${n} new troph${n === 1 ? 'y' : 'ies'}!`;
+    speakText = speakText.replace('See you again tomorrow!',
+      `You won ${n} new troph${n === 1 ? 'y' : 'ies'}! See you again tomorrow!`);
   }
 
   document.getElementById('alldone-score').textContent = scoreText;
@@ -2221,7 +2285,7 @@ function renderProgress() {
   const summary = document.getElementById('progress-summary');
   if (!grid || !summary) return;
 
-  let counts = { new: 0, learning: 0, mastered: 0 };
+  let counts = { new: 0, learning: 0, decoded: 0, mastered: 0, flawless: 0 };
   grid.innerHTML = '';
 
   for (const item of Object.values(stored.items)) {
@@ -2230,8 +2294,11 @@ function renderProgress() {
     cell.title     = item.display;
     cell.textContent = item.display.length <= 4 ? item.display : item.display.slice(0, 4);
 
+    if (item.flawless) counts.flawless++;
     if (item.mastered) {
       cell.classList.add('mastered'); counts.mastered++;
+    } else if (item.decoded) {
+      cell.classList.add('decoded');  counts.decoded++;
     } else if (item.totalAttempts === 0) {
       cell.classList.add('new');      counts.new++;
     } else {
@@ -2243,7 +2310,9 @@ function renderProgress() {
   summary.innerHTML = `
     ⬜ New: ${counts.new} &nbsp;
     📖 Learning: ${counts.learning} &nbsp;
-    ⭐ Mastered: ${counts.mastered}
+    🥈 Sounded out: ${counts.decoded} &nbsp;
+    ⭐ Mastered: ${counts.mastered} &nbsp;
+    💜 Flawless: ${counts.flawless}
   `;
 }
 
@@ -2414,7 +2483,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v24 — rounds top up with mastered words (with reminder). Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v25 — per-word trophies: silver sounded-out, gold mastered, purple flawless. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')

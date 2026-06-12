@@ -354,6 +354,34 @@ html, body {
   animation: letter-flash 0.9s ease-out;
 }
 
+/* ── Trophies (silver = sounded out, gold = knows it, purple = no help) ── */
+
+.trophy-row {
+  display: flex;
+  gap: 0.55rem;
+  justify-content: center;
+  align-items: center;
+  min-height: 2rem;
+}
+
+.trophy {
+  font-size: 1.7rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.trophy.silver { color: #d9e4f0; text-shadow: 0 0 14px rgba(174,191,212,0.8); }
+.trophy.gold   { color: #ffd166; text-shadow: 0 0 14px rgba(255,190,11,0.8); }
+.trophy.purple { color: #c07dff; text-shadow: 0 0 16px rgba(178,102,255,0.9); }
+
+.trophy.pop { animation: trophy-pop 0.7s cubic-bezier(0.2, 2.2, 0.4, 1); }
+
+@keyframes trophy-pop {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.6) rotate(12deg); }
+  100% { transform: scale(1); }
+}
+
 /* Grown-up preview: every word in the lists, big, with tappable groups. */
 .preview-word {
   font-size: clamp(2.2rem, 7vmin, 3.6rem);
@@ -788,9 +816,8 @@ html, body {
 
 .progress-cell.new      { background: rgba(255,255,255,0.07); color: var(--muted); }
 .progress-cell.learning { background: rgba(0,201,177,0.18);   color: var(--teal); }
-.progress-cell.unaided  { background: rgba(255,190,11,0.18);  color: var(--amber); }
+.progress-cell.decoded  { background: rgba(174,191,212,0.22); color: #d9e4f0; }
 .progress-cell.mastered { background: rgba(82,232,155,0.18);  color: var(--mint); }
-.progress-cell.excluded { background: rgba(255,82,82,0.1);    color: rgba(255,120,120,0.7); text-decoration: line-through; }
 
 .progress-summary {
   font-size: 0.82rem;
