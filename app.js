@@ -1239,10 +1239,16 @@ function evaluateVosk() {
   }
 
   if (wsrResult !== null) {
-    // WSR already terminated with a controlled stop before evaluateVosk ran.
+    // WSR terminated with a controlled stop before evaluateVosk ran.
     if (wsrResult) {
+      // WSR got a real transcript — use it.
       setMicState('waiting');
       onRecognitionResult([wsrResult]);
+    } else if (heardTranscripts.length) {
+      // WSR got nothing (audio conflict or silence) but Vosk heard something —
+      // use the Vosk transcript so the child gets wrong-answer feedback.
+      setMicState('waiting');
+      onRecognitionResult([...heardTranscripts]);
     } else {
       setMicState('ready');
       if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
@@ -2612,7 +2618,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v28 — WSR per-session isolation; conflict detection via wsrFailed; global unblock timer; faster speak watchdog. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v28b — WSR per-session isolation; wsrFailed conflict detection; Vosk-fallback when WSR ends empty; global unblock timer; faster speak watchdog. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
