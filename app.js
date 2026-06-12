@@ -363,7 +363,7 @@ const WORDS_CONTENT = [
   { id: 'word:play',    display: 'play',    accepted: ['play'],                  level: 1 },
   { id: 'word:red',     display: 'red',     accepted: ['red','read'],            level: 1 },
   { id: 'word:run',     display: 'run',     accepted: ['run'],                   level: 1 },
-  { id: 'word:said',    display: 'said',    accepted: ['said','sed'],            level: 1 },
+  { id: 'word:said',    display: 'said',    accepted: ['said','sed','sad'],       level: 1 },
   { id: 'word:see',     display: 'see',     accepted: ['see','sea'],             level: 1 },
   { id: 'word:the',     display: 'the',     accepted: ['the','da','duh','de','thee','dah'], level: 1 },
   { id: 'word:three',   display: 'three',   accepted: ['three'],                 level: 1 },
@@ -668,10 +668,12 @@ const WORDS_CONTENT = [
 // To add to this: on your dev machine, audition terms in Settings → "Audition &
 // edit all terms", then run rlExportAccepted() in the console (or tap Export on
 // that screen) and paste the `acceptedAdditions` entries below.
-// Genuine homophones only. Vosk-recognition-artifact entries (big→pick, etc.)
-// have been removed — the Web Speech API second-pass handles accent variants
-// without needing a static workaround list.
-const ACCEPTED_OVERRIDES = {};
+// Genuine homophones and confirmed WSR mishearings for specific words.
+// Applied on every load so existing users benefit even after the one-time
+// acceptedPruned migration has already run.
+const ACCEPTED_OVERRIDES = {
+  'word:said': ['sad'],   // WSR commonly mishears 'said' as 'sad'
+};
 
 // Returns a map of id → Set<normText> covering only the terms baked into the
 // content arrays (the canonical homophones / accepted spellings).
@@ -1739,11 +1741,18 @@ function checkLevelComplete() {
 // ============================================================
 
 function onRecognitionResult(transcripts) {
-  const item    = gs.currentItem;
-  const matched = matchAnswer(transcripts, item);
-  const best    = transcripts.find(t => t && t !== '[unk]') || '';
+  const item = gs.currentItem;
+  const best = transcripts.find(t => t && t !== '[unk]') || '';
 
-  DBG('judge', { expected: item?.display, heard: transcripts, matched, hearPressed: gs.hearPressed });
+  // If the hear button was pressed (app already spoke the word) or the app has
+  // already spoken the correct word during a retry, the child is repeating what
+  // they heard — auto-add any transcription so WSR mishearings don't block them.
+  if (best && (gs.hearPressed || gs.retryCount > 0)) {
+    addAcceptedTerm(item, best);
+  }
+
+  const matched = matchAnswer(transcripts, item);
+  DBG('judge', { expected: item?.display, heard: transcripts, matched, hearPressed: gs.hearPressed, retryCount: gs.retryCount });
   setHeardDisplay(best);
   handleAnswer(matched);
 }
