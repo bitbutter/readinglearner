@@ -1422,7 +1422,7 @@ function handleAnswer(correct) {
       // "red" is deliberate: spoken-only text, and the TTS reads "read" as
       // present-tense /reed/ where past-tense /red/ is meant.
       const line =
-        newTrophy === 'purple' ? `Wow! You red ${item.display} all by yourself!` :
+        newTrophy === 'purple' ? `Excellent! You red ${item.display} without any help!` :
         newTrophy === 'gold'   ? `${praise} You know ${item.display} now!` :
                                  `${praise} You sounded it out!`;
       // Let the trophy arpeggio ring before the voice comes in.
