@@ -357,7 +357,7 @@ const WORDS_CONTENT = [
   { id: 'word:little',  display: 'little',  accepted: ['little'],                level: 1 },
   { id: 'word:look',    display: 'look',    accepted: ['look'],                  level: 1 },
   { id: 'word:make',    display: 'make',    accepted: ['make'],                  level: 1 },
-  { id: 'word:me',      display: 'me',      accepted: ['me'],                    level: 1 },
+  { id: 'word:me',      display: 'me',      accepted: ['me','may'],              level: 1 },
   { id: 'word:my',      display: 'my',      accepted: ['my'],                    level: 1 },
   { id: 'word:not',     display: 'not',     accepted: ['not','knot'],            level: 1 },
   { id: 'word:play',    display: 'play',    accepted: ['play'],                  level: 1 },
@@ -365,12 +365,12 @@ const WORDS_CONTENT = [
   { id: 'word:run',     display: 'run',     accepted: ['run'],                   level: 1 },
   { id: 'word:said',    display: 'said',    accepted: ['said','sed'],            level: 1 },
   { id: 'word:see',     display: 'see',     accepted: ['see','sea'],             level: 1 },
-  { id: 'word:the',     display: 'the',     accepted: ['the','da','duh'],        level: 1 },
+  { id: 'word:the',     display: 'the',     accepted: ['the','da','duh','de','thee','dah'], level: 1 },
   { id: 'word:three',   display: 'three',   accepted: ['three'],                 level: 1 },
   { id: 'word:two',     display: 'two',     accepted: ['two','to','too'],        level: 1 },
   { id: 'word:up',      display: 'up',      accepted: ['up'],                    level: 1 },
   { id: 'word:we',      display: 'we',      accepted: ['we','wee'],              level: 1 },
-  { id: 'word:you',     display: 'you',     accepted: ['you'],                   level: 1 },
+  { id: 'word:you',     display: 'you',     accepted: ['you','u','yoo'],          level: 1 },
   // Level 2: Dolch Primer
   { id: 'word:all',     display: 'all',     accepted: ['all'],                   level: 2 },
   { id: 'word:are',     display: 'are',     accepted: ['are'],                   level: 2 },
@@ -1344,6 +1344,20 @@ function evaluateVosk() {
   } else {
     // WSR still running — waiting for onresult / onend (natural end-of-speech).
     wsrPending = true;
+    // If an interim already arrived before wsrPending was set (common for short
+    // words: interim fires during listening, button release happens immediately
+    // after), arm the 600ms deadline now so we don't wait the full 6s.
+    if (wsrInterim && !wsrInterimTimer) {
+      wsrInterimTimer = setTimeout(() => {
+        wsrInterimTimer = null;
+        if (!wsrPending || !wsrInterim) return;
+        DBG('wsr', 'interim (pre-pending) deadline — using: ' + wsrInterim);
+        if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
+        wsrPending = false;
+        setMicState('waiting');
+        onRecognitionResult([wsrInterim]);
+      }, 600);
+    }
     // After 6s force-abort; use interim transcript if Chrome never finalised.
     setTimeout(() => {
       if (!wsrPending) return;
