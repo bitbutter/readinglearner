@@ -2740,7 +2740,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v31 — Warm-up "get ready" state (amber ring + go chime) covering Chrome WSR start dead-zone. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v35 — Auto-add heard terms when hear pressed or correct word already spoken; "said"→"sad" pre-seeded. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
