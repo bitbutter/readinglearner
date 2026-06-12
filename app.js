@@ -973,6 +973,7 @@ const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let wsrRecognizer = null;
 let wsrPending    = false;
 let wsrResult     = null;
+let wsrInterim    = null;  // last interim transcript; fallback when onend has no final
 let wsrGeneration = 0;     // closed over in handlers to discard stale events
 let wsrAudioLive  = false; // true once WSR's audio capture has actually begun
 
@@ -997,16 +998,23 @@ function startWSR() {
   const r = new WSR();
   r.lang            = 'en-GB';
   r.continuous      = false;
-  r.interimResults  = false;
+  r.interimResults  = true;
   r.maxAlternatives = 1;
   wsrRecognizer = r;
+  wsrInterim    = null;
 
   r.onaudiostart = () => { if (myGen === wsrGeneration) { wsrAudioLive = true; DBG('wsr', 'audio live'); } };
   r.onstart      = () => { if (myGen === wsrGeneration) wsrAudioLive = true; };
 
   r.onresult = (e) => {
     if (myGen !== wsrGeneration) return;
-    const text = (e.results[0][0].transcript || '').toLowerCase().trim();
+    const result = e.results[e.results.length - 1];
+    const text = (result[0].transcript || '').toLowerCase().trim();
+    if (!result.isFinal) {
+      wsrInterim = text || null;
+      DBG('wsr.interim', text);
+      return;
+    }
     DBG('wsr.result', { text, wsrPending });
     wsrResult = text || '';
     if (wsrPending) {
@@ -1030,12 +1038,24 @@ function startWSR() {
 
   r.onend = () => {
     if (myGen !== wsrGeneration) return;
-    DBG('wsr.end', { wsrPending });
-    if (wsrResult === null) wsrResult = '';
+    // If no final result arrived, fall back to the last interim transcript.
+    // Chrome sometimes skips the final event for short function words like "the".
+    if (wsrResult === null) {
+      wsrResult = wsrInterim || '';
+      if (wsrInterim) DBG('wsr.end', { wsrPending, usedInterim: wsrInterim });
+      else             DBG('wsr.end', { wsrPending });
+    } else {
+      DBG('wsr.end', { wsrPending });
+    }
     if (wsrPending) {
       wsrPending = false;
-      setMicState('ready');
-      if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+      if (wsrResult) {
+        setMicState('waiting');
+        onRecognitionResult([wsrResult]);
+      } else {
+        setMicState('ready');
+        if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+      }
     }
   };
 
@@ -1235,6 +1255,7 @@ function startListening() {
   listenEvaluated  = false;
   wsrPending       = false;
   wsrResult        = null;
+  wsrInterim       = null;
 
   if (WSR) {
     // WSR-primary: cloud recognizer holds its own mic — no AudioContext needed.
