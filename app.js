@@ -373,7 +373,7 @@ const WORDS_CONTENT = [
   { id: 'word:you',     display: 'you',     accepted: ['you','u','yoo'],          level: 1 },
   // Level 2: Dolch Primer
   { id: 'word:all',     display: 'all',     accepted: ['all'],                   level: 2 },
-  { id: 'word:are',     display: 'are',     accepted: ['are'],                   level: 2 },
+  { id: 'word:are',     display: 'are',     accepted: ['are','our','r','ah'],     level: 2 },
   { id: 'word:at',      display: 'at',      accepted: ['at'],                    level: 2 },
   { id: 'word:ate',     display: 'ate',     accepted: ['ate'],                   level: 2 },
   { id: 'word:be',      display: 'be',      accepted: ['be','bee'],              level: 2 },
@@ -673,6 +673,7 @@ const WORDS_CONTENT = [
 // acceptedPruned migration has already run.
 const ACCEPTED_OVERRIDES = {
   'word:said': ['sad'],   // WSR commonly mishears 'said' as 'sad'
+  'word:are':  ['our', 'r', 'ah'],  // Chrome en-GB often returns nothing or 'our'/'r' for 'are'
 };
 
 // Returns a map of id → Set<normText> covering only the terms baked into the
