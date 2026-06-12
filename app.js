@@ -1419,14 +1419,17 @@ function handleAnswer(correct) {
       playTrophyChime(newTrophy);
       burstStars(70, TROPHY_PALETTES[newTrophy]);
       const praise = PRAISE[Math.random() * PRAISE.length | 0];
+      // "red" is deliberate: spoken-only text, and the TTS reads "read" as
+      // present-tense /reed/ where past-tense /red/ is meant.
       const line =
-        newTrophy === 'purple' ? `Wow! You read ${item.display} all by yourself!` :
+        newTrophy === 'purple' ? `Wow! You red ${item.display} all by yourself!` :
         newTrophy === 'gold'   ? `${praise} You know ${item.display} now!` :
                                  `${praise} You sounded it out!`;
-      speak(line, 1.05, () => {
+      // Let the trophy arpeggio ring before the voice comes in.
+      setTimeout(() => speak(line, 1.05, () => {
         gs.awaitingResult = false;
         nextItem();
-      });
+      }), 800);
     } else {
       playPling();
       burstStars();
@@ -1762,7 +1765,8 @@ function showAllDone(levelResult) {
   let scoreText, speakText;
   if (silent >= total && total > 0) {
     scoreText = 'Read them all by yourself!';
-    speakText = `You practised ${total} ${noun}s, and read them all by yourself. See you again tomorrow!`;
+    // "red": spoken-only past-tense fix for the TTS heteronym.
+    speakText = `You practised ${total} ${noun}s, and red them all by yourself. See you again tomorrow!`;
   } else if (silent > 0) {
     scoreText = `Got ${silent} right without hearing!`;
     speakText = `You practised ${total} ${noun}s, and got ${silent} right without hearing them first. See you again tomorrow!`;
@@ -2483,7 +2487,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v25 — per-word trophies: silver sounded-out, gold mastered, purple flawless. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v26 — trophy speech delayed past the chime; past-tense "read" spoken correctly. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
