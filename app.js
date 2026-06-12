@@ -1266,16 +1266,25 @@ let roundNumber = 0;
 function buildRound(set, level) {
   roundNumber++;
   const kind = set === 'numbers' ? 'number' : 'word';
-  // Mastered items are done for good — they never appear again.
-  const all  = Object.values(stored.items).filter(i =>
-    i.kind === kind && i.level === level && !i.mastered);
-  const size = Math.min(stored.settings.roundSize, all.length);
+  const levelItems = Object.values(stored.items).filter(i => i.kind === kind && i.level === level);
+  const unmastered = levelItems.filter(i => !i.mastered);
+  const size = Math.min(stored.settings.roundSize, levelItems.length);
 
-  const missed   = shuffle(all.filter(i => i.lastResult === 'miss'));
-  const newItems = shuffle(all.filter(i => i.totalAttempts === 0));
-  const rest     = shuffle(all.filter(i => i.totalAttempts > 0 && i.lastResult !== 'miss'));
+  const missed   = shuffle(unmastered.filter(i => i.lastResult === 'miss'));
+  const newItems = shuffle(unmastered.filter(i => i.totalAttempts === 0));
+  const rest     = shuffle(unmastered.filter(i => i.totalAttempts > 0 && i.lastResult !== 'miss'));
+  const round    = [...missed, ...newItems, ...rest].slice(0, size);
 
-  return shuffle([...missed, ...newItems, ...rest].slice(0, size));
+  // Top the round up with already-mastered words from the same level so a
+  // round is always full-size; they get a "you know this one" reminder when
+  // shown, and mastery is never revoked however they go.
+  if (round.length < size) {
+    for (const item of shuffle(levelItems.filter(i => i.mastered))) {
+      if (round.length >= size) break;
+      round.push(item);
+    }
+  }
+  return shuffle(round);
 }
 
 // ============================================================
@@ -1300,13 +1309,6 @@ const gs = {
 
 function startRound(set, level) {
   const items = buildRound(set, level);
-  if (!items.length) {
-    // Every word in this level is already mastered — nothing left to show.
-    speak(`You already know all of level ${level}! Amazing!`, 1.0);
-    renderPicker();
-    showScreen('picker');
-    return;
-  }
   gs.currentSet          = set;
   gs.currentLevel        = level;
   gs.queue               = [...items];
@@ -1362,6 +1364,9 @@ function presentItem(item) {
   clearHeardDisplay();
   DBG('presentItem', { id: item.id });
   setMicState('ready'); // mic and hear button ready immediately — child controls pacing
+
+  // Recycled mastered words get a gentle spoken reminder.
+  if (item.mastered) speak('You know this one!', 1.0);
 }
 
 function handleAnswer(correct) {
@@ -1773,40 +1778,6 @@ function renderPicker() {
       `linear-gradient(rgba(10,8,30,0.62), rgba(10,8,30,0.62)), url('${pickerImageUrl}') center/cover no-repeat`;
   } else {
     document.body.style.background = LEVEL_GRADIENTS[1];
-  }
-}
-
-function renderLevelRow(containerId, set) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  const levelKey   = set === 'numbers' ? 'numberLevel' : 'wordLevel';
-  const unlocked   = stored.settings[levelKey];
-  container.innerHTML = '';
-
-  for (let l = 1; l <= MAX_LEVEL; l++) {
-    const btn = document.createElement('button');
-    btn.className = 'level-btn';
-    if (l < unlocked) {
-      btn.classList.add('done');
-      btn.textContent = `L${l} ✓`;
-      btn.addEventListener('click', () => {
-        speak(`Level ${l}!`, 1.1, () => startRound(set, l));
-      });
-    } else if (l === unlocked) {
-      btn.classList.add('current');
-      btn.textContent = `L${l}`;
-      btn.addEventListener('click', () => {
-        speak(`Level ${l}!`, 1.1, () => startRound(set, l));
-      });
-    } else {
-      btn.classList.add('locked');
-      btn.textContent = `L${l}`;
-      btn.setAttribute('aria-label', `Level ${l} locked`);
-      btn.addEventListener('click', () => {
-        speak(`Finish level ${l - 1} first!`, 1.0);
-      });
-    }
-    container.appendChild(btn);
   }
 }
 
@@ -2443,7 +2414,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v23 — one-shot mastery, drag-to-sound-out, hear-then-learn, exclusion rules removed. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v24 — rounds top up with mastered words (with reminder). Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
