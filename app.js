@@ -998,9 +998,11 @@ function initWSR() {
   };
 
   wsrRecognizer.onend = () => {
+    // Always mark WSR as terminated so evaluateVosk doesn't wait forever if
+    // onend fires before wsrPending is set (Chrome no-speech early timeout).
+    if (wsrResult === null) wsrResult = '';
     DBG('wsr.end', { wsrPending });
     if (wsrPending) {
-      // Ended without a result or error event firing
       wsrPending = false;
       setMicState('ready');
       if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
@@ -1216,14 +1218,26 @@ function evaluateVosk() {
   }
 
   if (wsrResult !== null) {
-    // WSR already delivered its result before evaluateVosk ran (rare race).
-    setMicState('waiting');
-    onRecognitionResult(wsrResult ? [wsrResult] : []);
+    // WSR already terminated before evaluateVosk ran (early Chrome timeout race).
+    if (wsrResult) {
+      setMicState('waiting');
+      onRecognitionResult([wsrResult]);
+    } else {
+      setMicState('ready');
+      if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+    }
   } else {
     // Wait for WSR onresult / onerror / onend to call onRecognitionResult.
     wsrPending = true;
+    // Safety timeout: if WSR hangs and never fires any event, unblock after 5s.
+    setTimeout(() => {
+      if (!wsrPending) return;
+      wsrPending = false;
+      DBG('wsr', 'safety timeout — WSR never responded');
+      setMicState('ready');
+      if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+    }, 5000);
     DBG('wsr', 'waiting for cloud result…');
-    // Stay in evaluating state; wsrRecognizer handlers drive the next step.
   }
 }
 
