@@ -662,42 +662,20 @@ const WORDS_CONTENT = [
 // To add to this: on your dev machine, audition terms in Settings → "Audition &
 // edit all terms", then run rlExportAccepted() in the console (or tap Export on
 // that screen) and paste the `acceptedAdditions` entries below.
-const ACCEPTED_OVERRIDES = {
-  // Promoted from dev-machine auditioning. Pure-digit number matches from the
-  // export were dropped: the practice grammar only emits [a-z] tokens, so a
-  // digit string can never be returned.
-  'word:and':    ['at'],
-  'word:big':    ['pick', 'pig'],
-  'word:funny':  ['front'],
-  'word:jump':   ['john'],
-  'word:not':    ['now'],  // 'the not' now covered by token-run matching
-  'word:red':    ['right'],
-  'word:three':  ['free'],
-  'word:up':     ['okay', 'oh'],
-  'word:you':    ['yeah'],
-  'word:all':    ['oh'],
-  'word:are':    ['ah', 'our'],
-  'word:ate':    ['eight'],
-  'word:be':     ['the'],
-  'word:came':   ['game'],
-  'word:have':   ['ha', 'tough'],
-  'word:into':   ['and to'],
-  'word:must':   ['most'],
-  'word:new':    ['near'],
-  'word:no':     ['now'],
-  'word:out':    ['oh'],
-  'word:ride':   ['right'],
-  'word:saw':    ['so', 'saul'],
-  'word:soon':   ['so'],
-  'word:that':   ['the'],
-  'word:under':  ['on the', 'honda'],
-  'word:well':   ['wow'],
-  'word:white':  ['why'],
-  'word:will':   ['well'],
-  'word:yes':    ['yeah'],
-  'word:help':   ['hell'],
-  'word:play':   ['please'],
-};
+// Genuine homophones only. Vosk-recognition-artifact entries (big→pick, etc.)
+// have been removed — the Web Speech API second-pass handles accent variants
+// without needing a static workaround list.
+const ACCEPTED_OVERRIDES = {};
+
+// Returns a map of id → Set<normText> covering only the terms baked into the
+// content arrays (the canonical homophones / accepted spellings).
+function buildCanonicalAcceptedMap() {
+  const map = {};
+  for (const c of [...WORDS_CONTENT, ...NUMBERS_CONTENT]) {
+    map[c.id] = new Set(c.accepted.map(normText));
+  }
+  return map;
+}
 
 function applyAcceptedOverrides(items) {
   for (const [id, terms] of Object.entries(ACCEPTED_OVERRIDES)) {
@@ -836,6 +814,20 @@ function loadStored() {
       if (!item.auditionConfs) item.auditionConfs = [];
     }
     applyAcceptedOverrides(parsed.items);
+
+    // One-time migration: strip accepted terms accumulated by hear-then-learn
+    // back to canonical homophones only. Grown-up manual additions via the
+    // tuning screen survive only if they match a canonical entry.
+    if (!parsed.acceptedPruned) {
+      const canon = buildCanonicalAcceptedMap();
+      for (const [id, item] of Object.entries(parsed.items)) {
+        if (id.startsWith('custom:')) continue;
+        const allowed = canon[id];
+        if (allowed) item.accepted = item.accepted.filter(a => allowed.has(normText(a)));
+      }
+      parsed.acceptedPruned = true;
+    }
+
     stored = parsed;
   } catch (e) {
     showStorageError(e.message);
@@ -967,6 +959,56 @@ let micOpening      = false;
 
 let heardTranscripts  = [];
 let listenEvaluated   = false;
+
+// ── Web Speech API (second-pass, cloud-quality recognition) ──
+// wsrResult: null = not yet arrived, '' = arrived but empty, else transcript
+// wsrPending: true = evaluateVosk decided Vosk missed and we need the WSR result
+const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let wsrRecognizer = null;
+let wsrPending    = false;
+let wsrResult     = null;
+
+function initWSR() {
+  if (!WSR) { DBG('wsr', 'SpeechRecognition not available'); return; }
+  wsrRecognizer = new WSR();
+  wsrRecognizer.lang             = 'en-GB';
+  wsrRecognizer.continuous       = false;
+  wsrRecognizer.interimResults   = false;
+  wsrRecognizer.maxAlternatives  = 1;
+
+  wsrRecognizer.onresult = (e) => {
+    const text = (e.results[0][0].transcript || '').toLowerCase().trim();
+    DBG('wsr.result', { text, wsrPending });
+    wsrResult = text || '';
+    if (wsrPending) {
+      wsrPending = false;
+      setMicState('waiting');
+      onRecognitionResult(text ? [text] : []);
+    }
+  };
+
+  wsrRecognizer.onerror = (e) => {
+    DBG('wsr.error', e.error);
+    wsrResult = '';
+    if (wsrPending) {
+      wsrPending = false;
+      setMicState('ready');
+      if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+    }
+  };
+
+  wsrRecognizer.onend = () => {
+    DBG('wsr.end', { wsrPending });
+    if (wsrPending) {
+      // Ended without a result or error event firing
+      wsrPending = false;
+      setMicState('ready');
+      if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
+    }
+  };
+
+  DBG('wsr', 'initialized (en-GB)');
+}
 let settleTimer       = null;
 let maxListenTimer    = null;
 let sessionMicBlocked = false;
@@ -1093,7 +1135,13 @@ async function openMicStream() {
   }
 }
 
+function abortWSR() {
+  wsrPending = false;
+  if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} }
+}
+
 function closeMicStream() {
+  abortWSR();
   if (scriptProc) { try { scriptProc.disconnect(); } catch (_) {} scriptProc = null; }
   if (audioCtx)   { try { audioCtx.close(); } catch (_) {} audioCtx = null; }
   if (micStream)  { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
@@ -1111,8 +1159,16 @@ function startListening() {
   }
   heardTranscripts = [];
   listenEvaluated  = false;
+  wsrPending       = false;
+  wsrResult        = null;
   setMicState('listening');
   maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
+
+  // Start WSR in parallel so cloud recognition is running while Vosk listens.
+  if (wsrRecognizer) {
+    try { wsrRecognizer.start(); DBG('wsr', 'started'); }
+    catch (e) { DBG('wsr', 'start failed: ' + e.message); }
+  }
 }
 
 function requestStopAndEvaluate() {
@@ -1121,6 +1177,8 @@ function requestStopAndEvaluate() {
   clearTimeout(maxListenTimer);
   setMicState('evaluating');
   if (voskRecognizer) voskRecognizer.retrieveFinalResult();
+  // Signal WSR to finish streaming and deliver its result asynchronously.
+  if (wsrRecognizer) { try { wsrRecognizer.stop(); } catch (_) {} }
   settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 2000);
 }
 
@@ -1132,15 +1190,40 @@ function evaluateVosk() {
   clearTimeout(settleTimer);
   clearTimeout(maxListenTimer);
 
-  if (heardTranscripts.length) {
+  const item = gs.currentItem;
+  const voskMatch = heardTranscripts.length && item && matchAnswer(heardTranscripts, item);
+
+  if (voskMatch) {
+    // Vosk fast path — result already confirmed, discard WSR result.
+    abortWSR();
     setMicState('waiting');
     onRecognitionResult([...heardTranscripts]);
-  } else {
-    setMicState('ready');
-    // A non-reader gets no feedback from a silently reset button — tell them.
-    if (gs.currentItem && !gs.awaitingResult) {
-      speak("I didn't hear you. Try again!", 1.0);
+    return;
+  }
+
+  // Vosk missed (either heard nothing or heard something that didn't match).
+  // Defer to WSR for a cloud-quality second opinion.
+  if (!wsrRecognizer) {
+    // No WSR available — fall back to old behaviour.
+    if (heardTranscripts.length) {
+      setMicState('waiting');
+      onRecognitionResult([...heardTranscripts]);
+    } else {
+      setMicState('ready');
+      if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
     }
+    return;
+  }
+
+  if (wsrResult !== null) {
+    // WSR already delivered its result before evaluateVosk ran (rare race).
+    setMicState('waiting');
+    onRecognitionResult(wsrResult ? [wsrResult] : []);
+  } else {
+    // Wait for WSR onresult / onerror / onend to call onRecognitionResult.
+    wsrPending = true;
+    DBG('wsr', 'waiting for cloud result…');
+    // Stay in evaluating state; wsrRecognizer handlers drive the next step.
   }
 }
 
@@ -1505,17 +1588,9 @@ function checkLevelComplete() {
 // ============================================================
 
 function onRecognitionResult(transcripts) {
-  const item = gs.currentItem;
-  let matched = matchAnswer(transcripts, item);
-  const best = transcripts.find(t => t && t !== '[unk]') || '';
-
-  // After "Hear it" the child has just heard the word and is repeating it, so
-  // whatever the recognizer hears is a sample of how THEY say this word:
-  // silently learn it as an accepted form and count the attempt as correct.
-  if (gs.hearPressed && best && !matched) {
-    addAcceptedTerm(item, best);
-    matched = true;
-  }
+  const item    = gs.currentItem;
+  const matched = matchAnswer(transcripts, item);
+  const best    = transcripts.find(t => t && t !== '[unk]') || '';
 
   DBG('judge', { expected: item?.display, heard: transcripts, matched, hearPressed: gs.hearPressed });
   setHeardDisplay(best);
@@ -2487,7 +2562,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v26 — trophy speech delayed past the chime; past-tense "read" spoken correctly. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v27 — WSR two-pass recognition; accepted list pruned to canonical homophones. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
@@ -2506,6 +2581,7 @@ async function init() {
   setupEvents();
   showScreen('loading');
 
+  initWSR();
   await Promise.all([initVosk(), loadImageManifest()]);
 
   renderPicker();
