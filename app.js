@@ -936,7 +936,7 @@ function speak(text, rate, onEnd) {
   };
   utt.onend   = () => finish('onend');
   utt.onerror = (ev) => finish('onerror:' + (ev.error || '?'));
-  const watchdog = setTimeout(() => finish('WATCHDOG'), 3000 + text.length * 250);
+  const watchdog = setTimeout(() => finish('WATCHDOG'), Math.max(4000, text.length * 100 + 2000));
 
   speechSynthesis.speak(utt);
 }
@@ -962,21 +962,35 @@ let listenEvaluated   = false;
 
 // ── Web Speech API (second-pass, cloud-quality recognition) ──
 // wsrResult: null = not yet arrived, '' = arrived but empty, else transcript
-// wsrPending: true = evaluateVosk decided Vosk missed and we need the WSR result
+// wsrPending: true = evaluateVosk is waiting on a WSR result
 const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let wsrRecognizer = null;
 let wsrPending    = false;
 let wsrResult     = null;
+let wsrGeneration = 0;     // incremented each session; handlers close over myGen
+let wsrStopped    = false; // true after requestStopAndEvaluate calls wsrRecognizer.stop()
+let wsrFailed     = false; // true if WSR ended before stop() — audio conflict
 
 function initWSR() {
-  if (!WSR) { DBG('wsr', 'SpeechRecognition not available'); return; }
-  wsrRecognizer = new WSR();
-  wsrRecognizer.lang             = 'en-GB';
-  wsrRecognizer.continuous       = false;
-  wsrRecognizer.interimResults   = false;
-  wsrRecognizer.maxAlternatives  = 1;
+  DBG('wsr', WSR ? 'SpeechRecognition available (per-session)' : 'not available');
+}
 
-  wsrRecognizer.onresult = (e) => {
+function startWSR() {
+  if (!WSR) return;
+  wsrGeneration++;
+  const myGen = wsrGeneration;
+  wsrStopped = false;
+  wsrFailed  = false;
+
+  const r = new WSR();
+  r.lang            = 'en-GB';
+  r.continuous      = false;
+  r.interimResults  = false;
+  r.maxAlternatives = 1;
+  wsrRecognizer = r;
+
+  r.onresult = (e) => {
+    if (myGen !== wsrGeneration) return;
     const text = (e.results[0][0].transcript || '').toLowerCase().trim();
     DBG('wsr.result', { text, wsrPending });
     wsrResult = text || '';
@@ -987,8 +1001,14 @@ function initWSR() {
     }
   };
 
-  wsrRecognizer.onerror = (e) => {
-    DBG('wsr.error', e.error);
+  r.onerror = (e) => {
+    if (myGen !== wsrGeneration) return;
+    DBG('wsr.error', { error: e.error, wsrStopped });
+    if (!wsrStopped) {
+      // Fired before we called stop() — audio conflict or device error; ignore.
+      wsrFailed = true;
+      return;
+    }
     wsrResult = '';
     if (wsrPending) {
       wsrPending = false;
@@ -997,11 +1017,15 @@ function initWSR() {
     }
   };
 
-  wsrRecognizer.onend = () => {
-    // Always mark WSR as terminated so evaluateVosk doesn't wait forever if
-    // onend fires before wsrPending is set (Chrome no-speech early timeout).
+  r.onend = () => {
+    if (myGen !== wsrGeneration) return;
+    DBG('wsr.end', { wsrStopped, wsrPending });
+    if (!wsrStopped) {
+      // Ended before we called stop() — audio conflict; do not poison wsrResult.
+      wsrFailed = true;
+      return;
+    }
     if (wsrResult === null) wsrResult = '';
-    DBG('wsr.end', { wsrPending });
     if (wsrPending) {
       wsrPending = false;
       setMicState('ready');
@@ -1009,10 +1033,12 @@ function initWSR() {
     }
   };
 
-  DBG('wsr', 'initialized (en-GB)');
+  try { r.start(); DBG('wsr', 'started (gen ' + myGen + ')'); }
+  catch (e) { DBG('wsr', 'start failed: ' + e.message); wsrFailed = true; }
 }
 let settleTimer       = null;
 let maxListenTimer    = null;
+let unblockTimer      = null;
 let sessionMicBlocked = false;
 
 // 'waiting' | 'ready' | 'listening' | 'evaluating'
@@ -1138,8 +1164,9 @@ async function openMicStream() {
 }
 
 function abortWSR() {
+  wsrGeneration++;         // invalidate any in-flight handlers for this session
   wsrPending = false;
-  if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} }
+  if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
 }
 
 function closeMicStream() {
@@ -1165,12 +1192,7 @@ function startListening() {
   wsrResult        = null;
   setMicState('listening');
   maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
-
-  // Start WSR in parallel so cloud recognition is running while Vosk listens.
-  if (wsrRecognizer) {
-    try { wsrRecognizer.start(); DBG('wsr', 'started'); }
-    catch (e) { DBG('wsr', 'start failed: ' + e.message); }
-  }
+  startWSR();
 }
 
 function requestStopAndEvaluate() {
@@ -1180,7 +1202,7 @@ function requestStopAndEvaluate() {
   setMicState('evaluating');
   if (voskRecognizer) voskRecognizer.retrieveFinalResult();
   // Signal WSR to finish streaming and deliver its result asynchronously.
-  if (wsrRecognizer) { try { wsrRecognizer.stop(); } catch (_) {} }
+  if (wsrRecognizer) { try { wsrStopped = true; wsrRecognizer.stop(); } catch (_) {} }
   settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 2000);
 }
 
@@ -1203,10 +1225,9 @@ function evaluateVosk() {
     return;
   }
 
-  // Vosk missed (either heard nothing or heard something that didn't match).
-  // Defer to WSR for a cloud-quality second opinion.
-  if (!wsrRecognizer) {
-    // No WSR available — fall back to old behaviour.
+  // Vosk missed — try WSR second pass unless WSR is unavailable or conflicted.
+  if (!WSR || wsrFailed) {
+    // WSR not available or terminated prematurely (e.g. Windows Chrome AudioContext conflict).
     if (heardTranscripts.length) {
       setMicState('waiting');
       onRecognitionResult([...heardTranscripts]);
@@ -1218,7 +1239,7 @@ function evaluateVosk() {
   }
 
   if (wsrResult !== null) {
-    // WSR already terminated before evaluateVosk ran (early Chrome timeout race).
+    // WSR already terminated with a controlled stop before evaluateVosk ran.
     if (wsrResult) {
       setMicState('waiting');
       onRecognitionResult([wsrResult]);
@@ -1227,16 +1248,16 @@ function evaluateVosk() {
       if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
     }
   } else {
-    // Wait for WSR onresult / onerror / onend to call onRecognitionResult.
+    // WSR still running — wait for onresult / onerror / onend.
     wsrPending = true;
-    // Safety timeout: if WSR hangs and never fires any event, unblock after 5s.
+    // Safety timeout: if WSR hangs and never fires, unblock after 3s.
     setTimeout(() => {
       if (!wsrPending) return;
       wsrPending = false;
       DBG('wsr', 'safety timeout — WSR never responded');
       setMicState('ready');
       if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
-    }, 5000);
+    }, 3000);
     DBG('wsr', 'waiting for cloud result…');
   }
 }
@@ -1633,9 +1654,24 @@ function showScreen(name) {
   );
 }
 
+// ── Global unblock: absolute ceiling on how long the button can stay disabled ──
+function armUnblock(ms) {
+  clearTimeout(unblockTimer);
+  unblockTimer = setTimeout(() => {
+    DBG('unblock', `forced recovery after ${ms}ms`);
+    wsrPending        = false;
+    gs.awaitingResult = false;
+    if (micState !== 'ready') setMicState('ready');
+  }, ms);
+}
+function cancelUnblock() { clearTimeout(unblockTimer); }
+
 function setMicState(state) {
   DBG('micState', `${micState} -> ${state}`);
   micState = state;
+  // Arm a hard deadline whenever we enter a non-interactive state.
+  if (state === 'evaluating') armUnblock(14000);
+  if (state === 'ready')      cancelUnblock();
   const btn     = document.getElementById('mic-button');
   const lbl     = document.getElementById('mic-status');
   const hearBtn = document.getElementById('hear-button');
@@ -2576,7 +2612,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v27 — WSR two-pass recognition; accepted list pruned to canonical homophones. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v28 — WSR per-session isolation; conflict detection via wsrFailed; global unblock timer; faster speak watchdog. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
