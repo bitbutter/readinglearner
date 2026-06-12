@@ -973,7 +973,15 @@ const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let wsrRecognizer = null;
 let wsrPending    = false;
 let wsrResult     = null;
-let wsrGeneration = 0;  // closed over in handlers to discard stale events
+let wsrGeneration = 0;     // closed over in handlers to discard stale events
+let wsrAudioLive  = false; // true once WSR's audio capture has actually begun
+
+// Warm-up: Chrome's SpeechRecognition drops the first ~200-300ms after start.
+// We hold a visible "getting ready" state until audio is live AND a minimum
+// time has passed, so the child only speaks once capture is reliably running.
+const WARM_MIN_MS = 500;
+const WARM_MAX_MS = 850;  // hard ceiling if onaudiostart never fires
+let warmupTimer   = null;
 
 function initWSR() {
   DBG('wsr', WSR ? 'SpeechRecognition available (per-session)' : 'not available');
@@ -983,7 +991,8 @@ function startWSR() {
   if (!WSR) return;
   wsrGeneration++;
   const myGen = wsrGeneration;
-  wsrResult = null;
+  wsrResult    = null;
+  wsrAudioLive = false;
 
   const r = new WSR();
   r.lang            = 'en-GB';
@@ -991,6 +1000,9 @@ function startWSR() {
   r.interimResults  = false;
   r.maxAlternatives = 1;
   wsrRecognizer = r;
+
+  r.onaudiostart = () => { if (myGen === wsrGeneration) { wsrAudioLive = true; DBG('wsr', 'audio live'); } };
+  r.onstart      = () => { if (myGen === wsrGeneration) wsrAudioLive = true; };
 
   r.onresult = (e) => {
     if (myGen !== wsrGeneration) return;
@@ -1030,6 +1042,48 @@ function startWSR() {
   try { r.start(); DBG('wsr', 'started (gen ' + myGen + ')'); }
   catch (e) { DBG('wsr', 'start failed: ' + e.message); wsrResult = ''; }
 }
+
+// Poll until WSR audio is live and the minimum warm-up has elapsed, then flip
+// to 'listening' with a rising "go" chime. Hard ceiling at WARM_MAX_MS so a
+// missing onaudiostart can never hang the warm-up.
+function scheduleWarmupReady(warmStart) {
+  clearTimeout(warmupTimer);
+  const tick = () => {
+    if (micState !== 'warming') return;   // aborted / moved on
+    const elapsed = Date.now() - warmStart;
+    const ready = (wsrAudioLive && elapsed >= WARM_MIN_MS) || elapsed >= WARM_MAX_MS;
+    if (ready) {
+      DBG('warmup', { ready: true, elapsed, audioLive: wsrAudioLive });
+      setMicState('listening');
+      playReadyChime();
+      maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
+      return;
+    }
+    warmupTimer = setTimeout(tick, 40);
+  };
+  warmupTimer = setTimeout(tick, 40);
+}
+
+// Short rising blip — the "speak now" cue. Deliberately distinct from the
+// success pling (a chord). Kept brief so it barely overlaps live capture.
+function playReadyChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(660, t);
+    o.frequency.exponentialRampToValueAtTime(990, t + 0.1);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(t); o.stop(t + 0.18);
+    o.onended = () => { try { ctx.close(); } catch (_) {} };
+  } catch (_) {}
+}
+
 let settleTimer       = null;
 let maxListenTimer    = null;
 let unblockTimer      = null;
@@ -1184,9 +1238,11 @@ function startListening() {
 
   if (WSR) {
     // WSR-primary: cloud recognizer holds its own mic — no AudioContext needed.
-    setMicState('listening');
-    maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
+    // Enter 'warming' first; scheduleWarmupReady flips to 'listening' (with a
+    // "go" chime) once audio capture is live, so the child speaks after warm-up.
+    setMicState('warming');
     startWSR();
+    scheduleWarmupReady(Date.now());
     return;
   }
 
@@ -1671,16 +1727,19 @@ function setMicState(state) {
   DBG('micState', `${micState} -> ${state}`);
   micState = state;
   // Arm a hard deadline whenever we enter a non-interactive state.
-  if (state === 'evaluating') armUnblock(14000);
-  if (state === 'ready')      cancelUnblock();
+  if (state === 'warming' || state === 'evaluating') armUnblock(14000);
+  if (state === 'ready') { cancelUnblock(); clearTimeout(warmupTimer); }
   const btn     = document.getElementById('mic-button');
   const lbl     = document.getElementById('mic-status');
   const hearBtn = document.getElementById('hear-button');
-  btn.classList.remove('listening', 'waiting');
+  btn.classList.remove('listening', 'waiting', 'warming');
   if (hearBtn) hearBtn.classList.toggle('disabled', state !== 'ready');
-  if (state === 'listening') {
+  if (state === 'warming') {
+    btn.classList.add('warming');
+    lbl.textContent = 'Get ready…';
+  } else if (state === 'listening') {
     btn.classList.add('listening');
-    lbl.textContent = 'Listening…';
+    lbl.textContent = 'Speak now!';
   } else if (state === 'evaluating') {
     btn.classList.add('waiting');
     lbl.textContent = '…';
@@ -2613,7 +2672,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v30b — WSR-primary; no stop() on release; VOSK_ENABLED flag; fixed wsrFailed ReferenceError. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v31 — Warm-up "get ready" state (amber ring + go chime) covering Chrome WSR start dead-zone. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')

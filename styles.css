@@ -547,10 +547,42 @@ html, body {
   100% { transform: scale(1.65); opacity: 0; }
 }
 
+/* ── Warming up: amber 'wait', green ring fills clockwise, then chime → green ── */
+@property --warm-fill {
+  syntax: '<percentage>';
+  initial-value: 0%;
+  inherits: false;
+}
+
+.mic-button.warming {
+  background: linear-gradient(145deg, #ffd166, #ffbe0b);
+  box-shadow: 0 12px 40px rgba(255,190,11,0.45), 0 4px 12px rgba(0,0,0,0.3);
+  cursor: default;
+}
+
+.mic-button.warming:active { transform: none; }
+
+.mic-button.warming .mic-icon { opacity: 0.5; transform: scale(0.92); }
+
+.mic-button.warming .mic-ripple {
+  inset: 7px;
+  border-radius: 50%;
+  background: conic-gradient(#2dd46f var(--warm-fill), rgba(255,255,255,0.22) 0);
+  -webkit-mask: radial-gradient(transparent 58%, #000 60%);
+          mask: radial-gradient(transparent 58%, #000 60%);
+  animation: warm-fill var(--warm-dur, 500ms) linear forwards;
+}
+
+@keyframes warm-fill {
+  from { --warm-fill: 0%; }
+  to   { --warm-fill: 100%; }
+}
+
 .mic-icon {
   font-size: clamp(3rem, 10vmin, 5rem);
   line-height: 1;
   pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
 }
 
 .mic-status {
