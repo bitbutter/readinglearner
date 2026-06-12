@@ -1,5 +1,11 @@
 'use strict';
 
+// ── Feature flags ─────────────────────────────────────────────────────────────
+// Set VOSK_ENABLED = true to restore offline Vosk recognition and the
+// audition/tuning screen.
+const VOSK_ENABLED = false;
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ============================================================
 // DEBUG
 // ============================================================
@@ -960,16 +966,14 @@ let micOpening      = false;
 let heardTranscripts  = [];
 let listenEvaluated   = false;
 
-// ── Web Speech API (second-pass, cloud-quality recognition) ──
+// ── Web Speech API (primary recognizer) ──────────────────────────────────────
 // wsrResult: null = not yet arrived, '' = arrived but empty, else transcript
 // wsrPending: true = evaluateVosk is waiting on a WSR result
 const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let wsrRecognizer = null;
 let wsrPending    = false;
 let wsrResult     = null;
-let wsrGeneration = 0;     // incremented each session; handlers close over myGen
-let wsrStopped    = false; // true after requestStopAndEvaluate calls wsrRecognizer.stop()
-let wsrFailed     = false; // true if WSR ended before stop() — audio conflict
+let wsrGeneration = 0;  // closed over in handlers to discard stale events
 
 function initWSR() {
   DBG('wsr', WSR ? 'SpeechRecognition available (per-session)' : 'not available');
@@ -979,8 +983,7 @@ function startWSR() {
   if (!WSR) return;
   wsrGeneration++;
   const myGen = wsrGeneration;
-  wsrStopped = false;
-  wsrFailed  = false;
+  wsrResult = null;
 
   const r = new WSR();
   r.lang            = 'en-GB';
@@ -1003,17 +1006,8 @@ function startWSR() {
 
   r.onerror = (e) => {
     if (myGen !== wsrGeneration) return;
-    DBG('wsr.error', { error: e.error, wsrStopped });
-    if (e.error === 'not-allowed') {
-      sessionMicBlocked = true;
-      onMicDenied();
-      return;
-    }
-    if (!wsrStopped) {
-      // Fired before we called stop() — audio conflict or device error.
-      wsrFailed = true;
-      return;
-    }
+    DBG('wsr.error', e.error);
+    if (e.error === 'not-allowed') { sessionMicBlocked = true; onMicDenied(); return; }
     wsrResult = '';
     if (wsrPending) {
       wsrPending = false;
@@ -1024,12 +1018,7 @@ function startWSR() {
 
   r.onend = () => {
     if (myGen !== wsrGeneration) return;
-    DBG('wsr.end', { wsrStopped, wsrPending });
-    if (!wsrStopped) {
-      // Ended before we called stop() — audio conflict; do not poison wsrResult.
-      wsrFailed = true;
-      return;
-    }
+    DBG('wsr.end', { wsrPending });
     if (wsrResult === null) wsrResult = '';
     if (wsrPending) {
       wsrPending = false;
@@ -1039,7 +1028,7 @@ function startWSR() {
   };
 
   try { r.start(); DBG('wsr', 'started (gen ' + myGen + ')'); }
-  catch (e) { DBG('wsr', 'start failed: ' + e.message); wsrFailed = true; }
+  catch (e) { DBG('wsr', 'start failed: ' + e.message); wsrResult = ''; }
 }
 let settleTimer       = null;
 let maxListenTimer    = null;
@@ -1060,7 +1049,8 @@ let auditionMaxTimer   = null;
 let auditionSettleTimer = null;
 
 async function initVosk() {
-  if (!window.Vosk) { DBG('vosk', 'Vosk not loaded'); return; }
+  if (!VOSK_ENABLED) { DBG('vosk', 'disabled (VOSK_ENABLED=false)'); return; }
+  if (!window.Vosk)  { DBG('vosk', 'Vosk not loaded'); return; }
   try {
     DBG('vosk', 'loading model…');
     const modelUrl = new URL('./model.tar.gz', window.location.href).href;
@@ -1088,6 +1078,7 @@ function buildGrammar(set) {
 }
 
 function createRoundRecognizer(set) {
+  if (!VOSK_ENABLED) return;
   if (voskRecognizer) { try { voskRecognizer.remove(); } catch (_) {} voskRecognizer = null; }
   if (!voskReady) return;
 
@@ -1212,10 +1203,11 @@ function requestStopAndEvaluate() {
   clearTimeout(maxListenTimer);
   setMicState('evaluating');
   if (WSR) {
-    // WSR-primary: signal cloud recognizer to finalise and deliver result.
-    if (wsrRecognizer) { try { wsrStopped = true; wsrRecognizer.stop(); } catch (_) {} }
-    // Short settle — result arrives via onresult event, not via Vosk polling.
-    settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 500);
+    // Do NOT call wsrRecognizer.stop() here — Chrome aborts cloud processing
+    // if stop() arrives before the audio has been sent and acknowledged.
+    // With continuous:false, WSR finalises naturally after end-of-speech.
+    // Short settle to catch cases where onresult already fired.
+    settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 200);
   } else {
     // Vosk-only: flush the recognizer buffer and wait for the final result.
     if (voskRecognizer) voskRecognizer.retrieveFinalResult();
@@ -1246,13 +1238,8 @@ function evaluateVosk() {
   }
 
   // ── WSR-primary path ─────────────────────────────────────────────────────
-  if (wsrFailed) {
-    setMicState('ready');
-    if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
-    return;
-  }
-
   if (wsrResult !== null) {
+    // onresult or onend already fired before evaluateVosk ran.
     if (wsrResult) {
       setMicState('waiting');
       onRecognitionResult([wsrResult]);
@@ -1261,16 +1248,18 @@ function evaluateVosk() {
       if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
     }
   } else {
-    // WSR still running — wait for onresult / onerror / onend.
+    // WSR still running — waiting for onresult / onend (natural end-of-speech).
     wsrPending = true;
+    // After 6s force-abort; onend will then fire and clean up via wsrPending.
     setTimeout(() => {
       if (!wsrPending) return;
+      DBG('wsr', 'safety timeout — aborting');
+      if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
       wsrPending = false;
-      DBG('wsr', 'safety timeout — WSR never responded');
       setMicState('ready');
       if (gs.currentItem && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
-    }, 3000);
-    DBG('wsr', 'waiting for cloud result…');
+    }, 6000);
+    DBG('wsr', 'waiting for natural end-of-speech…');
   }
 }
 
@@ -2624,7 +2613,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v29 — WSR-primary recognition; Vosk retained for offline fallback and tuning audition only. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v30 — WSR-primary; no stop() on release (let cloud finalise naturally); VOSK_ENABLED flag. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
@@ -2642,6 +2631,11 @@ async function init() {
 
   setupEvents();
   showScreen('loading');
+
+  if (!VOSK_ENABLED) {
+    document.getElementById('btn-open-tuning')?.remove();
+    document.getElementById('btn-open-soundpreview')?.remove();
+  }
 
   initWSR();
   await Promise.all([initVosk(), loadImageManifest()]);
