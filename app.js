@@ -63,7 +63,7 @@ const LETTER_SOUNDS = {
 // Deliberately left out as too ambiguous in this app's vocabulary:
 // ea (eat/weather), ow (now/show), ou (out/your), ai (said/again), ur (our/hour).
 const DIGRAPH_TTS = {
-  igh: 'eye',  air: 'air',  ue: 'new',
+  igh: 'eye',  air: 'air', ear: 'air',  ue: 'new',
   sh: 'shh',  ch: 'chuh', th: 'thh', ng: 'ng',  ee: 'eee',  oo: 'ooo',
   qu: 'kwuh', ay: 'ay',   oa: 'oh',  oy: 'oy',  oi: 'oy',   ar: 'ar',
   or: 'or',   er: 'er',   ir: 'er',  wh: 'wuh', ck: 'kuh',  ll: 'lll',
@@ -95,7 +95,6 @@ const SEGMENT_OVERRIDES = {
   every:    ['e', 'v', 'e', 'r', 'y'],
   eight:    ['e', 'i', 'g', 'h', 't'],
   going:    ['g', 'o', 'i', 'ng'],
-  year:     ['y', 'e', 'a', 'r'],
   queen:    ['qu', 'ee', 'n'],
   earth:    ['e', 'a', 'r', 'th'],
 };
