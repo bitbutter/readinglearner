@@ -73,6 +73,14 @@ const DIGRAPH_TTS = {
 // Longest first so 'igh'/'air' win over their 2- and 1-letter prefixes.
 const DIGRAPHS = Object.keys(DIGRAPH_TTS).sort((a, b) => b.length - a.length);
 
+// 'ear' is ambiguous: it makes the AIR sound in pear/bear/clear but the NEAR
+// sound in year/dear/near/…. The chunk is shown the same way; only the
+// tapped sound differs (TTS string, since no clip exists for the near sound).
+const TEAM_SOUND_OVERRIDES = {
+  year: { ear: 'ear' }, ear: { ear: 'ear' }, dear: { ear: 'ear' },
+  near: { ear: 'ear' }, hear: { ear: 'ear' }, fear: { ear: 'ear' },
+};
+
 // Words whose greedy left-to-right segmentation would group letters that do
 // NOT make that sound there (the 'ch' in school, the 'er' in here/there, the
 // 'igh' hiding inside eight…). Spelled-out segmentations, lowercase.
@@ -165,6 +173,8 @@ function buildSoundUnitSpans(display) {
     if (seg.length > 1) span.classList.add('alt');
     if (magicE && (idx === vowelIdx || idx === 3)) span.classList.add('magic-e');
     if (silentE && idx === 3) span.classList.add('silent-e');
+    const override = TEAM_SOUND_OVERRIDES[lower];
+    if (override && override[seg]) span.dataset.sound = override[seg];
     const key = seg.toLowerCase();
     if (soundFallback(key) || DIGIT_NAMES[key]) span.classList.add('tappable');
     frag.appendChild(span);
@@ -176,7 +186,7 @@ function triggerSoundSpan(span) {
   span.classList.remove('tapped');
   void span.offsetWidth;  // restart the flash animation
   span.classList.add('tapped');
-  playLetterSound(span.textContent);
+  playLetterSound(span.textContent, span.dataset.sound);
 }
 
 // Tap OR drag: a finger dragged across the word triggers each letter/group
@@ -227,7 +237,8 @@ const letterAudioCache = {};
 // caches audio exact-URL, so a new query string forces a refetch.
 const AUDIO_VERSION = 4;
 
-function playLetterSound(seg) {
+function playLetterSound(seg, forceSpeak) {
+  if (forceSpeak) { speak(forceSpeak, 0.8); return; }
   const key = seg.toLowerCase();
   const fallback = soundFallback(key);
   if (fallback) {
