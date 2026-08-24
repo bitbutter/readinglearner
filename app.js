@@ -796,6 +796,7 @@ function makeItem(c, kind) {
     mastered: false,  // gold: read with at most one letter tap, no Hear it
     flawless: false,  // purple: read with no letter taps and no Hear it
     lastSeenRound: null,
+    lastRecapRound: null,  // last round number this item was surfaced as a recap
     lastResult: null,
     auditionConfs: [],
   };
@@ -1183,7 +1184,7 @@ async function initVosk() {
 }
 
 function buildGrammar(set) {
-  const kind = set === 'numbers' ? 'number' : 'word';
+  const kind = kindForSet(set);
   const tokens = new Set(['[unk]']);
   for (const item of Object.values(stored.items)) {
     if (item.kind !== kind) continue;
@@ -1547,9 +1548,11 @@ function shuffle(arr) {
 
 let roundNumber = 0;
 
+const kindForSet = (set) => (set === 'numbers' ? 'number' : 'word');
+
 function buildRound(set, level) {
   roundNumber++;
-  const kind = set === 'numbers' ? 'number' : 'word';
+  const kind = kindForSet(set);
   const levelItems = Object.values(stored.items).filter(i => i.kind === kind && i.level === level);
   const unmastered = levelItems.filter(i => !i.mastered);
   const size = Math.min(stored.settings.roundSize, levelItems.length);
@@ -1571,6 +1574,23 @@ function buildRound(set, level) {
   return shuffle(round);
 }
 
+// One "recap" word per session, drawn from levels the child has already
+// beaten (i.e. mastered items on earlier levels). Rotation is FIFO over
+// lastRecapRound so every previous word gets its turn; null while no earlier
+// level has been cleared yet (e.g. Level 1).
+function pickRecapItem(kind, level) {
+  const eligible = Object.values(stored.items).filter(
+    i => i.kind === kind && i.level < level && i.mastered
+  );
+  if (!eligible.length) return null;
+  const oldest = Math.min(...eligible.map(i => i.lastRecapRound || 0));
+  const candidates = eligible.filter(i => (i.lastRecapRound || 0) === oldest);
+  const pick = candidates[Math.random() * candidates.length | 0];
+  pick.lastRecapRound = roundNumber;
+  saveStored();
+  return pick;
+}
+
 // ============================================================
 // GAME STATE
 // ============================================================
@@ -1587,6 +1607,7 @@ const gs = {
   retryCount:          0,
   recycled:            new Set(),
   awaitingResult:      false,
+  recapId:             null,
   hearPressed:         false,
   letterTaps:          0,
   newTrophies:         0,
@@ -1605,7 +1626,15 @@ function startRound(set, level) {
   gs.retryCount          = 0;
   gs.recycled            = new Set();
   gs.awaitingResult      = false;
+  gs.recapId             = null;
   gs.hearPressed         = false;
+
+  // One recap word per session, dropped at a random spot in the round.
+  // Feedback-only: it takes no slot (originalSize excludes it) and never
+  // counts toward round stats or per-item progress.
+  const recap = pickRecapItem(kindForSet(set), level);
+  gs.recapId = recap ? recap.id : null;
+  if (recap) gs.queue.splice(Math.floor(Math.random() * gs.queue.length), 0, recap);
   gs.letterTaps          = 0;
   gs.newTrophies         = 0;
 
@@ -1638,7 +1667,10 @@ function presentItem(item) {
     len <= 4  ? 'clamp(5rem, 20vmin, 10rem)' :
     len <= 7  ? 'clamp(4rem, 15vmin,  8rem)' :
                 'clamp(3rem, 11vmin,  5.5rem)';
-  el.className = 'word-display' + (item.kind === 'number' ? ' number-display' : '');
+  const isRecap = item.id === gs.recapId;
+  el.className = 'word-display'
+    + (item.kind === 'number' ? ' number-display' : '')
+    + (isRecap ? ' recap' : '');
 
   // The word is split into sound units — single letters and compound sounds
   // like "sh"/"ee"/"igh". Tapping or dragging across them flashes each group
@@ -1652,8 +1684,12 @@ function presentItem(item) {
   DBG('presentItem', { id: item.id });
   setMicState('ready'); // mic and hear button ready immediately — child controls pacing
 
-  // Recycled mastered words get a gentle spoken reminder.
-  if (item.mastered) speak('You know this one!', 1.0);
+  document.getElementById('recap-banner').classList.toggle('hidden', !isRecap);
+
+  // Recap words get the recap announcement; recycled mastered words (same
+  // level) get a gentle spoken reminder.
+  if (isRecap)             speak('Recap! You learned this one before.', 1.0);
+  else if (item.mastered)  speak('You know this one!', 1.0);
 }
 
 function handleAnswer(correct) {
@@ -1662,6 +1698,7 @@ function handleAnswer(correct) {
   setMicState('waiting');
 
   const item = gs.currentItem;
+  if (item.id === gs.recapId) return recapAnswer(item, correct);
   item.totalAttempts++;
 
   if (correct) {
@@ -1749,6 +1786,27 @@ function handleAnswer(correct) {
   renderDots();
 }
 
+// Recap words are feedback-only: the usual praise/teaching sounds and flash,
+// but no retry/recycle, and no stats written anywhere — round score, dots and
+// per-item progress all skip them.
+function recapAnswer(item, correct) {
+  if (correct) {
+    flashScreen(true);
+    playPling();
+    burstStars();
+    speakPraise(() => {
+      gs.awaitingResult = false;
+      nextItem();
+    });
+  } else {
+    flashScreen(false);
+    speak(`This says ${item.display}.`, 0.85, () => {
+      gs.awaitingResult = false;
+      nextItem();
+    });
+  }
+}
+
 function endRound() {
   stored.rounds.push({
     id:      new Date().toISOString(),
@@ -1769,7 +1827,7 @@ function endRound() {
 
 function checkLevelComplete() {
   const levelKey = gs.currentSet === 'numbers' ? 'numberLevel' : 'wordLevel';
-  const kind     = gs.currentSet === 'numbers' ? 'number' : 'word';
+  const kind     = kindForSet(gs.currentSet);
   const level    = gs.currentLevel;
   const items    = Object.values(stored.items).filter(i => i.kind === kind && i.level === level);
   if (!items.length) return null;
@@ -1791,7 +1849,7 @@ function onRecognitionResult(transcripts) {
   // If the hear button was pressed (app already spoke the word) or the app has
   // already spoken the correct word during a retry, the child is repeating what
   // they heard — auto-add any transcription so WSR mishearings don't block them.
-  if (best && (gs.hearPressed || gs.retryCount > 0)) {
+  if (best && item.id !== gs.recapId && (gs.hearPressed || gs.retryCount > 0)) {
     addAcceptedTerm(item, best);
   }
 
