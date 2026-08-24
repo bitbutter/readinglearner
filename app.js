@@ -2781,7 +2781,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v38 — Added decodable CVC tier as Levels 1–2 (short a; short e/i/o/u); Dolch ladder shifted to 3–10, old top two levels dropped. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v39 — Levels 3–5 rebuilt as decodable ladders (blends/digraphs; magic e + teams; r-controlled). Deep links: #words-N / #numbers-N start a round at that level. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('./sw.js')
@@ -2798,6 +2798,15 @@ async function init() {
   document.body.appendChild(flash);
 
   setupEvents();
+
+  // Deep links: #words-3 / #numbers-5 — set that level and start a round.
+  const deep = levelFromHash();
+  if (deep) {
+    const key = deep.set === 'words' ? 'wordLevel' : 'numberLevel';
+    stored.settings[key] = clampLevel(deep.level);
+    saveStored();
+  }
+
   showScreen('loading');
 
   if (!VOSK_ENABLED) {
@@ -2810,6 +2819,13 @@ async function init() {
 
   renderPicker();
   showScreen('picker');
+  if (deep) startRound(deep.set, deep.level);
+}
+
+// Parse a level deep link from the URL fragment: '#words-3' / '#numbers-10'.
+function levelFromHash() {
+  const m = /^#(words|numbers)-([1-9]|10)$/.exec(location.hash);
+  return m ? { set: m[1], level: +m[2] } : null;
 }
 
 document.addEventListener('DOMContentLoaded', init);
