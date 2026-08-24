@@ -147,13 +147,13 @@ function isCVCEShape(segs) {
   return vowels === 1;
 }
 
-// Build the sound-unit spans for a display word: one span per unit,
-// alternating tint when the word contains a compound group. Tap/drag handling
-// lives on the container via attachSoundUnitGestures.
+// Build the sound-unit spans for a display word: one span per unit, with the
+// compound units (sh, ck, ee, ue, …) tinted so the child can see which
+// letters make one sound. Tap/drag handling lives on the container via
+// attachSoundUnitGestures.
 function buildSoundUnitSpans(display) {
   const frag = document.createDocumentFragment();
   const segs = segmentDisplay(display);
-  const hasGroups = segs.some(s => s.length > 1);
   const lower = display.toLowerCase();
   const cvce  = isCVCEShape(segs);
   const magicE  = cvce && !NOT_MAGIC_E.has(lower);
@@ -163,7 +163,7 @@ function buildSoundUnitSpans(display) {
     const span = document.createElement('span');
     span.className   = 'letter';
     span.textContent = seg;
-    if (hasGroups && idx % 2 === 1) span.classList.add('alt');
+    if (seg.length > 1) span.classList.add('alt');
     if (magicE && (idx === vowelIdx || idx === 3)) span.classList.add('magic-e');
     if (silentE && idx === 3) span.classList.add('silent-e');
     const key = seg.toLowerCase();

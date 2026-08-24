@@ -342,11 +342,11 @@ html, body {
   --letter-flash: #ffffff;
 }
 
-/* Alternating sound units get a subtle tint (only applied when the word
-   contains a compound group) so the child can see which letters go together. */
+/* Compound sound units (sh, ck, ee, ue, …) are tinted in a strong blue so
+   the child can see which letters make one sound. */
 .word-display .letter.alt,
 .preview-word .letter.alt {
-  color: #c7d9ff;
+  color: #4fc3ff;
 }
 
 /* Magic e: the vowel it lengthens and the silent final 'e' are highlighted in
