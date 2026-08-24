@@ -349,6 +349,20 @@ html, body {
   color: #c7d9ff;
 }
 
+/* Magic e: the vowel it lengthens and the silent final 'e' are highlighted in
+   a special colour so 'c-a-k-e' shows which letters work together. */
+.word-display .letter.magic-e,
+.preview-word .letter.magic-e {
+  color: #ff9ff3;
+}
+
+/* Silent e that is NOT magic (short vowel + dead 'e', e.g. 'have', 'done'):
+   the 'e' is dimmed to show it makes no sound here. */
+.word-display .letter.silent-e,
+.preview-word .letter.silent-e {
+  color: #9aa3b2;
+}
+
 .word-display .letter.tapped,
 .preview-word .letter.tapped {
   animation: letter-flash 0.9s ease-out;

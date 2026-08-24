@@ -58,11 +58,12 @@ const LETTER_SOUNDS = {
 };
 
 // Compound letter sounds (digraphs/trigraphs) with a reasonably unambiguous
-// pronunciation. Each has its own clip in audio/letters/ and a TTS fallback.
+// pronunciation. Each has its own clip in audio/letters/ where one exists
+// (ue falls back to TTS), so the TTS string is the safety net.
 // Deliberately left out as too ambiguous in this app's vocabulary:
 // ea (eat/weather), ow (now/show), ou (out/your), ai (said/again), ur (our/hour).
 const DIGRAPH_TTS = {
-  igh: 'eye',  air: 'air',
+  igh: 'eye',  air: 'air',  ue: 'new',
   sh: 'shh',  ch: 'chuh', th: 'thh', ng: 'ng',  ee: 'eee',  oo: 'ooo',
   qu: 'kwuh', ay: 'ay',   oa: 'oh',  oy: 'oy',  oi: 'oy',   ar: 'ar',
   or: 'or',   er: 'er',   ir: 'er',  wh: 'wuh', ck: 'kuh',  ll: 'lll',
@@ -95,6 +96,7 @@ const SEGMENT_OVERRIDES = {
   eight:    ['e', 'i', 'g', 'h', 't'],
   going:    ['g', 'o', 'i', 'ng'],
   year:     ['y', 'e', 'a', 'r'],
+  queen:    ['qu', 'ee', 'n'],
   earth:    ['e', 'a', 'r', 'th'],
 };
 
@@ -128,6 +130,23 @@ function soundFallback(key) {
   return LETTER_SOUNDS[key] || DIGRAPH_TTS[key] || null;
 }
 
+// Words spelled with a silent final 'e' but NOT pronounced with a magic e
+// (short vowel + silent e, e.g. 'have', 'come'). Their final 'e' gets the
+// dim silent-e colour.
+const NOT_MAGIC_E = new Set(['have', 'live', 'give', 'gave', 'wore', 'love', 'come', 'some', 'done', 'none', 'came']);
+const VOWEL_SET   = new Set(['a', 'e', 'i', 'o', 'u']);
+
+// True when a segmented word has one short vowel plus a final 'e' as its own
+// sound unit: CVCe or CCVCe (the e is the only other vowel letter).
+function isCVCEShape(segs) {
+  if (segs.length !== 4 || segs[3] !== 'e') return false;
+  let vowels = 0;
+  for (let i = 0; i < 3; i++) {
+    if (VOWEL_SET.has(segs[i])) vowels++;
+  }
+  return vowels === 1;
+}
+
 // Build the sound-unit spans for a display word: one span per unit,
 // alternating tint when the word contains a compound group. Tap/drag handling
 // lives on the container via attachSoundUnitGestures.
@@ -135,11 +154,18 @@ function buildSoundUnitSpans(display) {
   const frag = document.createDocumentFragment();
   const segs = segmentDisplay(display);
   const hasGroups = segs.some(s => s.length > 1);
+  const lower = display.toLowerCase();
+  const cvce  = isCVCEShape(segs);
+  const magicE  = cvce && !NOT_MAGIC_E.has(lower);
+  const silentE = cvce && NOT_MAGIC_E.has(lower);
+  const vowelIdx = cvce ? segs.findIndex(s => VOWEL_SET.has(s)) : -1;
   segs.forEach((seg, idx) => {
     const span = document.createElement('span');
     span.className   = 'letter';
     span.textContent = seg;
     if (hasGroups && idx % 2 === 1) span.classList.add('alt');
+    if (magicE && (idx === vowelIdx || idx === 3)) span.classList.add('magic-e');
+    if (silentE && idx === 3) span.classList.add('silent-e');
     const key = seg.toLowerCase();
     if (soundFallback(key) || DIGIT_NAMES[key]) span.classList.add('tappable');
     frag.appendChild(span);
@@ -382,37 +408,38 @@ const WORDS_CONTENT = [
   { id: 'word:cup',   display: 'cup',    accepted: ['cup'],             level: 2 },
   { id: 'word:bun',   display: 'bun',    accepted: ['bun'],             level: 2 },
   { id: 'word:jug',   display: 'jug',    accepted: ['jug'],             level: 2 },
-  // Level 3: Dolch Pre-Primer
-  { id: 'word:a',       display: 'a',       accepted: ['a','uh','ah'],          level: 3 },
-  { id: 'word:and',     display: 'and',     accepted: ['and'],                   level: 3 },
-  { id: 'word:away',    display: 'away',    accepted: ['away'],                  level: 3 },
-  { id: 'word:big',     display: 'big',     accepted: ['big'],                   level: 3 },
-  { id: 'word:blue',    display: 'blue',    accepted: ['blue','blew'],           level: 3 },
-  { id: 'word:come',    display: 'come',    accepted: ['come'],                  level: 3 },
-  { id: 'word:down',    display: 'down',    accepted: ['down'],                  level: 3 },
-  { id: 'word:funny',   display: 'funny',   accepted: ['funny'],                 level: 3 },
-  { id: 'word:go',      display: 'go',      accepted: ['go'],                    level: 3 },
-  { id: 'word:help',    display: 'help',    accepted: ['help'],                  level: 3 },
-  { id: 'word:here',    display: 'here',    accepted: ['here','hear'],           level: 3 },
-  { id: 'word:it',      display: 'it',      accepted: ['it'],                    level: 3 },
-  { id: 'word:jump',    display: 'jump',    accepted: ['jump'],                  level: 3 },
-  { id: 'word:little',  display: 'little',  accepted: ['little'],                level: 3 },
-  { id: 'word:look',    display: 'look',    accepted: ['look'],                  level: 3 },
-  { id: 'word:make',    display: 'make',    accepted: ['make'],                  level: 3 },
-  { id: 'word:me',      display: 'me',      accepted: ['me','may'],              level: 3 },
-  { id: 'word:my',      display: 'my',      accepted: ['my'],                    level: 3 },
-  { id: 'word:not',     display: 'not',     accepted: ['not','knot'],            level: 3 },
-  { id: 'word:play',    display: 'play',    accepted: ['play'],                  level: 3 },
-  { id: 'word:red',     display: 'red',     accepted: ['red','read'],            level: 3 },
-  { id: 'word:run',     display: 'run',     accepted: ['run'],                   level: 3 },
-  { id: 'word:said',    display: 'said',    accepted: ['said','sed','sad'],       level: 3 },
-  { id: 'word:see',     display: 'see',     accepted: ['see','sea'],             level: 3 },
-  { id: 'word:the',     display: 'the',     accepted: ['the','da','duh','de','thee','dah'], level: 3 },
-  { id: 'word:three',   display: 'three',   accepted: ['three'],                 level: 3 },
-  { id: 'word:two',     display: 'two',     accepted: ['two','to','too'],        level: 3 },
-  { id: 'word:up',      display: 'up',      accepted: ['up'],                    level: 3 },
-  { id: 'word:we',      display: 'we',      accepted: ['we','wee'],              level: 3 },
-  { id: 'word:you',     display: 'you',     accepted: ['you','u','yoo'],          level: 3 },
+  // Level 3: Blends, digraphs, -ck, easy two-syllables. Every word is
+  // decodable from letter sounds except 'the' (sight word).
+  { id: 'word:the',   display: 'the',    accepted: ['the','da','duh','de','thee','dah'], level: 3 },
+  { id: 'word:and',   display: 'and',    accepted: ['and'],                   level: 3 },
+  { id: 'word:up',    display: 'up',     accepted: ['up'],                    level: 3 },
+  { id: 'word:down',  display: 'down',   accepted: ['down'],                  level: 3 },
+  { id: 'word:it',    display: 'it',     accepted: ['it'],                    level: 3 },
+  { id: 'word:not',   display: 'not',    accepted: ['not','knot'],            level: 3 },
+  { id: 'word:run',   display: 'run',    accepted: ['run'],                   level: 3 },
+  { id: 'word:frog',  display: 'frog',   accepted: ['frog'],                  level: 3 },
+  { id: 'word:crab',  display: 'crab',   accepted: ['crab'],                  level: 3 },
+  { id: 'word:flag',  display: 'flag',   accepted: ['flag'],                  level: 3 },
+  { id: 'word:clap',  display: 'clap',   accepted: ['clap'],                  level: 3 },
+  { id: 'word:slip',  display: 'slip',   accepted: ['slip'],                  level: 3 },
+  { id: 'word:drum',  display: 'drum',   accepted: ['drum'],                  level: 3 },
+  { id: 'word:sled',  display: 'sled',   accepted: ['sled'],                  level: 3 },
+  { id: 'word:mud',   display: 'mud',    accepted: ['mud'],                   level: 3 },
+  { id: 'word:web',   display: 'web',    accepted: ['web'],                   level: 3 },
+  { id: 'word:van',   display: 'van',    accepted: ['van'],                   level: 3 },
+  { id: 'word:back',  display: 'back',   accepted: ['back'],                  level: 3 },
+  { id: 'word:duck',  display: 'duck',   accepted: ['duck'],                  level: 3 },
+  { id: 'word:rock',  display: 'rock',   accepted: ['rock'],                  level: 3 },
+  { id: 'word:sock',  display: 'sock',   accepted: ['sock'],                  level: 3 },
+  { id: 'word:pick',  display: 'pick',   accepted: ['pick'],                  level: 3 },
+  { id: 'word:lock',  display: 'lock',   accepted: ['lock'],                  level: 3 },
+  { id: 'word:ship',  display: 'ship',   accepted: ['ship'],                  level: 3 },
+  { id: 'word:fish',  display: 'fish',   accepted: ['fish'],                  level: 3 },
+  { id: 'word:dish',  display: 'dish',   accepted: ['dish'],                  level: 3 },
+  { id: 'word:chip',  display: 'chip',   accepted: ['chip'],                  level: 3 },
+  { id: 'word:thin',  display: 'thin',   accepted: ['thin'],                  level: 3 },
+  { id: 'word:baby',  display: 'baby',   accepted: ['baby'],                  level: 3 },
+  { id: 'word:milk',  display: 'milk',   accepted: ['milk'],                  level: 3 },
   // Level 4: Dolch Primer
   { id: 'word:all',     display: 'all',     accepted: ['all'],                   level: 4 },
   { id: 'word:are',     display: 'are',     accepted: ['are','our','r','ah'],     level: 4 },
@@ -672,7 +699,6 @@ const WORDS_CONTENT = [
 // Applied on every load so existing users benefit even after the one-time
 // acceptedPruned migration has already run.
 const ACCEPTED_OVERRIDES = {
-  'word:said': ['sad'],   // WSR commonly mishears 'said' as 'sad'
   'word:are':  ['our', 'r', 'ah'],  // Chrome en-GB often returns nothing or 'our'/'r' for 'are'
 };
 
