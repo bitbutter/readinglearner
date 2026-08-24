@@ -5,7 +5,11 @@
 // header and re-downloading the model every visit makes startup crawl.
 // App shell files (html/js/css) stay network-first so a normal push still
 // updates immediately, with the cache as an offline fallback.
-const CACHE = 'rl-cache-v1';
+const CACHE = 'rl-cache-v2';
+
+// The art manifest is tiny and drives which images exist — it must always
+// come from the network, otherwise a cached copy pins the app to old artwork.
+const NETWORK_FIRST = /manifest\.json$/;
 
 const CACHE_FIRST = /(?:model\.tar\.gz$|vosk\/vosk\.js$|\/images\/|\/audio\/)/;
 
@@ -48,6 +52,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  if (CACHE_FIRST.test(url.pathname)) event.respondWith(cacheFirst(event.request));
+  if (NETWORK_FIRST.test(url.pathname))  event.respondWith(networkFirst(event.request));
+  else if (CACHE_FIRST.test(url.pathname)) event.respondWith(cacheFirst(event.request));
   else                                event.respondWith(networkFirst(event.request));
 });

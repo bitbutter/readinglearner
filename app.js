@@ -897,19 +897,12 @@ function showStorageError(msg) {
 // ============================================================
 
 let levelImages = {};
-let pickerImageUrl = null;
 
 async function loadImageManifest() {
   try {
     const resp = await fetch('./images/manifest.json');
     if (resp.ok) levelImages = await resp.json();
   } catch (_) {}
-  pickerImageUrl = await new Promise(resolve => {
-    const img = new Image();
-    img.onload  = () => resolve('./images/picker.png');
-    img.onerror = () => resolve(null);
-    img.src = './images/picker.png';
-  });
 }
 
 let voices = [];
@@ -2135,12 +2128,7 @@ function setLevelBackground(level, set) {
 }
 
 function renderPicker() {
-  if (pickerImageUrl) {
-    document.body.style.background =
-      `linear-gradient(rgba(10,8,30,0.62), rgba(10,8,30,0.62)), url('${pickerImageUrl}') center/cover no-repeat`;
-  } else {
-    document.body.style.background = LEVEL_GRADIENTS[1];
-  }
+  document.body.style.background = LEVEL_GRADIENTS[1];
 }
 
 function renderSettingsLevelRows() {
@@ -2784,7 +2772,10 @@ async function init() {
   console.log('[ReadingLearner] build v39 — Levels 3–5 rebuilt as decodable ladders (blends/digraphs; magic e + teams; r-controlled). Deep links: #words-N / #numbers-N start a round at that level. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('./sw.js')
+    // updateViaCache:'none' → re-check sw.js on every load so a pushed
+    // service-worker fix reaches devices promptly instead of waiting up to
+    // 24 h for Chrome's periodic update.
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
       .catch(e => DBG('sw', 'register failed: ' + e.message));
   }
 
