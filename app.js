@@ -137,10 +137,18 @@ function soundFallback(key) {
   return LETTER_SOUNDS[key] || DIGRAPH_TTS[key] || null;
 }
 
+// Magic-e words: the vowel + final e act as a team — the e is silent, it
+// makes the vowel say its name. Tapping the VOWEL plays the long team sound
+// (reusing the matching long-vowel-team clip: a_e->ay, i_e->igh/eye,
+// o_e->oa/oh, u_e->ue/'new' TTS, e_e->ee). The final e itself plays NO sound
+// when tapped — it only flashes.
+const MAGIC_E_CLIP = { a: 'ay', i: 'igh', o: 'oa', u: 'ue', e: 'ee' };
+
 // Words spelled with a silent final 'e' but NOT pronounced with a magic e
-// (short vowel + silent e, e.g. 'have', 'come'). Their final 'e' gets the
-// dim silent-e colour.
-const NOT_MAGIC_E = new Set(['have', 'live', 'give', 'gave', 'wore', 'love', 'come', 'some', 'done', 'none', 'came']);
+// (short vowel + silent e like 'have'/'come', or another vowel team like
+// 'here'/'shore'). Their final 'e' gets the dim silent-e colour and plays
+// no sound when tapped.
+const NOT_MAGIC_E = new Set(['have', 'live', 'give', 'gave', 'wore', 'love', 'come', 'some', 'done', 'none', 'came', 'here', 'there', 'where', 'shore', 'store']);
 const VOWEL_SET   = new Set(['a', 'e', 'i', 'o', 'u']);
 
 // True when a segmented word has one short vowel plus a final 'e' as its own
@@ -164,15 +172,26 @@ function buildSoundUnitSpans(display) {
   const lower = display.toLowerCase();
   const cvce  = isCVCEShape(segs);
   const magicE  = cvce && !NOT_MAGIC_E.has(lower);
-  const silentE = cvce && NOT_MAGIC_E.has(lower);
+  // Silent final e: any listed word whose last unit is 'e' — not just CVCe
+  // shapes ('wore'/'shore' are team + e; 'here'/'there'/'where' are shaped
+  // like CVCe by their SEGMENT_OVERRIDES but are not magic-e words).
+  const silentE = NOT_MAGIC_E.has(lower) && segs[segs.length - 1].toLowerCase() === 'e';
   const vowelIdx = cvce ? segs.findIndex(s => VOWEL_SET.has(s)) : -1;
+  const lastIdx  = segs.length - 1;
   segs.forEach((seg, idx) => {
     const span = document.createElement('span');
     span.className   = 'letter';
     span.textContent = seg;
     if (seg.length > 1) span.classList.add('alt');
-    if (magicE && (idx === vowelIdx || idx === 3)) span.classList.add('magic-e');
-    if (silentE && idx === 3) span.classList.add('silent-e');
+    if (magicE && (idx === vowelIdx || idx === lastIdx)) {
+      span.classList.add('magic-e');
+      if (idx === vowelIdx) span.dataset.clip = MAGIC_E_CLIP[seg.toLowerCase()];
+      else span.dataset.silent = '1';  // the final e: silent team partner
+    }
+    if (silentE && idx === lastIdx) {
+      span.classList.add('silent-e');
+      span.dataset.silent = '1';
+    }
     const override = TEAM_SOUND_OVERRIDES[lower];
     if (override && override[seg]) span.dataset.sound = override[seg];
     const key = seg.toLowerCase();
@@ -186,7 +205,8 @@ function triggerSoundSpan(span) {
   span.classList.remove('tapped');
   void span.offsetWidth;  // restart the flash animation
   span.classList.add('tapped');
-  playLetterSound(span.textContent, span.dataset.sound);
+  if (span.dataset.silent) return;  // silent letters flash but say nothing
+  playLetterSound(span.dataset.clip || span.textContent, span.dataset.sound);
 }
 
 // Tap OR drag: a finger dragged across the word triggers each letter/group
@@ -207,7 +227,7 @@ function attachSoundUnitGestures(container, opts = {}) {
     if (!span || span === lastSpan) return;
     lastSpan = span;
     triggerSoundSpan(span);
-    opts.onTrigger?.();
+    opts.onTrigger?.(span);
   };
 
   container.addEventListener('pointerdown', (e) => {
@@ -2715,7 +2735,7 @@ function setupEvents() {
   // Letter taps/drags on the practice word and on the preview list.
   attachSoundUnitGestures(document.getElementById('word-display'), {
     guard: () => !(gs.awaitingResult || micState === 'listening' || micState === 'evaluating'),
-    onTrigger: () => { gs.letterTaps++; },
+    onTrigger: (span) => { if (!span.dataset.silent) gs.letterTaps++; },
   });
   attachSoundUnitGestures(document.getElementById('soundpreview-list'));
 
@@ -2837,7 +2857,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v39 — Levels 3–5 rebuilt as decodable ladders (blends/digraphs; magic e + teams; r-controlled). Deep links: #words-N / #numbers-N start a round at that level. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v40 — magic-e: vowel tap plays the long team sound, final e is silent (flash only); here/there/where/shore/store get silent-e treatment. Deep links: #words-N / #numbers-N start a round at that level. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed
