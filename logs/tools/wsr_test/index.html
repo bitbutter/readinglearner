@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>WSR manual diagnostic</title>
+<style>
+  body { font-family: ui-monospace, Consolas, monospace; background:#14141c; color:#eee; padding:1.5rem; margin:0; }
+  h1 { font-size:1.1rem; opacity:.8; margin:.2rem 0 1rem; font-weight:600; }
+  #hint { font-size:1.15rem; background:#22223a; border-radius:.7rem; padding:1rem 1.2rem; margin-bottom:1rem; line-height:1.5; }
+  button.go {
+    font-size:1.5rem; font-weight:800; padding:1.2rem 2.6rem; border-radius:1rem; border:none; cursor:pointer;
+    color:#fff; background:radial-gradient(circle at 35% 30%, #5f5fd8, #2d2d73); margin:.4rem .6rem .4rem 0;
+  }
+  button.go:disabled { opacity:.35; cursor:not-allowed; }
+  button.go.live { background:radial-gradient(circle at 35% 30%, #e05b5b, #7a1f1f); animation:pulse 1.1s infinite; }
+  @keyframes pulse { 0%,100% { transform:scale(1);} 50% { transform:scale(1.04);} }
+  #log { white-space:pre-wrap; font-size:1rem; line-height:1.55; }
+  .ok  { color:#3ddc84; }
+  .bad { color:#ff6e6e; }
+  .dim { color:#8a8aa0; }
+  .warn{ color:#ffb74d; }
+</style></head>
+<body>
+<h1>WSR manual diagnostic — every recognizer event, on screen and logged</h1>
+<div id="hint">
+  Click a button, wait for <b>LISTENING — SPEAK NOW</b>, then say the four words
+  clearly: <b>cat … mat … bus … pot</b>.<br>
+  Round 1 = recognizer alone. Round 2 = with a second mic stream open (like the eval page).
+  Round 3 = alone again (recovery check). Run all three.
+</div>
+<div>
+  <button class="go" id="t1">▶ Round 1 — recognizer alone</button>
+  <button class="go" id="t2" disabled>▶ Round 2 — with 2nd mic stream</button>
+  <button class="go" id="t3" disabled>▶ Round 3 — alone again</button>
+</div>
+<div id="log"></div>
+<script>
+'use strict';
+const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const $ = (id) => document.getElementById(id);
+const log = (m, cls) => {
+  const line = new Date().toTimeString().slice(0, 8) + '  ' + m;
+  const span = document.createElement('div');
+  if (cls) span.className = cls;
+  span.textContent = line;
+  $('log').appendChild(span);
+  try { fetch('/log', { method: 'POST', body: JSON.stringify({ t: Date.now(), m: line }) }); } catch (e) {}
+};
+
+function runRound(label, withStream) {
+  return new Promise(async (resolve) => {
+    if (!WSR) { log('SpeechRecognition NOT AVAILABLE in this browser', 'bad'); return resolve(); }
+    let stream = null;
+    if (withStream) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        log('2nd mic stream OPEN — device: ' + (stream.getAudioTracks()[0].label || 'unlabeled'), 'dim');
+      } catch (e) { log('2nd stream FAILED: ' + e.name, 'warn'); }
+    }
+    const events = [];
+    const r = new WSR();
+    r.lang = 'en-GB'; r.continuous = true; r.interimResults = true; r.maxAlternatives = 5;
+    let done = false;
+    const btns = ['t1','t2','t3'].map($);
+    const finish = (why) => {
+      if (done) return; done = true;
+      try { r.abort(); } catch (e) {}
+      if (stream) { stream.getTracks().forEach(t => t.stop()); if (why !== 'user-done') log('2nd stream released', 'dim'); }
+      btns.forEach(b => { b.disabled = false; b.classList.remove('live'); });
+      log('── ' + label + ' finished: ' + why + (events.length ? '  [events: ' + events.join(' → ') + ']' : ''), 'dim');
+      resolve();
+    };
+    btns.forEach(b => { b.disabled = true; });
+    r.onstart      = () => { events.push('start'); log('· start', 'dim'); };
+    r.onaudiostart = () => { events.push('audiostart'); log('· audiostart (mic capture live)', 'dim'); };
+    r.onspeechstart= () => { events.push('speechstart'); log('· speechstart — your voice detected', 'ok'); };
+    r.onspeechend  = () => { events.push('speechend'); log('· speechend', 'dim'); };
+    r.onresult     = (e) => {
+      const res = e.results[e.results.length - 1];
+      const text = (res[0].transcript || '').trim();
+      if (res.isFinal) {
+        events.push('FINAL("' + text + '")');
+        log('✔ FINAL RESULT: "' + text + '"  confidence=' + res[0].confidence + '  alternatives: ' +
+            [...res].slice(1, 5).map(a => '"' + (a.transcript || '').trim() + '"').filter(x => x !== '""').join(', '), 'ok');
+      } else {
+        events.push('interim');
+        log('… interim: "' + text + '"', 'dim');
+      }
+    };
+    r.onerror = (e) => { events.push('error:' + e.error); log('✘ ERROR EVENT: ' + e.error, 'bad'); };
+    r.onend   = () => { events.push('end'); log('· end (recognizer closed)', 'dim'); };
+
+    log('══ ' + label + ' starting — get ready…', 'warn');
+    try { r.start(); } catch (err) { log('start() THREW: ' + err.name, 'bad'); finish('threw'); return; }
+    setTimeout(() => log('LISTENING — SPEAK NOW: cat … mat … bus … pot', 'warn'), 700);
+    const stopBtn = $(label === 'Round 1' ? 't1' : label === 'Round 2' ? 't2' : 't3');
+    stopBtn.classList.add('live');
+    stopBtn.textContent = '■ stop ' + label.slice(0, 6).toLowerCase();
+    const userStop = () => { stopBtn.removeEventListener('click', userStop); finish('user-done'); };
+    stopBtn.addEventListener('click', userStop);
+    setTimeout(() => finish('15s auto-stop'), 15000);
+  });
+}
+
+log('UA: ' + navigator.userAgent, 'dim');
+log('WSR constructor: ' + (WSR ? 'available' : 'MISSING'), WSR ? 'dim' : 'bad');
+$('t1').addEventListener('click', async () => { await runRound('Round 1', false); $('t2').disabled = false; });
+$('t2').addEventListener('click', async () => { await runRound('Round 2', true); $('t3').disabled = false; });
+$('t3').addEventListener('click', async () => { await runRound('Round 3', false); log('ALL ROUNDS COMPLETE — tell me to read the log', 'ok'); });
+</script>
+</body></html>

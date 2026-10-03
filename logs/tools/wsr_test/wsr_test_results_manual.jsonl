@@ -1,0 +1,73 @@
+{"m":"--- manual run started ---"}
+{"t":1791025285581,"m":"13:01:25  UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"}
+{"t":1791025285583,"m":"13:01:25  WSR constructor: available"}
+{"t":1791025328508,"m":"13:02:08  ══ Round 1 starting — get ready…"}
+{"t":1791025328568,"m":"13:02:08  · start"}
+{"t":1791025328712,"m":"13:02:08  · audiostart (mic capture live)"}
+{"t":1791025329212,"m":"13:02:09  LISTENING — SPEAK NOW: cat … mat … bus … pot"}
+{"t":1791025331811,"m":"13:02:11  · speechstart — your voice detected"}
+{"t":1791025332614,"m":"13:02:12  … interim: \"test\""}
+{"t":1791025332910,"m":"13:02:12  … interim: \"test cat\""}
+{"t":1791025333197,"m":"13:02:13  … interim: \"cat\""}
+{"t":1791025333415,"m":"13:02:13  … interim: \"test cat\""}
+{"t":1791025333629,"m":"13:02:13  … interim: \"Matt\""}
+{"t":1791025334300,"m":"13:02:14  … interim: \"test cat Matt\""}
+{"t":1791025334432,"m":"13:02:14  … interim: \"bus\""}
+{"t":1791025335006,"m":"13:02:15  … interim: \"test cat Matt bus\""}
+{"t":1791025335229,"m":"13:02:15  … interim: \"pot\""}
+{"t":1791025336391,"m":"13:02:16  ✔ FINAL RESULT: \"test cat Matt bus pot\"  confidence=0.9395357966423035  alternatives: \"test cat mat boss pot\", \"test cat mat Bos pot\", \"test cat Matt bus\""}
+{"t":1791025343510,"m":"13:02:23  ── Round 1 finished: 15s auto-stop  [events: start → audiostart → speechstart → interim → interim → interim → interim → interim → interim → interim → interim → interim → FINAL(\"test cat Matt bus pot\")]"}
+{"t":1791025343510,"m":"13:02:23  · speechend"}
+{"t":1791025343511,"m":"13:02:23  ✘ ERROR EVENT: aborted"}
+{"t":1791025343512,"m":"13:02:23  · end (recognizer closed)"}
+{"t":1791025357556,"m":"13:02:37  2nd mic stream OPEN — device: Default - Microphone (Yeti X) (046d:0aaf)"}
+{"t":1791025357557,"m":"13:02:37  ══ Round 2 starting — get ready…"}
+{"t":1791025357560,"m":"13:02:37  · start"}
+{"t":1791025357671,"m":"13:02:37  · audiostart (mic capture live)"}
+{"t":1791025358257,"m":"13:02:38  LISTENING — SPEAK NOW: cat … mat … bus … pot"}
+{"t":1791025359671,"m":"13:02:39  · speechstart — your voice detected"}
+{"t":1791025360406,"m":"13:02:40  … interim: \"cat\""}
+{"t":1791025360907,"m":"13:02:40  … interim: \"cat\""}
+{"t":1791025361193,"m":"13:02:41  … interim: \"cats\""}
+{"t":1791025361410,"m":"13:02:41  … interim: \"cat Matt\""}
+{"t":1791025361494,"m":"13:02:41  … interim: \"Matt\""}
+{"t":1791025361995,"m":"13:02:41  … interim: \"cat Matt\""}
+{"t":1791025362322,"m":"13:02:42  … interim: \"bus\""}
+{"t":1791025363011,"m":"13:02:43  … interim: \"cat Matt bus\""}
+{"t":1791025363405,"m":"13:02:43  … interim: \"pot\""}
+{"t":1791025364497,"m":"13:02:44  ✔ FINAL RESULT: \"cat Matt bus pot\"  confidence=0.9521284103393555  alternatives: \"Cats Matt bus pot\", \"cat Matt bus\", \"Cats Matt bus\""}
+{"t":1791025372563,"m":"13:02:52  2nd stream released"}
+{"t":1791025372564,"m":"13:02:52  ── Round 2 finished: 15s auto-stop  [events: start → audiostart → speechstart → interim → interim → interim → interim → interim → interim → interim → interim → interim → FINAL(\"cat Matt bus pot\")]"}
+{"t":1791025372564,"m":"13:02:52  · speechend"}
+{"t":1791025372564,"m":"13:02:52  ✘ ERROR EVENT: aborted"}
+{"t":1791025372565,"m":"13:02:52  · end (recognizer closed)"}
+{"t":1791025378562,"m":"13:02:58  ══ Round 3 starting — get ready…"}
+{"t":1791025378564,"m":"13:02:58  · start"}
+{"t":1791025378682,"m":"13:02:58  · audiostart (mic capture live)"}
+{"t":1791025379271,"m":"13:02:59  LISTENING — SPEAK NOW: cat … mat … bus … pot"}
+{"t":1791025380581,"m":"13:03:00  · speechstart — your voice detected"}
+{"t":1791025381320,"m":"13:03:01  … interim: \"cat\""}
+{"t":1791025382013,"m":"13:03:02  … interim: \"cat\""}
+{"t":1791025382121,"m":"13:03:02  … interim: \"Matt\""}
+{"t":1791025382718,"m":"13:03:02  … interim: \"cat Matt\""}
+{"t":1791025383042,"m":"13:03:03  … interim: \"bus\""}
+{"t":1791025383708,"m":"13:03:03  … interim: \"cat Matt bus\""}
+{"t":1791025384130,"m":"13:03:04  … interim: \"pot\""}
+{"t":1791025385105,"m":"13:03:05  ✔ FINAL RESULT: \"cat Matt bus pot\"  confidence=0.949622392654419  alternatives: \"cat mat boss pot\", \"cat Matt boss pot\", \"cat Matt bus\""}
+{"t":1791025393570,"m":"13:03:13  ── Round 3 finished: 15s auto-stop  [events: start → audiostart → speechstart → interim → interim → interim → interim → interim → interim → interim → FINAL(\"cat Matt bus pot\")]"}
+{"t":1791025393571,"m":"13:03:13  ALL ROUNDS COMPLETE — tell me to read the log"}
+{"t":1791025393571,"m":"13:03:13  · speechend"}
+{"t":1791025393572,"m":"13:03:13  ✘ ERROR EVENT: aborted"}
+{"t":1791025393572,"m":"13:03:13  · end (recognizer closed)"}
+{"t":1791025407149,"m":"13:03:27  ══ Round 1 starting — get ready…"}
+{"t":1791025407152,"m":"13:03:27  · start"}
+{"t":1791025407262,"m":"13:03:27  · audiostart (mic capture live)"}
+{"t":1791025407857,"m":"13:03:27  LISTENING — SPEAK NOW: cat … mat … bus … pot"}
+{"t":1791025409061,"m":"13:03:29  · speechstart — your voice detected"}
+{"t":1791025412694,"m":"13:03:32  ✔ FINAL RESULT: \"\"  confidence=0  alternatives: "}
+{"t":1791025415993,"m":"13:03:35  ✔ FINAL RESULT: \"\"  confidence=0  alternatives: "}
+{"t":1791025417894,"m":"13:03:37  ✔ FINAL RESULT: \"\"  confidence=0  alternatives: "}
+{"t":1791025423078,"m":"13:03:43  ── Round 1 finished: 15s auto-stop  [events: start → audiostart → speechstart → FINAL(\"\") → FINAL(\"\") → FINAL(\"\")]"}
+{"t":1791025423079,"m":"13:03:43  · speechend"}
+{"t":1791025423079,"m":"13:03:43  ✘ ERROR EVENT: aborted"}
+{"t":1791025423079,"m":"13:03:43  · end (recognizer closed)"}

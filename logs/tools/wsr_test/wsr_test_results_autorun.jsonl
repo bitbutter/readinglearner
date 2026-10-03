@@ -1,0 +1,26 @@
+{"t":1791025089534,"m":"UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"}
+{"t":1791025089536,"m":"WSR ctor: SpeechRecognition"}
+{"t":1791025090111,"m":"--- T1: recognizer ALONE (speak now) ---"}
+{"t":1791025097076,"m":"T1: timeout 6s | events: start,audiostart"}
+{"t":1791025098081,"m":"--- T2: getUserMedia stream open, THEN recognizer (speak now) ---"}
+{"t":1791025098116,"m":"T2: getUserMedia OK — Default - Microphone (Yeti X) (046d:0aaf)"}
+{"t":1791025105070,"m":"T2: timeout 6s | events: start,audiostart"}
+{"t":1791025105082,"m":"T2: stream released"}
+{"t":1791025106068,"m":"--- T3: recognizer again after release (speak now) ---"}
+{"t":1791025113081,"m":"T3: timeout 6s | events: start,audiostart"}
+{"t":1791025113082,"m":"=== DONE — all three tests finished ==="}
+{"t":1791025165976,"m":"UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"}
+{"t":1791025165977,"m":"WSR ctor: SpeechRecognition"}
+{"t":1791025166289,"m":"--- T1: recognizer ALONE (speak now) ---"}
+{"t":1791025169475,"m":"T1: ended without final | events: start,audiostart,speechstart,end"}
+{"t":1791025169788,"m":"--- T2: getUserMedia stream open, THEN recognizer (speak now) ---"}
+{"t":1791025169824,"m":"T2: getUserMedia OK — Default - Microphone (Yeti X) (046d:0aaf)"}
+{"t":1791025175832,"m":"T2: timeout 6s | events: start,audiostart,speechstart"}
+{"t":1791025175833,"m":"T2: stream released"}
+{"t":1791025176141,"m":"--- T3: recognizer again after release (speak now) ---"}
+{"t":1791025180386,"m":"T3: ended without final | events: start,audiostart,speechstart,end"}
+{"t":1791025180387,"m":"--- T4: recognizer while the PAGE SPEAKES words via speakers (cat mat bus pot) ---"}
+{"t":1791025183916,"m":"T4: ended without final | events: start,audiostart,end"}
+{"t":1791025183916,"m":"--- T5: recognizer alone, longer window to catch no-speech ---"}
+{"t":1791025189919,"m":"T5-long: timeout 6s | events: start,audiostart"}
+{"t":1791025189919,"m":"=== DONE — all tests finished ==="}
