@@ -1275,3 +1275,39 @@ html, body {
 }
 
 .tune-level-select option { background: #0f0d1c; color: white; }
+
+/* ── Rule chips (2026-10): standing, tappable rule reminders ────────────── */
+.rule-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 3.4rem;
+  margin: 0.2rem 0 0.4rem;
+  padding: 0 1rem;
+}
+.rule-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 999px;
+  border: 2px solid var(--chip, #3ddc84);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: clamp(1rem, 3.4vmin, 1.5rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+.rule-chip:active {
+  transform: scale(0.94);
+  background: color-mix(in srgb, var(--chip, #3ddc84) 30%, rgba(0, 0, 0, 0.45));
+}
+.rule-chip-icon {
+  font-size: 0.85em;
+  opacity: 0.9;
+}
