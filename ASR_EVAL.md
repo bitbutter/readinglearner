@@ -24,11 +24,11 @@ The displayed prompt describes what the learner was asked to say. It is not veri
 
 ## Google recognition
 
-The optional model is **Google Cloud Speech-to-Text V2 Chirp 3**, using `en-GB` in the `eu` region. Set up the private speech server following [speech_api/README.md](speech_api/README.md).
+The evaluator can submit to **Google Cloud Speech-to-Text V2 Chirp 3** or **short**, using `en-GB` in the `eu` region. Google lists both models for this language and region. The `short` option is a comparison candidate, not a claim that it is more accurate. Set up the private speech server following [speech_api/README.md](speech_api/README.md).
 
-Select **Transcribe with Google Chirp 3**. The deployed transcription address is already filled in; enter the private server access code from Secret Manager. The Google credentials stay on the server; the evaluator's access code stays only in the open tab. Audio is saved before it is submitted to Google. A service failure leaves the file intact and is unscored. A completed request returning no speech is a scored miss.
+Select **Transcribe with Google Chirp 3** or **Transcribe with Google short (V2)**. The deployed transcription address is already filled in; enter the private server access code from Secret Manager. The Google credentials stay on the server; the evaluator's access code stays only in the open tab. Audio is saved before it is submitted to Google. A service failure leaves the file intact and is unscored. A completed request returning no speech is a scored miss.
 
-An existing saved take can be submitted with **Transcribe saved audio**. Every explicit submission can incur a recognition charge. To re-run a whole exported dataset, extract the ZIP and use the separate replay command documented in the server guide. It writes a new results file and does not alter the recordings.
+To compare both models, open each saved word take, select the other model, then press **Transcribe saved audio**. The page sends the same original audio bytes without the displayed answer. Both transcripts and their match/miss scores appear together in the result row and remain in the ZIP. The overall results show separate match rates. Each model submission is billed independently, so comparing both makes two recognition requests per take. To re-run a whole exported dataset, extract the ZIP and use the separate replay command documented in the server guide. It writes a new results file and does not alter the recordings.
 
 The deployed HTTPS server is reachable from Android Brave. The optional local development server is accessible only from this computer. Recording and exporting require no speech server.
 
@@ -36,7 +36,7 @@ The deployed HTTPS server is reachable from Android Brave. The optional local de
 
 The deployed code is in Google Cloud Secret Manager, project `readinglearner-speech-bitbu`, secret `reading-learner-speech-token`, version `1`. Open the version's actions and view its secret value yourself, then copy it directly to the evaluator's access-code field. Do not paste it into chat or put it in a URL, source file or shared export.
 
-The server's first live check transcribed Google's 1.812-second public Brooklyn Bridge sample correctly and verified the returned recording hash. This checks deployment, not recognition quality for a child's isolated words. Record correct words, deliberately wrong words and silence in the evaluator before comparing models.
+The server's first live check transcribed Google's 1.812-second public Brooklyn Bridge sample correctly and verified the returned recording hash. This checks deployment, not recognition quality for a child's isolated words. Compare models against the same saved audio and review the results before deciding whether either is suitable for reading practice.
 
 ## Local preview and checks
 

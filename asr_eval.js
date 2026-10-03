@@ -66,6 +66,22 @@ function lastModelRun(attempt) {
   return attempt?.modelRuns?.at(-1) || null;
 }
 
+function latestModelRun(attempt, model) {
+  return [...(attempt?.modelRuns || [])].reverse().find(run => run.model === model && run.status === 'complete') || null;
+}
+
+function latestModelError(attempt, model) {
+  return [...(attempt?.modelRuns || [])].reverse().find(run => (run.model === model || run.requestedModel === model) && run.status === 'error') || null;
+}
+
+function modelLabel(model) {
+  return model === 'chirp_3' ? 'Chirp 3' : model === 'short' ? 'short (V2)' : model;
+}
+
+function modelConfigurationVersion(model) {
+  return model === 'chirp_3' ? 'recorded-word-en-GB-chirp3-v1' : 'recorded-word-en-GB-short-v1';
+}
+
 function showProblem(message) {
   $('problem').textContent = message;
   $('problem').hidden = !message;
@@ -149,8 +165,13 @@ function renderTrial() {
   $('prompt').textContent = recordingSession.order[wordIndex];
   const takes = recordedAttempts.filter(recording => recording.wordIndex === wordIndex).length;
   $('counter').textContent = `word ${wordIndex + 1} / ${recordingSession.order.length}` + (takes ? ` — ${takes} saved take${takes === 1 ? '' : 's'}` : '');
+  const completedRuns = (attempt?.modelRuns || []).filter(savedRun => savedRun.status === 'complete');
   $('heard').textContent = run?.status === 'complete' ? (run.transcript ? `heard: “${run.transcript}”` : 'heard: (nothing)') : '';
-  $('alts').textContent = run?.status === 'complete' ? `${run.model} · ${run.languageCode} · ${(run.latencyMs / 1000).toFixed(1)}s` : '';
+  $('alts').textContent = completedRuns.map(savedRun => {
+    const transcript = savedRun.transcript || '(nothing)';
+    const verdict = scoreTranscript(savedRun.transcript, attempt.prompt).verdict;
+    return `${modelLabel(savedRun.model)}: “${transcript}” — ${verdict} · ${(savedRun.latencyMs / 1000).toFixed(1)}s`;
+  }).join(' | ');
   const description = attemptDescription(attempt);
   $('verdict').textContent = description.text + (attempt?.voided ? ' — VOIDED' : '');
   $('verdict').className = 'verdict ' + description.className;
@@ -260,7 +281,7 @@ async function enableMicrophone() {
 function readTranscriptionSettings() {
   const model = $('recognition-mode').value;
   if (model === 'record-only') return null;
-  if (model !== 'chirp_3') throw new Error('Unknown transcription model.');
+  if (!['chirp_3', 'short'].includes(model)) throw new Error('Unknown transcription model.');
   if (!$('gateway-url').value.trim() || !$('gateway-token').value.trim()) throw new Error('Enter the transcription address and access code, or choose “Save audio only”.');
   const serverUrl = new URL($('gateway-url').value.trim());
   const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(serverUrl.hostname);
@@ -386,7 +407,7 @@ async function transcribeAttempt(attempt, settings) {
       run.serverError = transcription.error;
       throw new Error(transcription.error?.message || transcription.error || `Speech server returned HTTP ${response.status}`);
     }
-    if (typeof transcription.transcript !== 'string' || transcription.provider !== 'google-cloud-stt' || transcription.model !== settings.model || transcription.languageCode !== 'en-GB' || !transcription.configurationVersion || transcription.audioSha256 !== attempt.audioSha256) {
+    if (typeof transcription.transcript !== 'string' || transcription.provider !== 'google-cloud-stt' || transcription.model !== settings.model || transcription.languageCode !== 'en-GB' || transcription.configurationVersion !== modelConfigurationVersion(settings.model) || transcription.audioSha256 !== attempt.audioSha256) {
       throw new Error('The speech server response does not match this recording and model.');
     }
     Object.assign(run, transcription, { status: 'complete', scoringVersion: 'prompt-homophones-v2', ...scoreTranscript(transcription.transcript, attempt.prompt) });
@@ -428,24 +449,36 @@ function download(blob, filename) {
 function renderSummary() {
   releaseReplayUrls();
   const selected = recordingSession.order.map((word, index) => currentAttempt(index)).filter(Boolean);
-  const scored = selected.filter(attempt => !attempt.voided && !attempt.captureError && lastModelRun(attempt)?.status === 'complete');
-  const hits = scored.filter(attempt => scoreTranscript(lastModelRun(attempt).transcript, attempt.prompt).verdict === 'hit').length;
-  const errors = selected.filter(attempt => !attempt.voided && (attempt.captureError || lastModelRun(attempt)?.status === 'error')).length;
-  $('stats').textContent = `${recordedAttempts.length} audio files saved · ${selected.length}/${recordingSession.order.length} words recorded · ${hits}/${scored.length} latest scored takes match${scored.length ? ` (${Math.round(hits / scored.length * 100)}%)` : ''} · ${errors} unscored errors · ${selected.filter(attempt => attempt.voided).length} voided`;
-  $('pairmatrix').textContent = 'Scores use the latest take and latest model result per word. Every earlier take and model result remains in the ZIP.';
+  const scoreModel = model => {
+    const rows = selected.flatMap(attempt => {
+      const modelRun = latestModelRun(attempt, model);
+      return !attempt.voided && !attempt.captureError && modelRun ? [{ attempt, modelRun }] : [];
+    });
+    const hits = rows.filter(({ attempt, modelRun }) => scoreTranscript(modelRun.transcript, attempt.prompt).verdict === 'hit').length;
+    const errors = selected.filter(attempt => !attempt.voided && latestModelError(attempt, model)).length;
+    return `${modelLabel(model)}: ${hits}/${rows.length} matches${rows.length ? ` (${Math.round(hits / rows.length * 100)}%)` : ''}, ${errors} errors`;
+  };
+  const models = [...new Set(recordedAttempts.flatMap(attempt => (attempt.modelRuns || []).map(run => run.model || run.requestedModel).filter(Boolean)))];
+  const captureErrors = selected.filter(attempt => !attempt.voided && attempt.captureError).length;
+  $('stats').textContent = `${recordedAttempts.length} audio files saved · ${selected.length}/${recordingSession.order.length} words recorded · ${models.map(scoreModel).join(' · ') || 'No model results yet'} · ${captureErrors} recording errors · ${selected.filter(attempt => attempt.voided).length} voided`;
+  $('pairmatrix').textContent = 'Each model is scored against the same latest saved take for each word. Every transcript and original audio file remains in the ZIP.';
   const table = document.createElement('table');
   const header = document.createElement('tr');
-  for (const label of ['Prompt', 'Transcript', 'Outcome', 'Audio']) {
+  for (const label of ['Prompt', 'Chirp 3 transcript / outcome', 'short (V2) transcript / outcome', 'Audio']) {
     const cell = document.createElement('th'); cell.textContent = label; header.appendChild(cell);
   }
   table.appendChild(header);
   for (const attempt of selected) {
     const row = document.createElement('tr');
-    const run = lastModelRun(attempt);
-    const description = attemptDescription(attempt);
-    for (const text of [attempt.prompt, run?.status === 'complete' ? run.transcript || '(nothing)' : '—', description.text + (attempt.voided ? ' — VOIDED' : '')]) {
+    const chirpRun = latestModelRun(attempt, 'chirp_3');
+    const shortRun = latestModelRun(attempt, 'short');
+    const formatRun = (model, modelRun) => modelRun
+      ? `${modelRun.transcript || '(nothing)'} — ${scoreTranscript(modelRun.transcript, attempt.prompt).verdict}`
+      : latestModelError(attempt, model)?.error ? `request error — ${latestModelError(attempt, model).error}` : '—';
+    for (const text of [attempt.prompt, formatRun('chirp_3', chirpRun), formatRun('short', shortRun)]) {
       const cell = document.createElement('td'); cell.textContent = text; row.appendChild(cell);
     }
+    if (attempt.voided) row.children[0].textContent += ' — VOIDED';
     const audioCell = document.createElement('td');
     audioCell.appendChild(audioPlayer(attempt.audioBlob));
     row.appendChild(audioCell);

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { request as httpRequest } from 'node:http';
 import { createSpeechGateway, readGatewayConfiguration } from '../server.mjs';
-import { MAX_REQUEST_BYTES } from '../providers.mjs';
+import { createGoogleSpeechTranscriber, MAX_REQUEST_BYTES } from '../providers.mjs';
 
 const gatewayToken = 'fake-gateway-token-at-least-24-characters';
 const recording = { model: 'chirp_3', audioBase64: Buffer.from('recording').toString('base64'), mimeType: 'audio/webm', durationMs: 2000 };
@@ -43,6 +43,8 @@ test('token, origin, route, content type and target metadata are rejected before
       { headers: { ...authorizedHeaders, 'Content-Type': 'text/plain' }, status: 415 },
       { body: { ...recording, expectedWord: 'mat' }, status: 400 },
       { body: { ...recording, durationMs: 60_000 }, status: 400 },
+      { body: { ...recording, model: 'latest_short' }, status: 400 },
+      { body: { ...recording, model: 'long' }, status: 400 },
       { path: '/elsewhere', status: 404 },
     ];
     for (const badRequest of requests) {
@@ -80,6 +82,36 @@ test('valid requests pass only validated recording fields and return evidence', 
     assert.equal(response.headers.get('cache-control'), 'no-store');
     assert.equal((await response.json()).transcript, 'Matt');
   });
+});
+
+test('HTTP model comparison sends each selected model to Google and returns its distinct identity', async () => {
+  const googleModels = [];
+  const transcribe = createGoogleSpeechTranscriber({
+    projectId: 'reading-learner-test', getAccessToken: async () => 'private-test-google-token',
+    fetchImplementation: async (url, options) => {
+      assert.equal(url, 'https://eu-speech.googleapis.com/v2/projects/reading-learner-test/locations/eu/recognizers/_:recognize');
+      const googleRequest = JSON.parse(options.body);
+      googleModels.push(googleRequest.config.model);
+      assert.deepEqual(googleRequest, { config: { autoDecodingConfig: {}, languageCodes: ['en-GB'], model: googleRequest.config.model }, content: recording.audioBase64 });
+      return Response.json({ results: [{ alternatives: [{ transcript: 'Matt.' }] }], metadata: { totalBilledDuration: '2s' } });
+    },
+  });
+  await withGateway({}, transcribe, async endpoint => {
+    for (const [model, configurationVersion] of [
+      ['chirp_3', 'recorded-word-en-GB-chirp3-v1'], ['short', 'recorded-word-en-GB-short-v1'],
+    ]) {
+      const response = await fetch(endpoint, { method: 'POST', headers: authorizedHeaders, body: JSON.stringify({ ...recording, model }) });
+      assert.equal(response.status, 200);
+      const transcription = await response.json();
+      assert.equal(transcription.provider, 'google-cloud-stt');
+      assert.equal(transcription.model, model);
+      assert.equal(transcription.configurationVersion, configurationVersion);
+      assert.equal(transcription.languageCode, 'en-GB');
+      assert.equal(transcription.transcript, 'Matt.');
+      assert.deepEqual(transcription.usage, { totalBilledDuration: '2s' });
+    }
+  });
+  assert.deepEqual(googleModels, ['chirp_3', 'short']);
 });
 
 test('oversized declared bodies are rejected before being uploaded or decoded', async () => {

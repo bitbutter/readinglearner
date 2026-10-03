@@ -303,7 +303,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
       const request = { endpoint, options, body: JSON.parse(options.body) }; fetchRequests.push(request);
       const originalBytes = Buffer.from(request.body.audioBase64, 'base64');
       const transcription = { transcript: 'Matt', provider: 'google-cloud-stt', model: request.body.model,
-        languageCode: 'en-GB', configurationVersion: 'test-config-1', latencyMs: 123,
+        languageCode: 'en-GB', configurationVersion: request.body.model === 'short' ? 'recorded-word-en-GB-short-v1' : 'recorded-word-en-GB-chirp3-v1', latencyMs: 123,
         audioSha256: createHash('sha256').update(originalBytes).digest('hex') };
       return responseFactory ? responseFactory(request, transcription) : { ok: true, status: 200, async json() { return transcription; } };
     },
@@ -327,8 +327,8 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     },
     async click(id) { const operations = elements.get(id).click(); await Promise.all(operations || []); await this.idle(); },
     async enableMicrophone() { await this.click('enable-mic'); assert.equal(elements.get('mic').disabled, false, elements.get('problem').textContent); },
-    configureTranscription() {
-      elements.get('recognition-mode').value = 'chirp_3'; elements.get('recognition-mode').dispatch('change');
+    configureTranscription(model = 'chirp_3') {
+      elements.get('recognition-mode').value = model; elements.get('recognition-mode').dispatch('change');
       elements.get('gateway-url').value = 'https://speech.example/transcribe';
       elements.get('gateway-token').value = 'tab-only-secret-token';
     },
@@ -341,8 +341,9 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
 }
 
 function expectScore(page, hits, denominator, errors = 0) {
-  assert.match(page.element('stats').textContent, new RegExp(hits + '/' + denominator + ' latest scored takes match'));
-  assert.match(page.element('stats').textContent, new RegExp(errors + ' unscored errors'));
+  assert.match(page.element('stats').textContent, new RegExp(hits + '/' + denominator + ' matches'));
+  if (errors) assert.match(page.element('stats').textContent, new RegExp(errors + ' errors'));
+  else assert.match(page.element('stats').textContent, /0 errors/);
 }
 
 const browserBehaviorTests = [
@@ -435,6 +436,31 @@ const browserBehaviorTests = [
     await page.click('finish'); expectScore(page, 1, 1); await page.click('export');
     assert.equal(page.archive.lastManifest.attempts[0].modelRuns[0].transcript, 'Matt');
   }],
+  ['Chirp 3 and short compare the same saved bytes and remain visible with separate scores', async () => {
+    const page = createPage({ responseFactory: async (request, response) => ({
+      ok: true, status: 200, async json() {
+        return { ...response, transcript: request.body.model === 'chirp_3' ? 'math' : 'mat' };
+      },
+    }) });
+    await page.idle(); await page.enableMicrophone(); page.configureTranscription('chirp_3'); await page.record();
+    const original = Buffer.from(await page.latestAttempt().audioBlob.arrayBuffer());
+    page.element('recognition-mode').value = 'short'; page.element('recognition-mode').dispatch('change');
+    await page.click('transcribe');
+    assert.deepEqual(page.fetchRequests.map(request => request.body.model), ['chirp_3', 'short']);
+    for (const request of page.fetchRequests) assert.deepEqual(Buffer.from(request.body.audioBase64, 'base64'), original);
+    const savedRuns = page.latestAttempt().modelRuns;
+    assert.deepEqual(savedRuns.map(run => run.model), ['chirp_3', 'short']);
+    assert.deepEqual(savedRuns.map(run => run.transcript), ['math', 'mat']);
+    assert.equal(page.element('alts').textContent.includes('Chirp 3: “math” — miss'), true);
+    assert.equal(page.element('alts').textContent.includes('short (V2): “mat” — hit'), true);
+    await page.click('finish');
+    assert.match(page.element('stats').textContent, /Chirp 3: 0\/1 matches/);
+    assert.match(page.element('stats').textContent, /short \(V2\): 1\/1 matches/);
+    assert.match(page.element('trials').textContent, /math — miss/);
+    assert.match(page.element('trials').textContent, /mat — hit/);
+    await page.click('export');
+    assert.deepEqual(page.archive.lastManifest.attempts[0].modelRuns.map(run => run.transcript), ['math', 'mat']);
+  }],
   ['A successful empty API transcript is a scored miss', async () => {
     const page = createPage({ responseFactory: async (request, response) => ({ ok: true, status: 200, async json() { return { ...response, transcript: '' }; } }) });
     await page.idle(); await page.enableMicrophone(); page.configureTranscription(); await page.record();
@@ -507,6 +533,14 @@ const browserBehaviorTests = [
     await page.click('finish'); await page.click('export');
     assert.doesNotMatch(JSON.stringify(page.archive.lastManifest), /tab-only-secret-token/);
     assert.equal(page.latestAttempt().audioSha256, createHash('sha256').update(page.recorderBytes).digest('hex'));
+  }],
+  ['An unrecognized model selection is rejected before a request is sent', async () => {
+    const page = createPage(); await page.idle(); await page.enableMicrophone();
+    page.configureTranscription('chirp_3'); await page.record();
+    page.element('recognition-mode').value = 'unapproved-model'; page.element('recognition-mode').dispatch('change');
+    await page.click('transcribe');
+    assert.equal(page.fetchRequests.length, 1);
+    assert.match(page.element('problem').textContent, /Unknown transcription model/);
   }],
   ['A response for different audio is retained as an unscored model error', async () => {
     const page = createPage({ responseFactory: async (request, response) => ({ ok: true, status: 200, async json() { return { ...response, audioSha256: '0'.repeat(64) }; } }) });

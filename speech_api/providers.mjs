@@ -5,6 +5,10 @@ export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 export const MAX_REQUEST_BYTES = Math.ceil(MAX_AUDIO_BYTES / 3) * 4 + 4096;
 export const SPEECH_LANGUAGE_CODE = 'en-GB';
 export const SPEECH_MODEL = 'chirp_3';
+export const SPEECH_MODEL_CONFIGURATION_VERSIONS = Object.freeze({
+  chirp_3: SPEECH_CONFIGURATION_VERSION,
+  short: 'recorded-word-en-GB-short-v1',
+});
 const RECORDING_MIME_TYPES = new Set(['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/wav']);
 const REQUEST_FIELDS = new Set(['model', 'audioBase64', 'mimeType', 'durationMs']);
 
@@ -18,6 +22,13 @@ export class SpeechGatewayError extends Error {
   }
 }
 
+function configurationVersionForSpeechModel(model) {
+  if (typeof model !== 'string' || !Object.hasOwn(SPEECH_MODEL_CONFIGURATION_VERSIONS, model)) {
+    throw new SpeechGatewayError(400, 'unsupported_model', 'Select the chirp_3 or short transcription model.');
+  }
+  return SPEECH_MODEL_CONFIGURATION_VERSIONS[model];
+}
+
 export function validateRecordingRequest(request) {
   if (!request || typeof request !== 'object' || Array.isArray(request)) {
     throw new SpeechGatewayError(400, 'invalid_recording', 'Send a JSON object containing the recording.');
@@ -25,9 +36,7 @@ export function validateRecordingRequest(request) {
   if (Object.keys(request).some(field => !REQUEST_FIELDS.has(field))) {
     throw new SpeechGatewayError(400, 'unexpected_recording_fields', 'Only model, audioBase64, mimeType and durationMs are accepted.');
   }
-  if (request.model !== SPEECH_MODEL) {
-    throw new SpeechGatewayError(400, 'unsupported_model', 'The supported transcription model is chirp_3.');
-  }
+  configurationVersionForSpeechModel(request.model);
   if (!Number.isFinite(request.durationMs) || request.durationMs <= 0 || request.durationMs >= 60_000) {
     throw new SpeechGatewayError(400, 'invalid_recording_duration', 'Recording duration must be positive and shorter than 60 seconds.');
   }
@@ -56,7 +65,7 @@ export function validateRecordingRequest(request) {
     throw new SpeechGatewayError(413, 'recording_too_large', 'Recordings may contain at most 10 MiB of audio.');
   }
   return {
-    model: SPEECH_MODEL,
+    model: request.model,
     audioBase64,
     mimeType: request.mimeType,
     durationMs: request.durationMs,
@@ -92,7 +101,7 @@ export function extractSpeechTranscript(providerResponse) {
   }).join(' ');
 }
 
-export function createChirpTranscriber({ projectId, fetchImplementation = fetch, getAccessToken, timeoutMs = 15_000, now = () => performance.now() }) {
+export function createGoogleSpeechTranscriber({ projectId, fetchImplementation = fetch, getAccessToken, timeoutMs = 15_000, now = () => performance.now() }) {
   let googleAuth;
   const obtainAccessToken = getAccessToken || (async () => {
     const { GoogleAuth } = await import('google-auth-library');
@@ -100,6 +109,8 @@ export function createChirpTranscriber({ projectId, fetchImplementation = fetch,
     return googleAuth.getAccessToken();
   });
   return async function transcribeRecording(recording, { signal } = {}) {
+    const model = recording?.model;
+    const configurationVersion = configurationVersionForSpeechModel(model);
     if (!projectId || !/^[a-z][a-z0-9-]{4,61}[a-z0-9]$/.test(projectId)) {
       throw new SpeechGatewayError(503, 'speech_project_unconfigured', 'Set GOOGLE_CLOUD_PROJECT to the Google Cloud project ID.');
     }
@@ -132,7 +143,7 @@ export function createChirpTranscriber({ projectId, fetchImplementation = fetch,
           'x-goog-user-project': projectId,
         },
         body: JSON.stringify({
-          config: { autoDecodingConfig: {}, languageCodes: [SPEECH_LANGUAGE_CODE], model: SPEECH_MODEL },
+          config: { autoDecodingConfig: {}, languageCodes: [SPEECH_LANGUAGE_CODE], model },
           content: recording.audioBase64,
         }),
         signal: requestSignal,
@@ -144,18 +155,18 @@ export function createChirpTranscriber({ projectId, fetchImplementation = fetch,
     }
     if (!response.ok) {
       throw new SpeechGatewayError(502, 'speech_provider_error', 'Google rejected the transcription request.', {
-        provider: 'google-cloud-stt', model: SPEECH_MODEL, providerStatus: response.status, providerResponse,
+        provider: 'google-cloud-stt', model, configurationVersion, providerStatus: response.status, providerResponse,
       });
     }
     const transcript = extractSpeechTranscript(providerResponse);
     return {
       provider: 'google-cloud-stt',
-      model: SPEECH_MODEL,
+      model,
       languageCode: SPEECH_LANGUAGE_CODE,
-      configurationVersion: SPEECH_CONFIGURATION_VERSION,
+      configurationVersion,
       audioSha256: recording.audioSha256,
       transcript,
-      // Chirp returns segment hypotheses. They are preserved in providerResponse;
+      // Google returns segment hypotheses. They are preserved in providerResponse;
       // they are not invented into competing whole-recording transcripts.
       alternatives: [],
       latencyMs: Math.max(0, Math.round(now() - startedAt)),

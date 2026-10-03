@@ -1,6 +1,6 @@
 # Recorded-word speech API
 
-This speech API accepts a recording and transcribes it with Google Cloud Speech-to-Text V2, model `chirp_3`, language `en-GB`, in Google's `eu` region. The evaluator uses it now; the server can also serve the reading app after its integration is published. That switch awaits evaluation against spoken reference words. Each submission makes one recognition request. It does not send the displayed word, accepted answers, vocabulary hints or transcript replacements to Google. It does not store recordings or sessions.
+This speech API accepts a recording and transcribes it with Google Cloud Speech-to-Text V2, model `chirp_3` or `short`, language `en-GB`, in Google's `eu` region. Both models are listed for this language and region; `short` is being evaluated as a candidate, with no assumption that it is more accurate. The evaluator uses it for same-recording comparisons. The reading app remains on its existing recognizer pending evidence from spoken reference words. Each submission makes one recognition request. It does not send the displayed word, accepted answers, vocabulary hints or transcript replacements to Google. It does not store recordings or sessions.
 
 Google's dedicated Speech-to-Text service is used here. The [Gemini Developer API terms](https://ai.google.dev/gemini-api/terms) prohibit clients directed toward or likely accessed by people under 18.
 
@@ -47,9 +47,9 @@ Rate and daily counters live only in this local process and reset when it restar
 
 ## Cloud Run setup
 
-The deployed endpoint is [reading-learner-speech](https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe), in project `readinglearner-speech-bitbu`. Cloud Build and container startup succeeded for revision `reading-learner-speech-00001-tdv` on 3 October 2026. Keep its access token private; the endpoint URL alone does not authorize transcription.
+The deployed endpoint is [reading-learner-speech](https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe), in project `readinglearner-speech-bitbu`. Revision `reading-learner-speech-00002-fxb` serves both allowlisted models in `en-GB`/EU. Keep its access token private; the endpoint URL alone does not authorize transcription.
 
-Live checks verified missing-token rejection, rejected an unapproved browser origin, and allowed the GitHub Pages browser preflight. One 1.812-second public Google audio sample returned “How old is the Brooklyn Bridge?” with the correct model, language and original-audio SHA-256. Both the service-wide and revision instance maximums are set to one. No child's recording was used for this check.
+Live checks after this update verified the allowed GitHub Pages browser preflight (`204`), missing-token rejection (`401`), and unapproved-origin rejection (`403`). These checks did not submit speech audio or incur a recognition request. An earlier revision transcribed one 1.812-second public Google sample as “How old is the Brooklyn Bridge?” with the expected model, language and original-audio SHA-256. Both the service-wide and revision instance maximums are set to one. No child's recording was used for these checks.
 
 For another deployment, use [Google Cloud Shell](https://shell.cloud.google.com/) in the browser. It already has Google's command-line tools; nothing needs to be installed on this computer. First create a project and link billing in the Google Cloud console. Review the chosen project, identities and deployment settings before running the following setup.
 
@@ -135,7 +135,7 @@ Content-Type: application/json
 }
 ```
 
-The response identifies the provider, model, language, `configurationVersion` (`recorded-word-en-GB-chirp3-v1`), the recording's SHA-256, elapsed request time, transcript, Google usage metadata, and Google's response. It preserves the returned transcript text; multiple sequential speech segments are joined with a space. `alternatives` is empty because the API does not invent complete alternate transcripts from segment hypotheses; those hypotheses remain in `providerResponse`.
+The request's `model` field accepts only `chirp_3` or `short`. The response identifies the provider, selected model, language, model-specific `configurationVersion` (`recorded-word-en-GB-chirp3-v1` or `recorded-word-en-GB-short-v1`), the recording's SHA-256, elapsed request time, transcript, Google usage metadata, and Google's response. It preserves the returned transcript text; multiple sequential speech segments are joined with a space. `alternatives` is empty because the API does not invent complete alternate transcripts from segment hypotheses; those hypotheses remain in `providerResponse`.
 
 A completed request with no Google results produces an empty transcript. Operational failures are separate HTTP errors containing `error.code` and `error.message`; Google's rejection response is preserved with credentials removed. No failure changes the selected model or becomes a successful transcript.
 
@@ -153,10 +153,10 @@ An optional third argument selects an HTTPS speech API or another loopback addre
 
 [Google's current V2 standard pricing](https://cloud.google.com/speech-to-text/pricing) is $0.016 per minute at the first usage tier, rounded up to the next whole second per request and billed per audio channel. Exactly two seconds of mono audio costs about $0.000533, or **$0.53 for 1,000 recordings**, excluding other services and taxes. A 2.01-second recording is charged as three seconds. Silence is still processed audio; an empty transcription can still incur a charge.
 
-Accuracy on this child's isolated words has not been established. Keep the same recordings for blind comparison, including silence and intentionally incorrect words. The recognizer should not receive the expected answer. Use the recording labels only afterward to score recognition.
+Accuracy on this child's isolated words has not been established. The evaluator can compare Chirp 3 and `short` on the same original take, including silence and intentionally incorrect words. The recognizer does not receive the expected answer; local evaluation scores each returned transcript afterward. Google lists `short` for `en-GB` in the `eu` region and shows it as a V2 model selection. This is a candidate to measure, not a guarantee of better recognition.
 
 ## Verify without contacting Google
 
 Run `npm test`. Tests simulate the Google service and credentials; they do not submit recordings or make paid recognition calls.
 
-Reference: [Chirp 3 model](https://docs.cloud.google.com/speech-to-text/docs/models/chirp-3), [V2 synchronous recognition](https://docs.cloud.google.com/speech-to-text/docs/reference/rest/v2/projects.locations.recognizers/recognize), [audio decoding](https://docs.cloud.google.com/speech-to-text/docs/reference/rest/v2/projects.locations.recognizers#AutoDetectDecodingConfig).
+Reference: [V2 supported languages](https://docs.cloud.google.com/speech-to-text/docs/speech-to-text-supported-languages), [V2 model-selection sample](https://docs.cloud.google.com/speech-to-text/docs/samples/speech-transcribe-model-selection-v2), [Chirp 3 model](https://docs.cloud.google.com/speech-to-text/docs/models/chirp-3), [V2 synchronous recognition](https://docs.cloud.google.com/speech-to-text/docs/reference/rest/v2/projects.locations.recognizers/recognize), [audio decoding](https://docs.cloud.google.com/speech-to-text/docs/reference/rest/v2/projects.locations.recognizers#AutoDetectDecodingConfig).

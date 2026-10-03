@@ -94,11 +94,13 @@
     <label for="saved-session">Saved session</label>
     <select id="saved-session" disabled></select>
     <button id="new-session" class="small" disabled>New session</button>
-    <label for="recognition-mode">After recording</label>
+    <label for="recognition-mode">After recording / saved-take model</label>
     <select id="recognition-mode">
       <option value="record-only">Save audio only</option>
       <option value="chirp_3">Transcribe with Google Chirp 3</option>
+      <option value="short">Transcribe with Google short (V2)</option>
     </select>
+    <p class="note">To compare models, select the other model and choose <b>Transcribe saved audio</b>. Both transcripts stay attached to the same original take.</p>
     <div id="api-settings" hidden>
       <label for="gateway-url">Transcription address</label>
       <input id="gateway-url" type="url" value="https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe" autocomplete="off">
@@ -160,7 +162,7 @@
     </div>
   </div>
 
-  <p class="note">Audio recording works independently of browser speech recognition, including in Brave. Recordings stay in this browser across reloads; download the ZIP for a portable copy. Clearing browser storage deletes local recordings. Chirp 3 requires a configured speech server and sends the saved audio to Google. The expected word is never sent to the recognizer. Scores compare the transcript with the displayed prompt, not a human-verified account of what was spoken.</p>
+  <p class="note">Audio recording works independently of browser speech recognition, including in Brave. Recordings stay in this browser across reloads; download the ZIP for a portable copy. Clearing browser storage deletes local recordings. Google Chirp 3 and short (V2) require the configured speech server and send saved audio to Google. The expected word is never sent to the recognizer. Scores compare each transcript with the displayed prompt, not a human-verified account of what was spoken.</p>
 
 <script src="asr_recordings.js"></script>
 <script src="asr_eval.js"></script>

@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import {
-  createChirpTranscriber, MAX_REQUEST_BYTES, SpeechGatewayError, validateRecordingRequest,
+  createGoogleSpeechTranscriber, MAX_REQUEST_BYTES, SPEECH_MODEL_CONFIGURATION_VERSIONS, SpeechGatewayError, validateRecordingRequest,
 } from './providers.mjs';
 
 function positiveInteger(value, defaultValue, name) {
@@ -84,7 +84,7 @@ function readRecordingBody(request, timeoutMs) {
 }
 
 export function createSpeechGateway({ configuration, transcribe, now = () => Date.now() }) {
-  const transcribeRecording = transcribe || createChirpTranscriber({ projectId: configuration.projectId, timeoutMs: configuration.timeoutMs });
+  const transcribeRecording = transcribe || createGoogleSpeechTranscriber({ projectId: configuration.projectId, timeoutMs: configuration.timeoutMs });
   let requestsInFlight = 0;
   let admittedAt = [];
   let quotaDay = '';
@@ -168,7 +168,7 @@ export async function startSpeechGateway(environment = process.env) {
   const configuration = readGatewayConfiguration(environment);
   const server = createSpeechGateway({ configuration });
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(configuration.port, configuration.host, resolve); });
-  console.log(`Speech API listening on ${configuration.host}:${configuration.port}; endpoint /transcribe (Google Cloud Chirp 3).`);
+  console.log(`Speech API listening on ${configuration.host}:${configuration.port}; endpoint /transcribe (Google Cloud models: ${Object.keys(SPEECH_MODEL_CONFIGURATION_VERSIONS).join(', ')}).`);
   return server;
 }
 
