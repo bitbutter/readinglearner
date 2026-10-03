@@ -13,6 +13,13 @@ const ACCEPTED = {
   to: ['to', 'too', 'two'], do: ['do', 'dew', 'due'],
 };
 const ALL_WORDS = Object.keys(ACCEPTED);
+const MODEL_LABELS = Object.freeze({ chirp_3: 'Chirp 3 (V2)', short: 'short (V2)', latest_short: 'latest_short (V1)' });
+const MODEL_CONFIGURATION_VERSIONS = Object.freeze({
+  chirp_3: 'recorded-word-en-GB-chirp3-v1',
+  short: 'recorded-word-en-GB-short-v1',
+  latest_short: 'recorded-word-en-GB-v1-latest-short',
+});
+const V1_OPUS_SAMPLE_RATES_HERTZ = new Set([8000, 12000, 16000, 24000, 48000]);
 const normText = (text) => text.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
 const $ = (id) => document.getElementById(id);
 let recordingSession = null;
@@ -81,11 +88,12 @@ function latestModelError(attempt, model) {
 }
 
 function modelLabel(model) {
-  return model === 'chirp_3' ? 'Chirp 3' : model === 'short' ? 'short (V2)' : model;
+  return MODEL_LABELS[model] || model;
 }
 
 function modelConfigurationVersion(model) {
-  return model === 'chirp_3' ? 'recorded-word-en-GB-chirp3-v1' : 'recorded-word-en-GB-short-v1';
+  if (!Object.hasOwn(MODEL_CONFIGURATION_VERSIONS, model)) throw new Error('Unknown transcription model.');
+  return MODEL_CONFIGURATION_VERSIONS[model];
 }
 
 function showProblem(message) {
@@ -288,7 +296,7 @@ async function enableMicrophone() {
 function readTranscriptionSettings() {
   const model = $('recognition-mode').value;
   if (model === 'record-only') return null;
-  if (!['chirp_3', 'short'].includes(model)) throw new Error('Unknown transcription model.');
+  if (!Object.hasOwn(MODEL_CONFIGURATION_VERSIONS, model)) throw new Error('Unknown transcription model.');
   if (!$('gateway-url').value.trim() || !$('gateway-token').value.trim()) throw new Error('Enter the transcription address and access code, or choose “Save audio only”.');
   const serverUrl = new URL($('gateway-url').value.trim());
   const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(serverUrl.hostname);
@@ -404,9 +412,22 @@ async function transcribeAttempt(attempt, settings) {
   const run = { id: crypto.randomUUID(), startedAt: new Date().toISOString(), requestedModel: settings.model, status: 'error' };
   const startedAtMs = Date.now();
   try {
+    const requestBody = {
+      model: settings.model,
+      mimeType: attempt.audioMimeType,
+      durationMs: attempt.durationMs,
+      audioBase64: await blobBase64(attempt.audioBlob),
+    };
+    if (settings.model === 'latest_short') {
+      const sampleRateHertz = attempt.microphoneSettings?.sampleRate;
+      if (!Number.isInteger(sampleRateHertz) || !V1_OPUS_SAMPLE_RATES_HERTZ.has(sampleRateHertz)) {
+        throw new Error('Google latest_short (V1) needs this recording’s saved microphone sample rate of 8000, 12000, 16000, 24000 or 48000 Hz.');
+      }
+      requestBody.sampleRateHertz = sampleRateHertz;
+    }
     const response = await fetch(settings.endpoint, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${settings.token}` },
-      body: JSON.stringify({ model: settings.model, mimeType: attempt.audioMimeType, durationMs: attempt.durationMs, audioBase64: await blobBase64(attempt.audioBlob) }),
+      body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(45000),
     });
     const transcription = await response.json();
@@ -500,18 +521,17 @@ function renderSummary() {
   $('pairmatrix').textContent = 'Each model is scored against the same latest saved take for each word. Every transcript and original audio file remains in the ZIP.';
   const table = document.createElement('table');
   const header = document.createElement('tr');
-  for (const label of ['Prompt', 'Chirp 3 transcript / outcome', 'short (V2) transcript / outcome', 'Audio']) {
+  for (const label of ['Prompt', ...Object.values(MODEL_LABELS).map(label => `${label} transcript / outcome`), 'Audio']) {
     const cell = document.createElement('th'); cell.textContent = label; header.appendChild(cell);
   }
   table.appendChild(header);
   for (const attempt of selected) {
     const row = document.createElement('tr');
-    const chirpRun = latestModelRun(attempt, 'chirp_3');
-    const shortRun = latestModelRun(attempt, 'short');
     const formatRun = (model, modelRun) => modelRun
       ? `${modelRun.transcript || '(nothing)'} — ${scoreTranscript(modelRun.transcript, attempt.prompt).verdict}`
       : latestModelError(attempt, model)?.error ? `request error — ${latestModelError(attempt, model).error}` : '—';
-    for (const text of [attempt.prompt, formatRun('chirp_3', chirpRun), formatRun('short', shortRun)]) {
+    const modelTranscripts = Object.keys(MODEL_LABELS).map(model => formatRun(model, latestModelRun(attempt, model)));
+    for (const text of [attempt.prompt, ...modelTranscripts]) {
       const cell = document.createElement('td'); cell.textContent = text; row.appendChild(cell);
     }
     if (attempt.voided) row.children[0].textContent += ' — VOIDED';

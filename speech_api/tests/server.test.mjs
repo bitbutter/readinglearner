@@ -89,9 +89,14 @@ test('HTTP model comparison sends each selected model to Google and returns its 
   const transcribe = createGoogleSpeechTranscriber({
     projectId: 'reading-learner-test', getAccessToken: async () => 'private-test-google-token',
     fetchImplementation: async (url, options) => {
-      assert.equal(url, 'https://eu-speech.googleapis.com/v2/projects/reading-learner-test/locations/eu/recognizers/_:recognize');
       const googleRequest = JSON.parse(options.body);
       googleModels.push(googleRequest.config.model);
+      if (googleRequest.config.model === 'latest_short') {
+        assert.equal(url, 'https://eu-speech.googleapis.com/v1/speech:recognize');
+        assert.deepEqual(googleRequest, { config: { encoding: 'WEBM_OPUS', sampleRateHertz: 48000, languageCode: 'en-GB', model: 'latest_short' }, audio: { content: recording.audioBase64 } });
+        return Response.json({ results: [{ alternatives: [{ transcript: 'Matt.' }] }], totalBilledTime: '2s' });
+      }
+      assert.equal(url, 'https://eu-speech.googleapis.com/v2/projects/reading-learner-test/locations/eu/recognizers/_:recognize');
       assert.deepEqual(googleRequest, { config: { autoDecodingConfig: {}, languageCodes: ['en-GB'], model: googleRequest.config.model }, content: recording.audioBase64 });
       return Response.json({ results: [{ alternatives: [{ transcript: 'Matt.' }] }], metadata: { totalBilledDuration: '2s' } });
     },
@@ -110,8 +115,15 @@ test('HTTP model comparison sends each selected model to Google and returns its 
       assert.equal(transcription.transcript, 'Matt.');
       assert.deepEqual(transcription.usage, { totalBilledDuration: '2s' });
     }
+    const response = await fetch(endpoint, { method: 'POST', headers: authorizedHeaders, body: JSON.stringify({ ...recording, model: 'latest_short', sampleRateHertz: 48000 }) });
+    assert.equal(response.status, 200);
+    const transcription = await response.json();
+    assert.equal(transcription.model, 'latest_short');
+    assert.equal(transcription.configurationVersion, 'recorded-word-en-GB-v1-latest-short');
+    assert.equal(transcription.transcript, 'Matt.');
+    assert.deepEqual(transcription.usage, { totalBilledTime: '2s' });
   });
-  assert.deepEqual(googleModels, ['chirp_3', 'short']);
+  assert.deepEqual(googleModels, ['chirp_3', 'short', 'latest_short']);
 });
 
 test('oversized declared bodies are rejected before being uploaded or decoded', async () => {

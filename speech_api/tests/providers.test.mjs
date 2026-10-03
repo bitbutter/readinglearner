@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createGoogleSpeechTranscriber, extractSpeechTranscript, MAX_AUDIO_BYTES, SPEECH_MODEL_CONFIGURATION_VERSIONS, validateRecordingRequest } from '../providers.mjs';
 
-const recordingRequest = (model = 'chirp_3') => ({ model, audioBase64: Buffer.from('original recording bytes').toString('base64'), mimeType: 'audio/webm;codecs=opus', durationMs: 2000 });
+const recordingRequest = (model = 'chirp_3') => ({
+  model, audioBase64: Buffer.from('original recording bytes').toString('base64'),
+  mimeType: 'audio/webm;codecs=opus', durationMs: 2000,
+  ...(model === 'latest_short' ? { sampleRateHertz: 48000 } : {}),
+});
 
 test('recording identity is computed from the decoded original bytes', () => {
   const recording = validateRecordingRequest(recordingRequest());
@@ -13,8 +17,10 @@ test('recording identity is computed from the decoded original bytes', () => {
 
 test('invalid recordings and target-word fields are rejected before a provider call', () => {
   for (const changes of [
-    { model: 'gemini-3.5-transcribe' }, { model: 'latest_short' }, { model: 'long' }, { model: 'short ' }, { model: 'SHORT' },
+    { model: 'gemini-3.5-transcribe' }, { model: 'long' }, { model: 'short ' }, { model: 'SHORT' },
     { model: null }, { model: 1 }, { model: 'toString' }, { model: '__proto__' },
+    { model: 'latest_short' }, { model: 'latest_short', sampleRateHertz: 44100 },
+    { model: 'latest_short', mimeType: 'audio/mp4' },
     { durationMs: 60_000 }, { durationMs: 0 }, { durationMs: '2000' },
     { audioBase64: '' }, { audioBase64: 'Zg=' }, { audioBase64: 'Zh==' }, { audioBase64: 'data:audio/webm;base64,Zg==' },
     { mimeType: 'text/plain' }, { prompt: 'mat' }, { expectedWord: 'mat' },
@@ -29,25 +35,31 @@ test('the actual 10 MiB boundary validates without exhausting the regular expres
 });
 
 test('Google gets the explicitly selected model, blind configuration, ADC authorization and bytes', async context => {
-  assert.deepEqual(Object.keys(SPEECH_MODEL_CONFIGURATION_VERSIONS).sort(), ['chirp_3', 'short']);
+  assert.deepEqual(Object.keys(SPEECH_MODEL_CONFIGURATION_VERSIONS).sort(), ['chirp_3', 'latest_short', 'short']);
   for (const [model, configurationVersion] of [
     ['chirp_3', 'recorded-word-en-GB-chirp3-v1'], ['short', 'recorded-word-en-GB-short-v1'],
+    ['latest_short', 'recorded-word-en-GB-v1-latest-short'],
   ]) await context.test(model, async () => {
-    const providerResponse = { results: [{ alternatives: [{ transcript: 'Matt.', confidence: 0.91 }] }], metadata: { totalBilledDuration: '2s' } };
+    const providerResponse = model === 'latest_short'
+      ? { results: [{ alternatives: [{ transcript: 'Matt.', confidence: 0.91 }] }], totalBilledTime: '2s' }
+      : { results: [{ alternatives: [{ transcript: 'Matt.', confidence: 0.91 }] }], metadata: { totalBilledDuration: '2s' } };
     let requestCount = 0;
     const transcribe = createGoogleSpeechTranscriber({
       projectId: 'reading-learner-test', getAccessToken: async () => 'fake-private-google-token',
       fetchImplementation: async (url, options) => {
         requestCount++;
-        assert.equal(url, 'https://eu-speech.googleapis.com/v2/projects/reading-learner-test/locations/eu/recognizers/_:recognize');
+        assert.equal(url, model === 'latest_short'
+          ? 'https://eu-speech.googleapis.com/v1/speech:recognize'
+          : 'https://eu-speech.googleapis.com/v2/projects/reading-learner-test/locations/eu/recognizers/_:recognize');
         assert.deepEqual(options.headers, {
           Authorization: 'Bearer fake-private-google-token',
           'Content-Type': 'application/json',
           'x-goog-user-project': 'reading-learner-test',
         });
-        assert.deepEqual(JSON.parse(options.body), {
-          config: { autoDecodingConfig: {}, languageCodes: ['en-GB'], model }, content: recordingRequest(model).audioBase64,
-        });
+        const expectedGoogleRequest = model === 'latest_short'
+          ? { config: { encoding: 'WEBM_OPUS', sampleRateHertz: 48000, languageCode: 'en-GB', model }, audio: { content: recordingRequest(model).audioBase64 } }
+          : { config: { autoDecodingConfig: {}, languageCodes: ['en-GB'], model }, content: recordingRequest(model).audioBase64 };
+        assert.deepEqual(JSON.parse(options.body), expectedGoogleRequest);
         assert.ok(options.signal instanceof AbortSignal);
         return Response.json(providerResponse);
       },
@@ -58,7 +70,7 @@ test('Google gets the explicitly selected model, blind configuration, ADC author
     assert.equal(transcription.model, model);
     assert.equal(transcription.configurationVersion, configurationVersion);
     assert.deepEqual(transcription.providerResponse, providerResponse);
-    assert.deepEqual(transcription.usage, { totalBilledDuration: '2s' });
+    assert.deepEqual(transcription.usage, model === 'latest_short' ? { totalBilledTime: '2s' } : { totalBilledDuration: '2s' });
     assert.deepEqual(transcription.alternatives, []);
   });
 });
@@ -83,11 +95,17 @@ test('credential and project failures are explicit and never call Google', async
 });
 
 test('Google rejections preserve the selected model and evidence without retrying another model', async context => {
-  for (const model of ['chirp_3', 'short']) await context.test(model, async () => {
+  for (const model of ['chirp_3', 'short', 'latest_short']) await context.test(model, async () => {
     let calls = 0;
     const transcribe = createGoogleSpeechTranscriber({
       projectId: 'reading-learner-test', getAccessToken: async () => 'fake-private-google-token',
-      fetchImplementation: async () => { calls++; return Response.json({ error: { status: 'PERMISSION_DENIED', message: 'fake-private-google-token access rejected' } }, { status: 403 }); },
+      fetchImplementation: async url => {
+        calls++;
+        assert.equal(url, model === 'latest_short'
+          ? 'https://eu-speech.googleapis.com/v1/speech:recognize'
+          : 'https://eu-speech.googleapis.com/v2/projects/reading-learner-test/locations/eu/recognizers/_:recognize');
+        return Response.json({ error: { status: 'PERMISSION_DENIED', message: 'fake-private-google-token access rejected' } }, { status: 403 });
+      },
     });
     await assert.rejects(transcribe(validateRecordingRequest(recordingRequest(model))), error => {
       assert.equal(error.code, 'speech_provider_error');
@@ -107,9 +125,10 @@ test('direct provider calls reject unapproved models before acquiring credential
     projectId: 'reading-learner-test', getAccessToken: async () => { credentialCalls++; return 'unused-token'; },
     fetchImplementation: async () => { providerCalls++; throw new Error('must not run'); },
   });
-  for (const model of ['long', 'latest_short', 'short ', '__proto__', null]) {
+  for (const model of ['long', 'latest_short ', 'short ', '__proto__', null]) {
     await assert.rejects(transcribe({ ...recordingRequest(), model }), error => error.code === 'unsupported_model');
   }
+  assert.throws(() => validateRecordingRequest({ ...recordingRequest(), model: 'latest_short' }), error => error.code === 'invalid_audio_sample_rate');
   assert.equal(credentialCalls, 0);
   assert.equal(providerCalls, 0);
 });

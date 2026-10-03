@@ -303,7 +303,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
       const request = { endpoint, options, body: JSON.parse(options.body) }; fetchRequests.push(request);
       const originalBytes = Buffer.from(request.body.audioBase64, 'base64');
       const transcription = { transcript: 'Matt', provider: 'google-cloud-stt', model: request.body.model,
-        languageCode: 'en-GB', configurationVersion: request.body.model === 'short' ? 'recorded-word-en-GB-short-v1' : 'recorded-word-en-GB-chirp3-v1', latencyMs: 123,
+        languageCode: 'en-GB', configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short' })[request.body.model], latencyMs: 123,
         audioSha256: createHash('sha256').update(originalBytes).digest('hex') };
       return responseFactory ? responseFactory(request, transcription) : { ok: true, status: 200, async json() { return transcription; } };
     },
@@ -364,7 +364,7 @@ function savedCompletedRun(model, transcript) {
   return {
     id: randomUUID(), model, status: 'complete', transcript, latencyMs: 100,
     provider: 'google-cloud-stt', languageCode: 'en-GB',
-    configurationVersion: model === 'short' ? 'recorded-word-en-GB-short-v1' : 'recorded-word-en-GB-chirp3-v1',
+    configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short' })[model],
   };
 }
 
@@ -458,7 +458,7 @@ const browserBehaviorTests = [
     await page.click('finish'); expectScore(page, 1, 1); await page.click('export');
     assert.equal(page.archive.lastManifest.attempts[0].modelRuns[0].transcript, 'Matt');
   }],
-  ['Chirp 3 and short compare the same saved bytes and remain visible with separate scores', async () => {
+  ['Chirp 3, V2 short and V1 latest_short compare the same saved bytes and saved sample rate', async () => {
     const page = createPage({ responseFactory: async (request, response) => ({
       ok: true, status: 200, async json() {
         return { ...response, transcript: request.body.model === 'chirp_3' ? 'math' : 'mat' };
@@ -468,20 +468,34 @@ const browserBehaviorTests = [
     const original = Buffer.from(await page.latestAttempt().audioBlob.arrayBuffer());
     page.element('recognition-mode').value = 'short'; page.element('recognition-mode').dispatch('change');
     await page.click('transcribe');
-    assert.deepEqual(page.fetchRequests.map(request => request.body.model), ['chirp_3', 'short']);
+    page.element('recognition-mode').value = 'latest_short'; page.element('recognition-mode').dispatch('change');
+    await page.click('transcribe');
+    assert.deepEqual(page.fetchRequests.map(request => request.body.model), ['chirp_3', 'short', 'latest_short']);
     for (const request of page.fetchRequests) assert.deepEqual(Buffer.from(request.body.audioBase64, 'base64'), original);
+    assert.equal(page.fetchRequests[2].body.sampleRateHertz, 48000);
     const savedRuns = page.latestAttempt().modelRuns;
-    assert.deepEqual(savedRuns.map(run => run.model), ['chirp_3', 'short']);
-    assert.deepEqual(savedRuns.map(run => run.transcript), ['math', 'mat']);
-    assert.equal(page.element('alts').textContent.includes('Chirp 3: “math” — miss'), true);
+    assert.deepEqual(savedRuns.map(run => run.model), ['chirp_3', 'short', 'latest_short']);
+    assert.deepEqual(savedRuns.map(run => run.transcript), ['math', 'mat', 'mat']);
+    assert.equal(page.element('alts').textContent.includes('Chirp 3 (V2): “math” — miss'), true);
     assert.equal(page.element('alts').textContent.includes('short (V2): “mat” — hit'), true);
+    assert.equal(page.element('alts').textContent.includes('latest_short (V1): “mat” — hit'), true);
     await page.click('finish');
-    assert.match(page.element('stats').textContent, /Chirp 3: 0\/1 matches/);
+    assert.match(page.element('stats').textContent, /Chirp 3 \(V2\): 0\/1 matches/);
     assert.match(page.element('stats').textContent, /short \(V2\): 1\/1 matches/);
+    assert.match(page.element('stats').textContent, /latest_short \(V1\): 1\/1 matches/);
     assert.match(page.element('trials').textContent, /math — miss/);
     assert.match(page.element('trials').textContent, /mat — hit/);
     await page.click('export');
-    assert.deepEqual(page.archive.lastManifest.attempts[0].modelRuns.map(run => run.transcript), ['math', 'mat']);
+    assert.deepEqual(page.archive.lastManifest.attempts[0].modelRuns.map(run => run.transcript), ['math', 'mat', 'mat']);
+  }],
+  ['V1 latest_short refuses a saved recording without a supported sample rate before sending audio', async () => {
+    const archive = new RecordingArchive();
+    const { attempt } = await seedSavedTake(archive, 0);
+    archive.attempts.set(attempt.id, { ...archive.attempts.get(attempt.id), microphoneSettings: {} });
+    const page = createPage({ archive }); await page.idle(); page.configureTranscription('latest_short');
+    await page.click('transcribe');
+    assert.equal(page.fetchRequests.length, 0);
+    assert.match(page.latestAttempt().modelRuns[0].error, /saved microphone sample rate/);
   }],
   ['The selected model batch sends each eligible current take once and skips completed, voided, and interrupted takes', async () => {
     const archive = new RecordingArchive();
@@ -500,7 +514,7 @@ const browserBehaviorTests = [
     assert.match(page.element('batch-status').textContent, /1\/1 remaining takes transcribed and saved/);
     assert.equal(page.element('transcribe-all').disabled, true);
     await page.click('finish');
-    assert.match(page.element('stats').textContent, /Chirp 3: 0\/1 matches/);
+    assert.match(page.element('stats').textContent, /Chirp 3 \(V2\): 0\/1 matches/);
     assert.match(page.element('stats').textContent, /short \(V2\): 2\/2 matches/);
   }],
   ['A failed batch stops before later takes and a retry skips successes already saved', async () => {
