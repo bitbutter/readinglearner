@@ -1,0 +1,63 @@
+### open-syllable
+baby.a→ay.mp3, he.e→ee.mp3, she.e→ee.mp3, be.e→ee.mp3, we.e→ee.mp3, so.o→oa.mp3, no.o→oa.mp3, tiger.i→igh.mp3, go.o→oa.mp3, goes.o→oa.mp3, use.u→ue.mp3, only.o→oa.mp3, music.u→ue.mp3, table.a→ay.mp3, paper.a→ay.mp3, idea.i→igh.mp3
+
+### final-y
+baby.y→ee.mp3, many.y→ee.mp3, very.y→ee.mp3, carry.y→ee.mp3, only.y→ee.mp3, family.y→ee.mp3, body.y→ee.mp3, city.y→ee.mp3, story.y→ee.mp3
+
+### y-long-i
+why.y→igh.mp3, myself.y→igh.mp3, try.y→igh.mp3
+
+### s-says-z
+is.s→z.mp3, was.s→z.mp3, always.s→z.mp3, because.s→z.mp3, does.s→z.mp3, goes.s→z.mp3, these.s→z.mp3, those.s→z.mp3, use.s→z.mp3, music.s→z.mp3
+
+### voiced-th
+the.th→thv!, their.th→thv!, these.th→thv!, those.th→thv!, together.th→thv!, mother.th→thv!, father.th→thv!, brother.th→thv!, weather.th→thv!
+
+### ea-team
+read.ea→ee.mp3, tea.ea→ee.mp3, beat.ea→ee.mp3, clean.ea→ee.mp3, sea.ea→ee.mp3, teacher.ea→ee.mp3
+
+### ea-short-e
+weather.ea→e.mp3
+
+### all-family
+always.a→aw!, call.a→aw!, fall.a→aw!, shall.a→aw!, small.a→aw!, wall.a→aw!
+
+### aw-team
+draw.aw→aw!
+
+### ow-team
+down.ow→ow!, around.ow→ow!, found.ow→ow!, about.ow→ow!, mountain.ow→ow!, sound.ow→ow!
+
+### ow-says-oh
+grow.o→oa.mp3, own.o→oa.mp3, show.o→oa.mp3, window.o→oa.mp3
+
+### soft-c
+place.c→s.mp3, face.c→s.mp3, music.c→s.mp3, city.c→s.mp3, pencil.c→s.mp3
+
+### soft-g
+page.g→j.mp3
+
+### old-family
+both.o→oa.mp3, cold.o→oa.mp3, hold.o→oa.mp3
+
+### ind-family
+kind.i→igh.mp3
+
+### r-controlled
+turn.ur→er.mp3, hurt.ur→er.mp3, burn.ur→er.mp3
+
+### wa-family
+was.a→o.mp3, wash.a→o.mp3, water.a→aw!
+
+### magic-e
+write.i→igh.mp3, place.a→ay.mp3
+
+### schwa
+around.a→u.mp3, because.e1→i.mp3, before.e1→i.mp3, about.a→u.mp3, today.o→u.mp3, together.o→u.mp3, mountain.ai→u.mp3
+
+### ear-near
+year.ear→earnear!
+
+### tricky
+do.o→oo.mp3, door.oo→or.mp3, floor.oo→or.mp3, to.o→oo.mp3, because.au→o.mp3, buy.uy→igh.mp3, does.o→u.mp3, many.a→e.mp3, pull.u→ooshort!, their.ei→air.mp3, work.or→er.mp3, would.ou→ooshort!, done.o→u.mp3, eight.eigh→ay.mp3, full.u→ooshort!, laugh.ugh→f.mp3, warm.a→aw!, people.eo→ee.mp3, people.le→l.mp3, mother.o→u.mp3, father.a→o.mp3, colour.o1→u.mp3, book.oo→ooshort!, friend.ie→e.mp3, brother.o→u.mp3, picture.t→ch.mp3, picture.u→er.mp3, earth.ear→er.mp3
+

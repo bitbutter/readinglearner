@@ -1,0 +1,8276 @@
+[
+ {
+  "word": "cat",
+  "level": 1,
+  "segs": [
+   "c",
+   "a",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "hat",
+  "level": 1,
+  "segs": [
+   "h",
+   "a",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "mat",
+  "level": 1,
+  "segs": [
+   "m",
+   "a",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bat",
+  "level": 1,
+  "segs": [
+   "b",
+   "a",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "rat",
+  "level": 1,
+  "segs": [
+   "r",
+   "a",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sat",
+  "level": 1,
+  "segs": [
+   "s",
+   "a",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bad",
+  "level": 1,
+  "segs": [
+   "b",
+   "a",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "dad",
+  "level": 1,
+  "segs": [
+   "d",
+   "a",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "mad",
+  "level": 1,
+  "segs": [
+   "m",
+   "a",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sad",
+  "level": 1,
+  "segs": [
+   "s",
+   "a",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bag",
+  "level": 1,
+  "segs": [
+   "b",
+   "a",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "tag",
+  "level": 1,
+  "segs": [
+   "t",
+   "a",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "rag",
+  "level": 1,
+  "segs": [
+   "r",
+   "a",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "can",
+  "level": 1,
+  "segs": [
+   "c",
+   "a",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "man",
+  "level": 1,
+  "segs": [
+   "m",
+   "a",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "pan",
+  "level": 1,
+  "segs": [
+   "p",
+   "a",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "ran",
+  "level": 1,
+  "segs": [
+   "r",
+   "a",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "cap",
+  "level": 1,
+  "segs": [
+   "c",
+   "a",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "map",
+  "level": 1,
+  "segs": [
+   "m",
+   "a",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "tap",
+  "level": 1,
+  "segs": [
+   "t",
+   "a",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bed",
+  "level": 2,
+  "segs": [
+   "b",
+   "e",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "hen",
+  "level": 2,
+  "segs": [
+   "h",
+   "e",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "pen",
+  "level": 2,
+  "segs": [
+   "p",
+   "e",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "net",
+  "level": 2,
+  "segs": [
+   "n",
+   "e",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "wet",
+  "level": 2,
+  "segs": [
+   "w",
+   "e",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "pig",
+  "level": 2,
+  "segs": [
+   "p",
+   "i",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "pin",
+  "level": 2,
+  "segs": [
+   "p",
+   "i",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "lip",
+  "level": 2,
+  "segs": [
+   "l",
+   "i",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "fin",
+  "level": 2,
+  "segs": [
+   "f",
+   "i",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "zip",
+  "level": 2,
+  "segs": [
+   "z",
+   "i",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "z",
+    "plays": "z.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "pot",
+  "level": 2,
+  "segs": [
+   "p",
+   "o",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "log",
+  "level": 2,
+  "segs": [
+   "l",
+   "o",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "fox",
+  "level": 2,
+  "segs": [
+   "f",
+   "o",
+   "x"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "x",
+    "plays": "x.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "hop",
+  "level": 2,
+  "segs": [
+   "h",
+   "o",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "mop",
+  "level": 2,
+  "segs": [
+   "m",
+   "o",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bus",
+  "level": 2,
+  "segs": [
+   "b",
+   "u",
+   "s"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bug",
+  "level": 2,
+  "segs": [
+   "b",
+   "u",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "cup",
+  "level": 2,
+  "segs": [
+   "c",
+   "u",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bun",
+  "level": 2,
+  "segs": [
+   "b",
+   "u",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "jug",
+  "level": 2,
+  "segs": [
+   "j",
+   "u",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "j",
+    "plays": "j.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "the",
+  "level": 3,
+  "segs": [
+   "th",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "and",
+  "level": 3,
+  "segs": [
+   "a",
+   "n",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "up",
+  "level": 3,
+  "segs": [
+   "u",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "down",
+  "level": 3,
+  "segs": [
+   "d",
+   "o",
+   "w",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "it",
+  "level": 3,
+  "segs": [
+   "i",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "not",
+  "level": 3,
+  "segs": [
+   "n",
+   "o",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "run",
+  "level": 3,
+  "segs": [
+   "r",
+   "u",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "frog",
+  "level": 3,
+  "segs": [
+   "f",
+   "r",
+   "o",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "crab",
+  "level": 3,
+  "segs": [
+   "c",
+   "r",
+   "a",
+   "b"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "flag",
+  "level": 3,
+  "segs": [
+   "f",
+   "l",
+   "a",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "clap",
+  "level": 3,
+  "segs": [
+   "c",
+   "l",
+   "a",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "slip",
+  "level": 3,
+  "segs": [
+   "s",
+   "l",
+   "i",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "drum",
+  "level": 3,
+  "segs": [
+   "d",
+   "r",
+   "u",
+   "m"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sled",
+  "level": 3,
+  "segs": [
+   "s",
+   "l",
+   "e",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "mud",
+  "level": 3,
+  "segs": [
+   "m",
+   "u",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "web",
+  "level": 3,
+  "segs": [
+   "w",
+   "e",
+   "b"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "van",
+  "level": 3,
+  "segs": [
+   "v",
+   "a",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "v",
+    "plays": "v.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "back",
+  "level": 3,
+  "segs": [
+   "b",
+   "a",
+   "ck"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ck",
+    "plays": "ck.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "duck",
+  "level": 3,
+  "segs": [
+   "d",
+   "u",
+   "ck"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ck",
+    "plays": "ck.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "rock",
+  "level": 3,
+  "segs": [
+   "r",
+   "o",
+   "ck"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ck",
+    "plays": "ck.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sock",
+  "level": 3,
+  "segs": [
+   "s",
+   "o",
+   "ck"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ck",
+    "plays": "ck.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "pick",
+  "level": 3,
+  "segs": [
+   "p",
+   "i",
+   "ck"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ck",
+    "plays": "ck.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "lock",
+  "level": 3,
+  "segs": [
+   "l",
+   "o",
+   "ck"
+  ],
+  "units": [
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ck",
+    "plays": "ck.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "ship",
+  "level": 3,
+  "segs": [
+   "sh",
+   "i",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "fish",
+  "level": 3,
+  "segs": [
+   "f",
+   "i",
+   "sh"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "dish",
+  "level": 3,
+  "segs": [
+   "d",
+   "i",
+   "sh"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "chip",
+  "level": 3,
+  "segs": [
+   "ch",
+   "i",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "ch",
+    "plays": "ch.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "thin",
+  "level": 3,
+  "segs": [
+   "th",
+   "i",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "baby",
+  "level": 3,
+  "segs": [
+   "b",
+   "a",
+   "b",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "milk",
+  "level": 3,
+  "segs": [
+   "m",
+   "i",
+   "l",
+   "k"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "cake",
+  "level": 4,
+  "segs": [
+   "c",
+   "a",
+   "k",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "ay.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "make",
+  "level": 4,
+  "segs": [
+   "m",
+   "a",
+   "k",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "ay.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "tape",
+  "level": 4,
+  "segs": [
+   "t",
+   "a",
+   "p",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "ay.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "gate",
+  "level": 4,
+  "segs": [
+   "g",
+   "a",
+   "t",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "ay.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "name",
+  "level": 4,
+  "segs": [
+   "n",
+   "a",
+   "m",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "ay.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "bike",
+  "level": 4,
+  "segs": [
+   "b",
+   "i",
+   "k",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "igh.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "pipe",
+  "level": 4,
+  "segs": [
+   "p",
+   "i",
+   "p",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "igh.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "ride",
+  "level": 4,
+  "segs": [
+   "r",
+   "i",
+   "d",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "igh.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "five",
+  "level": 4,
+  "segs": [
+   "f",
+   "i",
+   "v",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "igh.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "v",
+    "plays": "v.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "cube",
+  "level": 4,
+  "segs": [
+   "c",
+   "u",
+   "b",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "ue.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "cute",
+  "level": 4,
+  "segs": [
+   "c",
+   "u",
+   "t",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "ue.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "tube",
+  "level": 4,
+  "segs": [
+   "t",
+   "u",
+   "b",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "ue.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "home",
+  "level": 4,
+  "segs": [
+   "h",
+   "o",
+   "m",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "oa.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "bone",
+  "level": 4,
+  "segs": [
+   "b",
+   "o",
+   "n",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "oa.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "note",
+  "level": 4,
+  "segs": [
+   "n",
+   "o",
+   "t",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "oa.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "see",
+  "level": 4,
+  "segs": [
+   "s",
+   "ee"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "feed",
+  "level": 4,
+  "segs": [
+   "f",
+   "ee",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "meet",
+  "level": 4,
+  "segs": [
+   "m",
+   "ee",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sweet",
+  "level": 4,
+  "segs": [
+   "s",
+   "w",
+   "ee",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "moon",
+  "level": 4,
+  "segs": [
+   "m",
+   "oo",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oo",
+    "plays": "oo.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "boot",
+  "level": 4,
+  "segs": [
+   "b",
+   "oo",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oo",
+    "plays": "oo.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "cool",
+  "level": 4,
+  "segs": [
+   "c",
+   "oo",
+   "l"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oo",
+    "plays": "oo.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "food",
+  "level": 4,
+  "segs": [
+   "f",
+   "oo",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oo",
+    "plays": "oo.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "play",
+  "level": 4,
+  "segs": [
+   "p",
+   "l",
+   "ay"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ay",
+    "plays": "ay.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "day",
+  "level": 4,
+  "segs": [
+   "d",
+   "ay"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ay",
+    "plays": "ay.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "say",
+  "level": 4,
+  "segs": [
+   "s",
+   "ay"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ay",
+    "plays": "ay.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "way",
+  "level": 4,
+  "segs": [
+   "w",
+   "ay"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ay",
+    "plays": "ay.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "rain",
+  "level": 4,
+  "segs": [
+   "r",
+   "a",
+   "i",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "train",
+  "level": 4,
+  "segs": [
+   "t",
+   "r",
+   "a",
+   "i",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "boat",
+  "level": 4,
+  "segs": [
+   "b",
+   "oa",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oa",
+    "plays": "oa.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "coat",
+  "level": 4,
+  "segs": [
+   "c",
+   "oa",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oa",
+    "plays": "oa.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "are",
+  "level": 4,
+  "segs": [
+   "ar",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "at",
+  "level": 4,
+  "segs": [
+   "a",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "but",
+  "level": 4,
+  "segs": [
+   "b",
+   "u",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "do",
+  "level": 4,
+  "segs": [
+   "d",
+   "o"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "he",
+  "level": 4,
+  "segs": [
+   "h",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "she",
+  "level": 4,
+  "segs": [
+   "sh",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "so",
+  "level": 4,
+  "segs": [
+   "s",
+   "o"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "no",
+  "level": 4,
+  "segs": [
+   "n",
+   "o"
+  ],
+  "units": [
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "on",
+  "level": 4,
+  "segs": [
+   "o",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "be",
+  "level": 4,
+  "segs": [
+   "b",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "we",
+  "level": 4,
+  "segs": [
+   "w",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "car",
+  "level": 5,
+  "segs": [
+   "c",
+   "ar"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "star",
+  "level": 5,
+  "segs": [
+   "s",
+   "t",
+   "ar"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "arm",
+  "level": 5,
+  "segs": [
+   "ar",
+   "m"
+  ],
+  "units": [
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "farm",
+  "level": 5,
+  "segs": [
+   "f",
+   "ar",
+   "m"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "park",
+  "level": 5,
+  "segs": [
+   "p",
+   "ar",
+   "k"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "part",
+  "level": 5,
+  "segs": [
+   "p",
+   "ar",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "cart",
+  "level": 5,
+  "segs": [
+   "c",
+   "ar",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "fork",
+  "level": 5,
+  "segs": [
+   "f",
+   "or",
+   "k"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "corn",
+  "level": 5,
+  "segs": [
+   "c",
+   "or",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "horn",
+  "level": 5,
+  "segs": [
+   "h",
+   "or",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "short",
+  "level": 5,
+  "segs": [
+   "sh",
+   "or",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "shore",
+  "level": 5,
+  "segs": [
+   "sh",
+   "or",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "her",
+  "level": 5,
+  "segs": [
+   "h",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bird",
+  "level": 5,
+  "segs": [
+   "b",
+   "ir",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ir",
+    "plays": "ir.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "girl",
+  "level": 5,
+  "segs": [
+   "g",
+   "ir",
+   "l"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ir",
+    "plays": "ir.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "turn",
+  "level": 5,
+  "segs": [
+   "t",
+   "u",
+   "r",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "hurt",
+  "level": 5,
+  "segs": [
+   "h",
+   "u",
+   "r",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "burn",
+  "level": 5,
+  "segs": [
+   "b",
+   "u",
+   "r",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "tiger",
+  "level": 5,
+  "segs": [
+   "t",
+   "i",
+   "g",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "door",
+  "level": 5,
+  "segs": [
+   "d",
+   "o",
+   "o",
+   "r"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "floor",
+  "level": 5,
+  "segs": [
+   "f",
+   "l",
+   "o",
+   "o",
+   "r"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "store",
+  "level": 5,
+  "segs": [
+   "s",
+   "t",
+   "or",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "more",
+  "level": 5,
+  "segs": [
+   "m",
+   "or",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "coin",
+  "level": 5,
+  "segs": [
+   "c",
+   "oi",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oi",
+    "plays": "oi.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "join",
+  "level": 5,
+  "segs": [
+   "j",
+   "oi",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "j",
+    "plays": "j.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oi",
+    "plays": "oi.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "toy",
+  "level": 5,
+  "segs": [
+   "t",
+   "oy"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oy",
+    "plays": "oy.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "boy",
+  "level": 5,
+  "segs": [
+   "b",
+   "oy"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oy",
+    "plays": "oy.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "night",
+  "level": 5,
+  "segs": [
+   "n",
+   "igh",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "igh",
+    "plays": "igh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "light",
+  "level": 5,
+  "segs": [
+   "l",
+   "igh",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "igh",
+    "plays": "igh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "right",
+  "level": 5,
+  "segs": [
+   "r",
+   "igh",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "igh",
+    "plays": "igh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "high",
+  "level": 5,
+  "segs": [
+   "h",
+   "igh"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "igh",
+    "plays": "igh.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "read",
+  "level": 5,
+  "segs": [
+   "r",
+   "e",
+   "a",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "tea",
+  "level": 5,
+  "segs": [
+   "t",
+   "e",
+   "a"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "beat",
+  "level": 5,
+  "segs": [
+   "b",
+   "e",
+   "a",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "hair",
+  "level": 5,
+  "segs": [
+   "h",
+   "air"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "air",
+    "plays": "air.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bear",
+  "level": 5,
+  "segs": [
+   "b",
+   "ear"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ear",
+    "plays": "ear.mp3",
+    "status": "default-no-clip(tts)"
+   }
+  ]
+ },
+ {
+  "word": "pear",
+  "level": 5,
+  "segs": [
+   "p",
+   "ear"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ear",
+    "plays": "ear.mp3",
+    "status": "default-no-clip(tts)"
+   }
+  ]
+ },
+ {
+  "word": "is",
+  "level": 5,
+  "segs": [
+   "i",
+   "s"
+  ],
+  "units": [
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "in",
+  "level": 5,
+  "segs": [
+   "i",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "to",
+  "level": 5,
+  "segs": [
+   "t",
+   "o"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "go",
+  "level": 5,
+  "segs": [
+   "g",
+   "o"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "was",
+  "level": 5,
+  "segs": [
+   "w",
+   "a",
+   "s"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "always",
+  "level": 6,
+  "segs": [
+   "a",
+   "l",
+   "w",
+   "ay",
+   "s"
+  ],
+  "units": [
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ay",
+    "plays": "ay.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "around",
+  "level": 6,
+  "segs": [
+   "a",
+   "r",
+   "o",
+   "u",
+   "n",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "because",
+  "level": 6,
+  "segs": [
+   "b",
+   "e",
+   "c",
+   "a",
+   "u",
+   "s",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "been",
+  "level": 6,
+  "segs": [
+   "b",
+   "ee",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "before",
+  "level": 6,
+  "segs": [
+   "b",
+   "e",
+   "f",
+   "or",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "best",
+  "level": 6,
+  "segs": [
+   "b",
+   "e",
+   "s",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "both",
+  "level": 6,
+  "segs": [
+   "b",
+   "o",
+   "th"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "buy",
+  "level": 6,
+  "segs": [
+   "b",
+   "u",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "call",
+  "level": 6,
+  "segs": [
+   "c",
+   "a",
+   "ll"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ll",
+    "plays": "ll.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "cold",
+  "level": 6,
+  "segs": [
+   "c",
+   "o",
+   "l",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "does",
+  "level": 6,
+  "segs": [
+   "d",
+   "o",
+   "e",
+   "s"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "fast",
+  "level": 6,
+  "segs": [
+   "f",
+   "a",
+   "s",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "first",
+  "level": 6,
+  "segs": [
+   "f",
+   "ir",
+   "s",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ir",
+    "plays": "ir.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "found",
+  "level": 6,
+  "segs": [
+   "f",
+   "o",
+   "u",
+   "n",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "gave",
+  "level": 6,
+  "segs": [
+   "g",
+   "a",
+   "v",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "v",
+    "plays": "v.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "goes",
+  "level": 6,
+  "segs": [
+   "g",
+   "o",
+   "e",
+   "s"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "green",
+  "level": 6,
+  "segs": [
+   "g",
+   "r",
+   "ee",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "its",
+  "level": 6,
+  "segs": [
+   "i",
+   "t",
+   "s"
+  ],
+  "units": [
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "made",
+  "level": 6,
+  "segs": [
+   "m",
+   "a",
+   "d",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "ay.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "many",
+  "level": 6,
+  "segs": [
+   "m",
+   "a",
+   "n",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "off",
+  "level": 6,
+  "segs": [
+   "o",
+   "f",
+   "f"
+  ],
+  "units": [
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "or",
+  "level": 6,
+  "segs": [
+   "or"
+  ],
+  "units": [
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "pull",
+  "level": 6,
+  "segs": [
+   "p",
+   "u",
+   "ll"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ll",
+    "plays": "ll.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sing",
+  "level": 6,
+  "segs": [
+   "s",
+   "i",
+   "ng"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ng",
+    "plays": "ng.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sit",
+  "level": 6,
+  "segs": [
+   "s",
+   "i",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sleep",
+  "level": 6,
+  "segs": [
+   "s",
+   "l",
+   "ee",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "tell",
+  "level": 6,
+  "segs": [
+   "t",
+   "e",
+   "ll"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ll",
+    "plays": "ll.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "their",
+  "level": 6,
+  "segs": [
+   "th",
+   "e",
+   "i",
+   "r"
+  ],
+  "units": [
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "these",
+  "level": 6,
+  "segs": [
+   "th",
+   "e",
+   "s",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "ee.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "those",
+  "level": 6,
+  "segs": [
+   "th",
+   "o",
+   "s",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "oa.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "upon",
+  "level": 6,
+  "segs": [
+   "u",
+   "p",
+   "o",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "us",
+  "level": 6,
+  "segs": [
+   "u",
+   "s"
+  ],
+  "units": [
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "use",
+  "level": 6,
+  "segs": [
+   "u",
+   "s",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "very",
+  "level": 6,
+  "segs": [
+   "v",
+   "e",
+   "r",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "v",
+    "plays": "v.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "wash",
+  "level": 6,
+  "segs": [
+   "w",
+   "a",
+   "sh"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "which",
+  "level": 6,
+  "segs": [
+   "wh",
+   "i",
+   "ch"
+  ],
+  "units": [
+   {
+    "unit": "wh",
+    "plays": "wh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ch",
+    "plays": "ch.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "why",
+  "level": 6,
+  "segs": [
+   "wh",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "wh",
+    "plays": "wh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "wish",
+  "level": 6,
+  "segs": [
+   "w",
+   "i",
+   "sh"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "work",
+  "level": 6,
+  "segs": [
+   "w",
+   "o",
+   "r",
+   "k"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "would",
+  "level": 6,
+  "segs": [
+   "w",
+   "o",
+   "u",
+   "l",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "write",
+  "level": 6,
+  "segs": [
+   "w",
+   "r",
+   "i",
+   "t",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "your",
+  "level": 6,
+  "segs": [
+   "y",
+   "o",
+   "u",
+   "r"
+  ],
+  "units": [
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "about",
+  "level": 7,
+  "segs": [
+   "a",
+   "b",
+   "o",
+   "u",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "better",
+  "level": 7,
+  "segs": [
+   "b",
+   "e",
+   "tt",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "tt",
+    "plays": "tt.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "bring",
+  "level": 7,
+  "segs": [
+   "b",
+   "r",
+   "i",
+   "ng"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ng",
+    "plays": "ng.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "carry",
+  "level": 7,
+  "segs": [
+   "c",
+   "a",
+   "r",
+   "r",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "clean",
+  "level": 7,
+  "segs": [
+   "c",
+   "l",
+   "e",
+   "a",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "cut",
+  "level": 7,
+  "segs": [
+   "c",
+   "u",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "done",
+  "level": 7,
+  "segs": [
+   "d",
+   "o",
+   "n",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "draw",
+  "level": 7,
+  "segs": [
+   "d",
+   "r",
+   "a",
+   "w"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "drink",
+  "level": 7,
+  "segs": [
+   "d",
+   "r",
+   "i",
+   "n",
+   "k"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "eight",
+  "level": 7,
+  "segs": [
+   "e",
+   "i",
+   "g",
+   "h",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "fall",
+  "level": 7,
+  "segs": [
+   "f",
+   "a",
+   "ll"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ll",
+    "plays": "ll.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "far",
+  "level": 7,
+  "segs": [
+   "f",
+   "ar"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "full",
+  "level": 7,
+  "segs": [
+   "f",
+   "u",
+   "ll"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ll",
+    "plays": "ll.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "got",
+  "level": 7,
+  "segs": [
+   "g",
+   "o",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "grow",
+  "level": 7,
+  "segs": [
+   "g",
+   "r",
+   "o",
+   "w"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "hold",
+  "level": 7,
+  "segs": [
+   "h",
+   "o",
+   "l",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "hot",
+  "level": 7,
+  "segs": [
+   "h",
+   "o",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "if",
+  "level": 7,
+  "segs": [
+   "i",
+   "f"
+  ],
+  "units": [
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "keep",
+  "level": 7,
+  "segs": [
+   "k",
+   "ee",
+   "p"
+  ],
+  "units": [
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "kind",
+  "level": 7,
+  "segs": [
+   "k",
+   "i",
+   "n",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "laugh",
+  "level": 7,
+  "segs": [
+   "l",
+   "a",
+   "u",
+   "g",
+   "h"
+  ],
+  "units": [
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "long",
+  "level": 7,
+  "segs": [
+   "l",
+   "o",
+   "ng"
+  ],
+  "units": [
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ng",
+    "plays": "ng.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "much",
+  "level": 7,
+  "segs": [
+   "m",
+   "u",
+   "ch"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ch",
+    "plays": "ch.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "myself",
+  "level": 7,
+  "segs": [
+   "m",
+   "y",
+   "s",
+   "e",
+   "l",
+   "f"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "never",
+  "level": 7,
+  "segs": [
+   "n",
+   "e",
+   "v",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "v",
+    "plays": "v.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "only",
+  "level": 7,
+  "segs": [
+   "o",
+   "n",
+   "l",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "own",
+  "level": 7,
+  "segs": [
+   "o",
+   "w",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "seven",
+  "level": 7,
+  "segs": [
+   "s",
+   "e",
+   "v",
+   "e",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "v",
+    "plays": "v.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "shall",
+  "level": 7,
+  "segs": [
+   "sh",
+   "a",
+   "ll"
+  ],
+  "units": [
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ll",
+    "plays": "ll.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "show",
+  "level": 7,
+  "segs": [
+   "sh",
+   "o",
+   "w"
+  ],
+  "units": [
+   {
+    "unit": "sh",
+    "plays": "sh.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "six",
+  "level": 7,
+  "segs": [
+   "s",
+   "i",
+   "x"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "x",
+    "plays": "x.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "small",
+  "level": 7,
+  "segs": [
+   "s",
+   "m",
+   "a",
+   "ll"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ll",
+    "plays": "ll.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "start",
+  "level": 7,
+  "segs": [
+   "s",
+   "t",
+   "ar",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "ten",
+  "level": 7,
+  "segs": [
+   "t",
+   "e",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "today",
+  "level": 7,
+  "segs": [
+   "t",
+   "o",
+   "d",
+   "ay"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ay",
+    "plays": "ay.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "together",
+  "level": 7,
+  "segs": [
+   "t",
+   "o",
+   "g",
+   "e",
+   "th",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "try",
+  "level": 7,
+  "segs": [
+   "t",
+   "r",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "warm",
+  "level": 7,
+  "segs": [
+   "w",
+   "a",
+   "r",
+   "m"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "time",
+  "level": 8,
+  "segs": [
+   "t",
+   "i",
+   "m",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "igh.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "water",
+  "level": 8,
+  "segs": [
+   "w",
+   "a",
+   "t",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "people",
+  "level": 8,
+  "segs": [
+   "p",
+   "e",
+   "o",
+   "p",
+   "l",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "year",
+  "level": 8,
+  "segs": [
+   "y",
+   "ear"
+  ],
+  "units": [
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ear",
+    "plays": "TTS:ear",
+    "status": "team-override"
+   }
+  ]
+ },
+ {
+  "word": "place",
+  "level": 8,
+  "segs": [
+   "p",
+   "l",
+   "a",
+   "c",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "end",
+  "level": 8,
+  "segs": [
+   "e",
+   "n",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "land",
+  "level": 8,
+  "segs": [
+   "l",
+   "a",
+   "n",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "air",
+  "level": 8,
+  "segs": [
+   "air"
+  ],
+  "units": [
+   {
+    "unit": "air",
+    "plays": "air.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "animal",
+  "level": 8,
+  "segs": [
+   "a",
+   "n",
+   "i",
+   "m",
+   "a",
+   "l"
+  ],
+  "units": [
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "mother",
+  "level": 8,
+  "segs": [
+   "m",
+   "o",
+   "th",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "face",
+  "level": 8,
+  "segs": [
+   "f",
+   "a",
+   "c",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "ay.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "family",
+  "level": 8,
+  "segs": [
+   "f",
+   "a",
+   "m",
+   "i",
+   "l",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "school",
+  "level": 8,
+  "segs": [
+   "s",
+   "c",
+   "h",
+   "oo",
+   "l"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oo",
+    "plays": "oo.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "father",
+  "level": 8,
+  "segs": [
+   "f",
+   "a",
+   "th",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "body",
+  "level": 8,
+  "segs": [
+   "b",
+   "o",
+   "d",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "music",
+  "level": 9,
+  "segs": [
+   "m",
+   "u",
+   "s",
+   "i",
+   "c"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "colour",
+  "level": 9,
+  "segs": [
+   "c",
+   "o",
+   "l",
+   "o",
+   "u",
+   "r"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sun",
+  "level": 9,
+  "segs": [
+   "s",
+   "u",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "dog",
+  "level": 9,
+  "segs": [
+   "d",
+   "o",
+   "g"
+  ],
+  "units": [
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "horse",
+  "level": 9,
+  "segs": [
+   "h",
+   "or",
+   "s",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "h",
+    "plays": "h.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "river",
+  "level": 9,
+  "segs": [
+   "r",
+   "i",
+   "v",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "v",
+    "plays": "v.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sea",
+  "level": 9,
+  "segs": [
+   "s",
+   "e",
+   "a"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "tree",
+  "level": 9,
+  "segs": [
+   "t",
+   "r",
+   "ee"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "mountain",
+  "level": 9,
+  "segs": [
+   "m",
+   "o",
+   "u",
+   "n",
+   "t",
+   "a",
+   "i",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "morning",
+  "level": 9,
+  "segs": [
+   "m",
+   "or",
+   "n",
+   "i",
+   "ng"
+  ],
+  "units": [
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ng",
+    "plays": "ng.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "city",
+  "level": 9,
+  "segs": [
+   "c",
+   "i",
+   "t",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "road",
+  "level": 9,
+  "segs": [
+   "r",
+   "oa",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oa",
+    "plays": "oa.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "room",
+  "level": 9,
+  "segs": [
+   "r",
+   "oo",
+   "m"
+  ],
+  "units": [
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oo",
+    "plays": "oo.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "m",
+    "plays": "m.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "book",
+  "level": 9,
+  "segs": [
+   "b",
+   "oo",
+   "k"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "oo",
+    "plays": "oo.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "page",
+  "level": 9,
+  "segs": [
+   "p",
+   "a",
+   "g",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "ay.mp3",
+    "status": "magic-e-vowel"
+   },
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "(silent)",
+    "status": "silent-e"
+   }
+  ]
+ },
+ {
+  "word": "story",
+  "level": 9,
+  "segs": [
+   "s",
+   "t",
+   "or",
+   "y"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "or",
+    "plays": "or.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "y",
+    "plays": "y.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "friend",
+  "level": 9,
+  "segs": [
+   "f",
+   "r",
+   "i",
+   "e",
+   "n",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "f",
+    "plays": "f.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "children",
+  "level": 10,
+  "segs": [
+   "ch",
+   "i",
+   "l",
+   "d",
+   "r",
+   "e",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "ch",
+    "plays": "ch.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "brother",
+  "level": 10,
+  "segs": [
+   "b",
+   "r",
+   "o",
+   "th",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sister",
+  "level": 10,
+  "segs": [
+   "s",
+   "i",
+   "s",
+   "t",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "teacher",
+  "level": 10,
+  "segs": [
+   "t",
+   "e",
+   "a",
+   "ch",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ch",
+    "plays": "ch.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "window",
+  "level": 10,
+  "segs": [
+   "w",
+   "i",
+   "n",
+   "d",
+   "o",
+   "w"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "table",
+  "level": 10,
+  "segs": [
+   "t",
+   "a",
+   "b",
+   "l",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "b",
+    "plays": "b.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "chair",
+  "level": 10,
+  "segs": [
+   "ch",
+   "air"
+  ],
+  "units": [
+   {
+    "unit": "ch",
+    "plays": "ch.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "air",
+    "plays": "air.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "wall",
+  "level": 10,
+  "segs": [
+   "w",
+   "a",
+   "ll"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ll",
+    "plays": "ll.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "clock",
+  "level": 10,
+  "segs": [
+   "c",
+   "l",
+   "o",
+   "ck"
+  ],
+  "units": [
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ck",
+    "plays": "ck.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "paper",
+  "level": 10,
+  "segs": [
+   "p",
+   "a",
+   "p",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "pencil",
+  "level": 10,
+  "segs": [
+   "p",
+   "e",
+   "n",
+   "c",
+   "i",
+   "l"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "l",
+    "plays": "l.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "picture",
+  "level": 10,
+  "segs": [
+   "p",
+   "i",
+   "c",
+   "t",
+   "u",
+   "r",
+   "e"
+  ],
+  "units": [
+   {
+    "unit": "p",
+    "plays": "p.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "c",
+    "plays": "c.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "street",
+  "level": 10,
+  "segs": [
+   "s",
+   "t",
+   "r",
+   "ee",
+   "t"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ee",
+    "plays": "ee.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "garden",
+  "level": 10,
+  "segs": [
+   "g",
+   "ar",
+   "d",
+   "e",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "g",
+    "plays": "g.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ar",
+    "plays": "ar.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "kitchen",
+  "level": 10,
+  "segs": [
+   "k",
+   "i",
+   "t",
+   "ch",
+   "e",
+   "n"
+  ],
+  "units": [
+   {
+    "unit": "k",
+    "plays": "k.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "t",
+    "plays": "t.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "ch",
+    "plays": "ch.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "weather",
+  "level": 10,
+  "segs": [
+   "w",
+   "e",
+   "a",
+   "th",
+   "er"
+  ],
+  "units": [
+   {
+    "unit": "w",
+    "plays": "w.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "er",
+    "plays": "er.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "sound",
+  "level": 10,
+  "segs": [
+   "s",
+   "o",
+   "u",
+   "n",
+   "d"
+  ],
+  "units": [
+   {
+    "unit": "s",
+    "plays": "s.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "o",
+    "plays": "o.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "u",
+    "plays": "u.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "n",
+    "plays": "n.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "earth",
+  "level": 10,
+  "segs": [
+   "e",
+   "a",
+   "r",
+   "th"
+  ],
+  "units": [
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "r",
+    "plays": "r.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "th",
+    "plays": "th.mp3",
+    "status": "default"
+   }
+  ]
+ },
+ {
+  "word": "idea",
+  "level": 10,
+  "segs": [
+   "i",
+   "d",
+   "e",
+   "a"
+  ],
+  "units": [
+   {
+    "unit": "i",
+    "plays": "i.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "d",
+    "plays": "d.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "e",
+    "plays": "e.mp3",
+    "status": "default"
+   },
+   {
+    "unit": "a",
+    "plays": "a.mp3",
+    "status": "default"
+   }
+  ]
+ }
+]
