@@ -101,6 +101,9 @@
       <option value="short">Transcribe with Google short (V2)</option>
     </select>
     <p class="note">To compare models, select the other model and choose <b>Transcribe saved audio</b>. Both transcripts stay attached to the same original take.</p>
+    <button id="transcribe-all" class="small">Transcribe remaining saved takes with selected model</button>
+    <p class="note">The batch sends each prompt's current valid take to the selected model, one at a time. Successful results are skipped on later runs. A failed request stops the batch; retrying a failed request may make another billable request.</p>
+    <p id="batch-status" role="status" aria-live="polite"></p>
     <div id="api-settings" hidden>
       <label for="gateway-url">Transcription address</label>
       <input id="gateway-url" type="url" value="https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe" autocomplete="off">

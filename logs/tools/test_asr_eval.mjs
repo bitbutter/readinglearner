@@ -346,6 +346,28 @@ function expectScore(page, hits, denominator, errors = 0) {
   else assert.match(page.element('stats').textContent, /0 errors/);
 }
 
+async function seedSavedTake(archive, wordIndex, { modelRuns = [], voided = false, captureError = null } = {}) {
+  const savedSession = archive.sessions.get(existingSessionId);
+  const prompt = savedSession.order[wordIndex];
+  const audioBytes = Buffer.from([0x40 + wordIndex, 0xff, 0x00, 0x31]);
+  const audioBlob = new Blob([audioBytes], { type: 'audio/webm;codecs=opus' });
+  const attempt = {
+    id: randomUUID(), prompt, wordIndex, durationMs: 820,
+    startedAt: '2026-10-03T10:00:00.000Z', micLabel: 'Test microphone', microphoneSettings: { sampleRate: 48000 },
+    audioSha256: createHash('sha256').update(audioBytes).digest('hex'), voided, captureError, modelRuns,
+  };
+  await archive.saveAttempt(existingSessionId, attempt, audioBlob);
+  return { audioBytes, attempt };
+}
+
+function savedCompletedRun(model, transcript) {
+  return {
+    id: randomUUID(), model, status: 'complete', transcript, latencyMs: 100,
+    provider: 'google-cloud-stt', languageCode: 'en-GB',
+    configurationVersion: model === 'short' ? 'recorded-word-en-GB-short-v1' : 'recorded-word-en-GB-chirp3-v1',
+  };
+}
+
 const browserBehaviorTests = [
   ['The main app canonical and fresh accepted spellings match Matt as a whole token', async () => {
     const app = createAppWordRestoration();
@@ -460,6 +482,50 @@ const browserBehaviorTests = [
     assert.match(page.element('trials').textContent, /mat — hit/);
     await page.click('export');
     assert.deepEqual(page.archive.lastManifest.attempts[0].modelRuns.map(run => run.transcript), ['math', 'mat']);
+  }],
+  ['The selected model batch sends each eligible current take once and skips completed, voided, and interrupted takes', async () => {
+    const archive = new RecordingArchive();
+    const first = await seedSavedTake(archive, 0, { modelRuns: [savedCompletedRun('chirp_3', 'math')] });
+    const second = await seedSavedTake(archive, 1, { modelRuns: [savedCompletedRun('short', 'mad')] });
+    await seedSavedTake(archive, 2, { captureError: 'microphone disconnected' });
+    await seedSavedTake(archive, 3, { voided: true });
+    const page = createPage({ archive }); await page.idle(); page.configureTranscription('short');
+    assert.equal(page.element('transcribe-all').disabled, false);
+    await page.click('transcribe-all');
+    assert.equal(page.fetchRequests.length, 1);
+    assert.equal(page.fetchRequests[0].body.model, 'short');
+    assert.deepEqual(Buffer.from(page.fetchRequests[0].body.audioBase64, 'base64'), first.audioBytes);
+    assert.equal(page.archive.attempts.get(first.attempt.id).modelRuns.length, 2);
+    assert.deepEqual(page.archive.attempts.get(second.attempt.id).modelRuns.map(run => run.transcript), ['mad']);
+    assert.match(page.element('batch-status').textContent, /1\/1 remaining takes transcribed and saved/);
+    assert.equal(page.element('transcribe-all').disabled, true);
+    await page.click('finish');
+    assert.match(page.element('stats').textContent, /Chirp 3: 0\/1 matches/);
+    assert.match(page.element('stats').textContent, /short \(V2\): 2\/2 matches/);
+  }],
+  ['A failed batch stops before later takes and a retry skips successes already saved', async () => {
+    const archive = new RecordingArchive();
+    const takes = [];
+    for (let wordIndex = 0; wordIndex < 3; wordIndex++) takes.push(await seedSavedTake(archive, wordIndex));
+    let requestNumber = 0;
+    const page = createPage({ archive, responseFactory: async (_request, transcription) => {
+      requestNumber++;
+      if (requestNumber === 2) return { ok: false, status: 503, async json() { return { error: { message: 'temporary provider error' } }; } };
+      return { ok: true, status: 200, async json() { return transcription; } };
+    } });
+    await page.idle(); page.configureTranscription('short');
+    await page.click('transcribe-all');
+    assert.equal(page.fetchRequests.length, 2, 'The third take must wait after the second take fails');
+    assert.match(page.element('batch-status').textContent, /stopped at “mad” after 2\/3/);
+    assert.equal(archive.attempts.get(takes[0].attempt.id).modelRuns.length, 1);
+    assert.equal(archive.attempts.get(takes[1].attempt.id).modelRuns[0].status, 'error');
+    assert.equal(archive.attempts.get(takes[2].attempt.id).modelRuns.length, 0);
+    await page.click('transcribe-all');
+    assert.equal(page.fetchRequests.length, 4, 'The retry must send only the failed and not-yet-run takes');
+    assert.equal(archive.attempts.get(takes[0].attempt.id).modelRuns.length, 1, 'The completed take must not be billed twice');
+    assert.equal(archive.attempts.get(takes[1].attempt.id).modelRuns.at(-1).status, 'complete');
+    assert.equal(archive.attempts.get(takes[2].attempt.id).modelRuns.length, 1);
+    assert.match(page.element('batch-status').textContent, /2\/2 remaining takes transcribed and saved/);
   }],
   ['A successful empty API transcript is a scored miss', async () => {
     const page = createPage({ responseFactory: async (request, response) => ({ ok: true, status: 200, async json() { return { ...response, transcript: '' }; } }) });

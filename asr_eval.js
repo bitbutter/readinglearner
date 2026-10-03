@@ -70,6 +70,12 @@ function latestModelRun(attempt, model) {
   return [...(attempt?.modelRuns || [])].reverse().find(run => run.model === model && run.status === 'complete') || null;
 }
 
+function remainingCurrentAttemptsForModel(model) {
+  if (!recordingSession) return [];
+  return recordingSession.order.map((_, wordIndex) => currentAttempt(wordIndex)).filter(attempt =>
+    attempt && !attempt.voided && !attempt.captureError && !latestModelRun(attempt, model));
+}
+
 function latestModelError(attempt, model) {
   return [...(attempt?.modelRuns || [])].reverse().find(run => (run.model === model || run.requestedModel === model) && run.status === 'error') || null;
 }
@@ -99,6 +105,7 @@ function refreshControls() {
   // Keep the pressed button enabled until release; disabling it can suppress pointerup.
   $('mic').disabled = operationPending || !!pendingAudioSave || !!pendingModelSave || !archiveReady || !microphoneStream;
   $('transcribe').disabled = locked || !currentAttempt() || !!currentAttempt()?.captureError || $('recognition-mode').value === 'record-only';
+  $('transcribe-all').disabled = locked || $('recognition-mode').value === 'record-only' || !remainingCurrentAttemptsForModel($('recognition-mode').value).length;
   $('retry-save').hidden = !pendingAudioSave && !pendingModelSave;
   $('retry-save').disabled = operationPending;
   $('retry-save').textContent = pendingModelSave ? 'Retry saving the model result' : 'Retry saving this recording';
@@ -417,6 +424,35 @@ async function transcribeAttempt(attempt, settings) {
   }
   pendingModelSave = { attemptId: attempt.id, run };
   await savePendingModelRun();
+  return run;
+}
+
+async function transcribeRemainingCurrentTakes(settings) {
+  const attempts = remainingCurrentAttemptsForModel(settings.model);
+  const label = modelLabel(settings.model);
+  if (!attempts.length) {
+    $('batch-status').textContent = `No current saved takes need ${label}.`;
+    return;
+  }
+  $('batch-status').textContent = `Starting ${label} for ${attempts.length} current saved takes, one at a time.`;
+  for (let index = 0; index < attempts.length; index++) {
+    const attempt = attempts[index];
+    if (!attempt.audioBlob || !attempt.audioSha256 || !attempt.audioMimeType || !Number.isFinite(attempt.durationMs)) {
+      throw new Error(`Saved audio for “${attempt.prompt}” is incomplete; no request was sent for that take.`);
+    }
+    $('batch-status').textContent = `Transcribing with ${label}: ${index + 1}/${attempts.length} — “${attempt.prompt}”.`;
+    let run;
+    try { run = await transcribeAttempt(attempt, settings); }
+    catch (error) {
+      $('batch-status').textContent = `Batch stopped at “${attempt.prompt}”: ${error.message}. Earlier saved results are kept.`;
+      throw error;
+    }
+    if (run.status === 'error') {
+      $('batch-status').textContent = `Batch stopped at “${attempt.prompt}” after ${index + 1}/${attempts.length}. This request failed and was saved as an error; earlier results are kept. Correct the problem, then run the batch again.`;
+      return;
+    }
+  }
+  $('batch-status').textContent = `${label} finished: ${attempts.length}/${attempts.length} remaining takes transcribed and saved.`;
 }
 
 async function savePendingModelRun() {
@@ -525,6 +561,7 @@ $('tts').addEventListener('click', () => {
 });
 $('recognition-mode').addEventListener('change', () => { $('api-settings').hidden = $('recognition-mode').value === 'record-only'; refreshControls(); });
 $('transcribe').addEventListener('click', () => runOperation(() => transcribeAttempt(currentAttempt(), readTranscriptionSettings())));
+$('transcribe-all').addEventListener('click', () => runOperation(() => transcribeRemainingCurrentTakes(readTranscriptionSettings())));
 $('retry-save').addEventListener('click', () => runOperation(() => pendingAudioSave ? savePendingAudio() : savePendingModelRun()));
 $('download-unsaved').addEventListener('click', () => {
   const capture = pendingAudioSave;

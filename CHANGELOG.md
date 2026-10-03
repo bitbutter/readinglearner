@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Google Cloud Speech-to-Text V2 `short` comparison against the same saved evaluator recordings, with separate per-model transcript and accuracy summaries.
+- Batch transcription of each prompt's current saved take with the selected model, preserving each result and resuming at takes without a successful result.
 - Speech recording dataset: original audio persists across reloads, every take remains available, and ZIP exports include individual audio files plus a versioned manifest.
 - Google Cloud Chirp 3 transcription through a private-token-protected HTTPS speech server, plus a command to re-evaluate exported recordings. Google credentials stay on the server; expected words are omitted from recognition requests.
 - Rule chips under the word: standing, tappable reminders for each teaching family a word belongs to (always visible, never fade); rule line spoken once when a family is first met, re-hearable on tap.
