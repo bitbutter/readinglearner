@@ -1,14 +1,15 @@
 {
   "words": {
-    "1": "l1_grendel.jpg",
-    "2": "l2_grendelsmother.jpg",
-    "3": "l3_necrons.jpg",
-    "4": "l4_marines.jpg",
-    "5": "l5_battle.jpg",
-    "6": "l6_ultramarine.jpg",
-    "7": "l7_eldar.jpg",
-    "8": "l8_blackmarines.jpg",
-    "9": "l9_knight.jpg"
+    "1": "l1_lonemarine.jpg",
+    "2": "l2_cathedralknight.jpg",
+    "3": "l3_helmet.jpg",
+    "4": "l4_hammerchampion.jpg",
+    "5": "l5_scouts.jpg",
+    "6": "l6_muster.jpg",
+    "7": "l7_saint.jpg",
+    "8": "l8_battleship.jpg",
+    "9": "l9_titanparade.jpg",
+    "10": "l10_ringplanet.jpg"
   },
   "numbers": {}
 }
