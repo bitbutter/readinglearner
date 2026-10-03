@@ -215,6 +215,7 @@ async function startMeter() {
     meterStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const track = meterStream.getAudioTracks()[0];
     document.getElementById('miclabel').textContent = '🎙 ' + (track.label || 'default mic');
+    if (session) { session.micLabel = track.label || 'default mic'; save(); }
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioCtx.createAnalyser();
     analyser.fftSize = 512;
@@ -231,6 +232,7 @@ async function startMeter() {
       const now = Date.now();
       if (level < 0.02) flatSince = flatSince || now; else flatSince = null;
       document.getElementById('meterwarn').textContent =
+        audioCtx.state !== 'running' ? 'tap anywhere once to activate the meter' :
         (flatSince && now - flatSince > 3000 && !holding) ? 'no input — check the default mic in system settings' : '';
       requestAnimationFrame(tick);
     };
@@ -247,6 +249,7 @@ const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 const WARM_MIN_MS = 500, WARM_MAX_MS = 850;
 const GRACE_MS = 2500, HARD_MS = 4000;
 let rec = null, gen = 0, interim = null, audioLive = false;
+let settledGen = -1, settledIdx = -1;   // recognition already written to this trial?
 let gotErr = null, gotFinal = null, gotConf = null, gotAlts = [], settledVia = null;
 let graceTimer = null, hardTimer = null, thinkTick = null;
 let mr = null, mrChunks = [];
@@ -330,6 +333,8 @@ function beginHold(e) {
   if (holding || settling || !WSR || $('mic').disabled) return;
   holding = true;
   gotFinal = null; gotConf = null; gotAlts = []; interim = null; settledVia = null; gotErr = null;
+  audioLive = false;              // reset: otherwise trial 2+ skips the warm-up
+  settledGen = -1; settledIdx = -1;
   setMic('waiting');
   $('status').textContent = 'Getting ready…';
   $('verdict').textContent = '';
@@ -384,7 +389,7 @@ function endHold() {
   thinkTick = setInterval(() => {
     $('status').textContent = `Thinking… ${((Date.now() - t0) / 1000).toFixed(1)}s — tap here to accept what we have`;
   }, 200);
-  graceTimer = setTimeout(() => forceSettle('interim-grace'), GRACE_MS);
+  graceTimer = setTimeout(() => { if (interim) forceSettle('interim-grace'); }, GRACE_MS);
   hardTimer = setTimeout(() => forceSettle('timeout'), HARD_MS);
   if (mr && mr.state === 'recording') mr.stop();
 }
@@ -395,6 +400,9 @@ function forceSettle(via) {
 }
 
 function settle() {
+  // A late event for an already-settled recognition may only update the SAME
+  // trial — never the one the user has navigated to in the meantime.
+  if (settledGen === gen && settledIdx !== trialIdx) return;
   if (settledVia === null && gotFinal !== null) settledVia = 'final';
   clearInterval(thinkTick); clearTimeout(graceTimer); clearTimeout(hardTimer);
   thinkTick = null; graceTimer = null; hardTimer = null;
@@ -425,25 +433,37 @@ function settle() {
   $('verdict').className = 'verdict ' + cls;
   $('status').textContent = 'Re-record, void, or move on';
 
+  const prev = session.trials[trialIdx];
   session.trials[trialIdx] = {
     i: trialIdx, prompt, ts: new Date().toISOString(),
     transcript: t, alternatives: gotAlts, confidence: gotConf,
     verdict: cls === 'ok' ? 'hit' : (cls === 'conf' ? 'pair-confusion' : 'miss'),
     confusedWith: cls === 'conf' ? ALL_WORDS.filter(w => w !== prompt && matchesWord(transcript, w))[0] : null,
-    settledVia, err: gotErr || null, voided: false,
-    hadAudio: !!audioBlobs[trialIdx] || (session.trials[trialIdx]?.hadAudio ?? false),
+    settledVia, err: gotErr || null,
+    voided: prev?.voided ?? false,               // a late final must not un-void
+    updatedFinal: prev ? true : undefined,       // this record replaced an earlier settle
+    hadAudio: !!audioBlobs[trialIdx] || (prev?.hadAudio ?? false),
   };
+  settledGen = gen;
+  settledIdx = trialIdx;
   gotErr = null;
   save();
   renderStrip();
 }
 
 // ── Buttons ────────────────────────────────────────────────────────────────
+// Chrome autoplay policy: an AudioContext created outside a user gesture
+// starts suspended and the meter would sit at 0%. Wake it on any tap/keypress.
+document.addEventListener('pointerdown', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
+document.addEventListener('keydown', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
+
 $('mic').addEventListener('pointerdown', beginHold);
 $('mic').addEventListener('pointerup', endHold);
 $('mic').addEventListener('pointercancel', endHold);
 $('mic').addEventListener('pointerleave', () => holding && endHold());
 window.addEventListener('keydown', (e) => {
+  const summaryShown = $('summary').style.display === 'block';
+  if (summaryShown) return;
   if (e.code === 'Space' && !e.repeat && !holding && !settling) beginHold(e);
   if (e.code === 'ArrowRight' && !holding && !settling) { if (trialIdx < session.order.length) { trialIdx++; showTrial(); } }
   if (e.code === 'ArrowLeft' && !holding && !settling && trialIdx > 0) { trialIdx--; showTrial(); }
@@ -456,6 +476,11 @@ $('prev').addEventListener('click', () => { if (!holding && !settling && trialId
 $('next').addEventListener('click', () => { if (!holding && !settling) { if (trialIdx >= session.order.length) finish(); else { trialIdx++; showTrial(); } } });
 $('redo').addEventListener('click', () => {
   if (holding || settling) return;
+  const old = session.trials[trialIdx];
+  if (old) {
+    session.replaced = session.replaced || [];
+    session.replaced.push({ ...old, supersededTs: new Date().toISOString() });
+  }
   delete session.trials[trialIdx];
   delete audioBlobs[trialIdx];
   save();
@@ -482,14 +507,19 @@ function renderSummary() {
   const all = session.trials.filter(Boolean);
   const ts = all.filter(t => !t.voided);
   const hits = ts.filter(t => t.verdict === 'hit').length;
+  const finalHits = ts.filter(t => t.verdict === 'hit' && t.settledVia === 'final').length;
+  const salvaged = hits - finalHits;
   const conf = ts.filter(t => t.verdict === 'pair-confusion');
   const miss = ts.filter(t => t.verdict === 'miss');
+  const lateUpdates = ts.filter(t => t.updatedFinal).length;
   $('stats').innerHTML =
     `<span class="bigstat ok">${hits}</span> correct` +
+    `<span style="font-size:.85rem;opacity:.7">(${finalHits} confirmed final${salvaged ? `, ${salvaged} salvaged from interim` : ''}${lateUpdates ? `, ${lateUpdates} updated by a late final` : ''})</span><br>` +
     `<span class="bigstat conf">${conf.length}</span> pair confusions` +
     `<span class="bigstat bad">${miss.length}</span> missed / unrecognized` +
     `<span class="bigstat">${ts.length}</span> valid of ${session.order.length} words` +
-    (all.length > ts.length ? ` <span class="bigstat">${all.length - ts.length}</span> voided` : '');
+    (all.length > ts.length ? ` <span class="bigstat">${all.length - ts.length}</span> voided` : '') +
+    (session.replaced?.length ? `<br><span style="font-size:.85rem;opacity:.7">${session.replaced.length} superseded attempt${session.replaced.length > 1 ? 's' : ''} kept in the export</span>` : '');
 
   let m = '<h3>Minimal pairs</h3><table><tr><th>he said…</th><th>came back as…</th><th></th></tr>';
   for (const p of PAIRS) {
