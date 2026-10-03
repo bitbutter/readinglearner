@@ -456,7 +456,7 @@ function settle() {
   $('alts').textContent = gotAlts.length > 1 ? 'alternatives: ' + gotAlts.slice(1).filter(Boolean).map(a => `“${a}”`).join(' ') : '';
 
   let verdict, cls;
-  if (!t) { verdict = gotErr === 'not-allowed' ? 'microphone blocked' : 'nothing recognized'; cls = 'bad'; }
+  if (!t) { verdict = gotErr === 'not-allowed' ? 'microphone blocked' : 'nothing recognized' + (gotErr ? ' — ' + gotErr : ''); cls = 'bad'; }
   else if (matchesWord(transcript, prompt)) { verdict = '✓ correct'; cls = 'ok'; }
   else {
     const confusedWith = ALL_WORDS.filter(w => w !== prompt && matchesWord(transcript, w));
