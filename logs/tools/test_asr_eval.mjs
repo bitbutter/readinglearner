@@ -524,16 +524,25 @@ const browserBehaviorTests = [
     let requestNumber = 0;
     const page = createPage({ archive, responseFactory: async (_request, transcription) => {
       requestNumber++;
-      if (requestNumber === 2) return { ok: false, status: 503, async json() { return { error: { message: 'temporary provider error' } }; } };
+      if (requestNumber === 2) return { ok: false, status: 502, async json() { return { error: {
+        code: 'speech_provider_error', message: 'Google rejected the transcription request.', providerStatus: 400,
+        providerResponse: { error: { status: 'INVALID_ARGUMENT', message: 'Invalid sampleRateHertz.' } },
+      } }; } };
       return { ok: true, status: 200, async json() { return transcription; } };
     } });
     await page.idle(); page.configureTranscription('short');
     await page.click('transcribe-all');
     assert.equal(page.fetchRequests.length, 2, 'The third take must wait after the second take fails');
     assert.match(page.element('batch-status').textContent, /stopped at “mad” after 2\/3/);
+    assert.match(page.element('batch-status').textContent, /Google HTTP 400.*INVALID_ARGUMENT.*Invalid sampleRateHertz/);
     assert.equal(archive.attempts.get(takes[0].attempt.id).modelRuns.length, 1);
     assert.equal(archive.attempts.get(takes[1].attempt.id).modelRuns[0].status, 'error');
+    await page.click('next');
+    assert.match(page.element('verdict').textContent, /Google HTTP 400.*INVALID_ARGUMENT.*Invalid sampleRateHertz/);
     assert.equal(archive.attempts.get(takes[2].attempt.id).modelRuns.length, 0);
+    await page.click('finish');
+    assert.match(page.element('trials').textContent, /request error — Google rejected.*Google HTTP 400.*INVALID_ARGUMENT.*Invalid sampleRateHertz/);
+    await page.click('back2');
     await page.click('transcribe-all');
     assert.equal(page.fetchRequests.length, 4, 'The retry must send only the failed and not-yet-run takes');
     assert.equal(archive.attempts.get(takes[0].attempt.id).modelRuns.length, 1, 'The completed take must not be billed twice');
@@ -588,9 +597,12 @@ const browserBehaviorTests = [
   }],
   ['API error markup is rendered as text in trial and summary cells', async () => {
     const markup = '<img src=x onerror=alert(1)>';
-    const page = createPage({ responseFactory: async () => ({ ok: false, status: 500, async json() { return { error: markup }; } }) });
+    const page = createPage({ responseFactory: async () => ({ ok: false, status: 502, async json() { return { error: {
+      code: 'speech_provider_error', message: 'Google rejected the transcription request.', providerStatus: 400,
+      providerResponse: { error: { status: 'INVALID_ARGUMENT', message: markup } },
+    } }; } }) });
     await page.idle(); await page.enableMicrophone(); page.configureTranscription(); await page.record();
-    assert.match(page.element('verdict').textContent, /<img src=x onerror=alert\(1\)>/);
+    assert.match(page.element('verdict').textContent, /INVALID_ARGUMENT.*<img src=x onerror=alert\(1\)>/);
     assert.deepEqual(page.element('verdict').htmlWrites, []); await page.click('finish');
     assert.match(page.element('trials').textContent, /<img src=x onerror=alert\(1\)>/);
     const walk = element => [element, ...element.children.flatMap(walk)];

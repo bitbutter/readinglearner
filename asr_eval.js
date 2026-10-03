@@ -87,6 +87,19 @@ function latestModelError(attempt, model) {
   return [...(attempt?.modelRuns || [])].reverse().find(run => (run.model === model || run.requestedModel === model) && run.status === 'error') || null;
 }
 
+function modelRunErrorText(run) {
+  const serverError = run?.serverError;
+  const googleError = serverError?.providerResponse?.error;
+  const details = [
+    run?.error,
+    serverError?.code,
+    Number.isInteger(serverError?.providerStatus) ? `Google HTTP ${serverError.providerStatus}` : null,
+    typeof googleError?.status === 'string' ? googleError.status : null,
+    typeof googleError?.message === 'string' ? googleError.message : null,
+  ];
+  return [...new Set(details.filter(detail => typeof detail === 'string' && detail.trim()))].join(' — ');
+}
+
 function modelLabel(model) {
   return MODEL_LABELS[model] || model;
 }
@@ -150,7 +163,7 @@ function attemptDescription(attempt) {
   if (attempt.captureError) return { text: `Recording interrupted: ${attempt.captureError}. Audio saved; not scored.`, className: 'bad' };
   const run = lastModelRun(attempt);
   if (!run) return { text: 'Audio saved — not transcribed yet', className: '' };
-  if (run.status === 'error') return { text: `Audio saved. Transcription failed: ${run.error}. Not scored.`, className: 'bad' };
+  if (run.status === 'error') return { text: `Audio saved. Transcription failed: ${modelRunErrorText(run)}. Not scored.`, className: 'bad' };
   const score = scoreTranscript(run.transcript, attempt.prompt);
   if (score.verdict === 'hit') return { text: '✓ matches the displayed word', className: 'ok' };
   if (score.verdict === 'pair-confusion') return { text: `⚠ pair confusion — “${score.confusedWith}”`, className: 'conf' };
@@ -469,7 +482,7 @@ async function transcribeRemainingCurrentTakes(settings) {
       throw error;
     }
     if (run.status === 'error') {
-      $('batch-status').textContent = `Batch stopped at “${attempt.prompt}” after ${index + 1}/${attempts.length}. This request failed and was saved as an error; earlier results are kept. Correct the problem, then run the batch again.`;
+      $('batch-status').textContent = `Batch stopped at “${attempt.prompt}” after ${index + 1}/${attempts.length}. This request failed and was saved as an error: ${modelRunErrorText(run)}. Earlier results are kept. Correct the problem, then run the batch again.`;
       return;
     }
   }
@@ -527,9 +540,11 @@ function renderSummary() {
   table.appendChild(header);
   for (const attempt of selected) {
     const row = document.createElement('tr');
-    const formatRun = (model, modelRun) => modelRun
-      ? `${modelRun.transcript || '(nothing)'} — ${scoreTranscript(modelRun.transcript, attempt.prompt).verdict}`
-      : latestModelError(attempt, model)?.error ? `request error — ${latestModelError(attempt, model).error}` : '—';
+    const formatRun = (model, modelRun) => {
+      if (modelRun) return `${modelRun.transcript || '(nothing)'} — ${scoreTranscript(modelRun.transcript, attempt.prompt).verdict}`;
+      const errorRun = latestModelError(attempt, model);
+      return errorRun ? `request error — ${modelRunErrorText(errorRun)}` : '—';
+    };
     const modelTranscripts = Object.keys(MODEL_LABELS).map(model => formatRun(model, latestModelRun(attempt, model)));
     for (const text of [attempt.prompt, ...modelTranscripts]) {
       const cell = document.createElement('td'); cell.textContent = text; row.appendChild(cell);
