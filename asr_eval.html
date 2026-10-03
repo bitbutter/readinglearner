@@ -253,6 +253,8 @@ let settledGen = -1, settledIdx = -1;   // recognition already written to this t
 let gotErr = null, gotFinal = null, gotConf = null, gotAlts = [], settledVia = null;
 let graceTimer = null, hardTimer = null, thinkTick = null;
 let mr = null, mrChunks = [];
+let retryCount = 0;             // meter-release retries this hold
+let meterReleased = false;
 
 const $ = (id) => document.getElementById(id);
 const speak = (t) => { try { const u = new SpeechSynthesisUtterance(t); u.lang = 'en-GB'; u.rate = .85; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {} };
@@ -335,19 +337,38 @@ function beginHold(e) {
   gotFinal = null; gotConf = null; gotAlts = []; interim = null; settledVia = null; gotErr = null;
   audioLive = false;              // reset: otherwise trial 2+ skips the warm-up
   settledGen = -1; settledIdx = -1;
+  retryCount = 0;
   setMic('waiting');
   $('status').textContent = 'Getting ready…';
   $('verdict').textContent = '';
   $('replay').innerHTML = '';
 
+  armRecognition();
+
+  // audio capture for replay/export, reusing the always-on meter stream
+  try {
+    if (meterStream && !meterReleased) {
+      mrChunks = [];
+      mr = new MediaRecorder(meterStream);
+      mr.ondataavailable = (ev) => mrChunks.push(ev.data);
+      mr.onstop = () => { if (mrChunks.length) audioBlobs[trialIdx] = new Blob(mrChunks, { type: mr.mimeType }); };
+      mr.start();
+    }
+  } catch (e) {}
+
+  setTimeout(() => { if (holding) { setMic('listening'); $('status').textContent = 'Listening — speak now, then let go'; } }, audioLive ? 0 : WARM_MIN_MS);
+  setTimeout(() => { if (holding && !$('mic').classList.contains('listening')) { setMic('listening'); $('status').textContent = 'Listening — speak now, then let go'; } }, WARM_MAX_MS);
+}
+
+function armRecognition() {
   gen++;
   const myGen = gen;
   const r = new WSR();
   r.lang = 'en-GB'; r.continuous = false; r.interimResults = true;
   r.maxAlternatives = 5;
   rec = r;
-  r.onaudiostart = () => { if (myGen === gen) audioLive = true; };
-  r.onstart = () => { if (myGen === gen) audioLive = true; };
+  r.onaudiostart = () => { if (myGen === gen) audioLive = true; console.log('[asr_eval] audio started'); };
+  r.onstart = () => { if (myGen === gen) audioLive = true; console.log('[asr_eval] recognition started'); };
   r.onresult = (ev) => {
     if (myGen !== gen) return;
     const res = ev.results[ev.results.length - 1];
@@ -359,25 +380,42 @@ function beginHold(e) {
     settledVia = 'final';
     settle();
   };
-  r.onerror = (ev) => { if (myGen !== gen) return; gotErr = ev.error; if (gotFinal === null) { gotFinal = interim || ''; settledVia = 'error'; settle(); } };
+  r.onerror = (ev) => {
+    if (myGen !== gen) return;
+    gotErr = ev.error;
+    console.log('[asr_eval] recognizer error:', ev.error);
+    if (gotFinal !== null) return;
+    // A capture/system-level error may be the meter stream and the
+    // recognizer fighting over the mic. Retry once with the meter fully
+    // released — if the retry works, the conflict is proven.
+    const conflictish = ['audio-capture', 'network', 'service-not-allowed', 'aborted', 'unknown'].includes(ev.error);
+    if (conflictish && retryCount === 0 && meterStream && !meterReleased) {
+      retryCount++;
+      meterReleased = true;
+      releaseMeter();
+      $('status').textContent = 'Mic was busy — retrying without the meter…';
+      setTimeout(() => {
+        if (gotFinal !== null) return;
+        try { armRecognition(); } catch (e) { gotFinal = interim || ''; settledVia = 'error'; settle(); }
+      }, 400);
+      return;
+    }
+    gotFinal = interim || '';
+    settledVia = ev.error === 'no-speech' ? 'no-speech' : 'error';
+    settle();
+  };
   r.onend = () => {
     if (myGen !== gen) return;
     if (gotFinal === null && interim) { gotFinal = interim; settledVia = 'interim-end'; settle(); }
   };
   try { r.start(); } catch (err) { holding = false; setMic(''); $('status').textContent = 'Recognizer failed: ' + err.name; return; }
+}
 
-  try {
-    if (meterStream) {
-      mrChunks = [];
-      mr = new MediaRecorder(meterStream);
-      mr.ondataavailable = (ev) => mrChunks.push(ev.data);
-      mr.onstop = () => { if (mrChunks.length) audioBlobs[trialIdx] = new Blob(mrChunks, { type: mr.mimeType }); };
-      mr.start();
-    }
-  } catch (e) {}
-
-  setTimeout(() => { if (myGen === gen && holding) { setMic('listening'); $('status').textContent = 'Listening — speak now, then let go'; } }, audioLive ? 0 : WARM_MIN_MS);
-  setTimeout(() => { if (myGen === gen && holding && !$('mic').classList.contains('listening')) { setMic('listening'); $('status').textContent = 'Listening — speak now, then let go'; } }, WARM_MAX_MS);
+function releaseMeter() {
+  try { if (meterStream) meterStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  meterStream = null;
+  document.getElementById('miclabel').textContent = 'meter paused — recognizer has the mic';
+  document.getElementById('meterbar').style.width = '0%';
 }
 
 function endHold() {
@@ -447,6 +485,10 @@ function settle() {
   settledGen = gen;
   settledIdx = trialIdx;
   gotErr = null;
+
+  // If the meter was released to free the mic for a retry, bring it back
+  // for the next word (permission already granted — no prompt).
+  if (meterReleased) { meterReleased = false; startMeter(); }
   save();
   renderStrip();
 }
