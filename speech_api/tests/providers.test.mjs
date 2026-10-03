@@ -3,8 +3,13 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { createGoogleSpeechTranscriber, extractSpeechTranscript, MAX_AUDIO_BYTES, SPEECH_MODEL_CONFIGURATION_VERSIONS, validateRecordingRequest } from '../providers.mjs';
 
-const recordingRequest = (model = 'chirp_3') => ({
-  model, audioBase64: Buffer.from('original recording bytes').toString('base64'),
+const opusRecordingBytes = channelCount => Buffer.concat([
+  Buffer.from([0x4f, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64, 1, channelCount, 0, 0, 0x80, 0xbb, 0, 0, 0, 0, 0]),
+  Buffer.from('original recording bytes'),
+]);
+
+const recordingRequest = (model = 'chirp_3', opusChannelCount = 2) => ({
+  model, audioBase64: (model === 'latest_short' ? opusRecordingBytes(opusChannelCount) : Buffer.from('original recording bytes')).toString('base64'),
   mimeType: 'audio/webm;codecs=opus', durationMs: 2000,
   ...(model === 'latest_short' ? { sampleRateHertz: 48000 } : {}),
 });
@@ -28,6 +33,16 @@ test('invalid recordings and target-word fields are rejected before a provider c
   ]) assert.throws(() => validateRecordingRequest({ ...recordingRequest(), ...changes }));
 });
 
+test('V1 derives the channel count from the saved OpusHead and rejects a missing header', () => {
+  for (const opusChannelCount of [1, 2]) {
+    const recording = validateRecordingRequest(recordingRequest('latest_short', opusChannelCount));
+    assert.equal(recording.audioChannelCount, opusChannelCount);
+  }
+  assert.throws(() => validateRecordingRequest({
+    ...recordingRequest('chirp_3'), model: 'latest_short', sampleRateHertz: 48000,
+  }), error => error.code === 'opus_channel_count_unavailable');
+});
+
 test('the actual 10 MiB boundary validates without exhausting the regular expression stack', () => {
   const recording = validateRecordingRequest({ ...recordingRequest(), audioBase64: Buffer.alloc(MAX_AUDIO_BYTES).toString('base64') });
   assert.match(recording.audioSha256, /^[a-f0-9]{64}$/);
@@ -38,7 +53,7 @@ test('Google gets the explicitly selected model, blind configuration, ADC author
   assert.deepEqual(Object.keys(SPEECH_MODEL_CONFIGURATION_VERSIONS).sort(), ['chirp_3', 'latest_short', 'short']);
   for (const [model, configurationVersion] of [
     ['chirp_3', 'recorded-word-en-GB-chirp3-v1'], ['short', 'recorded-word-en-GB-short-v1'],
-    ['latest_short', 'recorded-word-en-GB-v1-latest-short'],
+    ['latest_short', 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2'],
   ]) await context.test(model, async () => {
     const providerResponse = model === 'latest_short'
       ? { results: [{ alternatives: [{ transcript: 'Matt.', confidence: 0.91 }] }], totalBilledTime: '2s' }
@@ -57,7 +72,7 @@ test('Google gets the explicitly selected model, blind configuration, ADC author
           'x-goog-user-project': 'reading-learner-test',
         });
         const expectedGoogleRequest = model === 'latest_short'
-          ? { config: { encoding: 'WEBM_OPUS', sampleRateHertz: 48000, languageCode: 'en-GB', model }, audio: { content: recordingRequest(model).audioBase64 } }
+          ? { config: { encoding: 'WEBM_OPUS', sampleRateHertz: 48000, audioChannelCount: 2, languageCode: 'en-GB', model }, audio: { content: recordingRequest(model).audioBase64 } }
           : { config: { autoDecodingConfig: {}, languageCodes: ['en-GB'], model }, content: recordingRequest(model).audioBase64 };
         assert.deepEqual(JSON.parse(options.body), expectedGoogleRequest);
         assert.ok(options.signal instanceof AbortSignal);

@@ -17,7 +17,7 @@ const MODEL_LABELS = Object.freeze({ chirp_3: 'Chirp 3 (V2)', short: 'short (V2)
 const MODEL_CONFIGURATION_VERSIONS = Object.freeze({
   chirp_3: 'recorded-word-en-GB-chirp3-v1',
   short: 'recorded-word-en-GB-short-v1',
-  latest_short: 'recorded-word-en-GB-v1-latest-short',
+  latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2',
 });
 const V1_OPUS_SAMPLE_RATES_HERTZ = new Set([8000, 12000, 16000, 24000, 48000]);
 const normText = (text) => text.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();

@@ -303,7 +303,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
       const request = { endpoint, options, body: JSON.parse(options.body) }; fetchRequests.push(request);
       const originalBytes = Buffer.from(request.body.audioBase64, 'base64');
       const transcription = { transcript: 'Matt', provider: 'google-cloud-stt', model: request.body.model,
-        languageCode: 'en-GB', configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short' })[request.body.model], latencyMs: 123,
+        languageCode: 'en-GB', configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2' })[request.body.model], latencyMs: 123,
         audioSha256: createHash('sha256').update(originalBytes).digest('hex') };
       return responseFactory ? responseFactory(request, transcription) : { ok: true, status: 200, async json() { return transcription; } };
     },
@@ -364,7 +364,7 @@ function savedCompletedRun(model, transcript) {
   return {
     id: randomUUID(), model, status: 'complete', transcript, latencyMs: 100,
     provider: 'google-cloud-stt', languageCode: 'en-GB',
-    configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short' })[model],
+    configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2' })[model],
   };
 }
 

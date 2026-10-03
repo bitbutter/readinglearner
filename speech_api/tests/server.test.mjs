@@ -6,6 +6,13 @@ import { createGoogleSpeechTranscriber, MAX_REQUEST_BYTES } from '../providers.m
 
 const gatewayToken = 'fake-gateway-token-at-least-24-characters';
 const recording = { model: 'chirp_3', audioBase64: Buffer.from('recording').toString('base64'), mimeType: 'audio/webm', durationMs: 2000 };
+const latestShortRecording = {
+  ...recording, model: 'latest_short', sampleRateHertz: 48000,
+  audioBase64: Buffer.concat([
+    Buffer.from([0x4f, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64, 1, 2, 0, 0, 0x80, 0xbb, 0, 0, 0, 0, 0]),
+    Buffer.from('recording'),
+  ]).toString('base64'),
+};
 const authorizedHeaders = { Authorization: `Bearer ${gatewayToken}`, 'Content-Type': 'application/json', Origin: 'http://localhost:8080' };
 
 async function withGateway(configChanges, transcribe, run, now) {
@@ -93,7 +100,7 @@ test('HTTP model comparison sends each selected model to Google and returns its 
       googleModels.push(googleRequest.config.model);
       if (googleRequest.config.model === 'latest_short') {
         assert.equal(url, 'https://eu-speech.googleapis.com/v1/speech:recognize');
-        assert.deepEqual(googleRequest, { config: { encoding: 'WEBM_OPUS', sampleRateHertz: 48000, languageCode: 'en-GB', model: 'latest_short' }, audio: { content: recording.audioBase64 } });
+        assert.deepEqual(googleRequest, { config: { encoding: 'WEBM_OPUS', sampleRateHertz: 48000, audioChannelCount: 2, languageCode: 'en-GB', model: 'latest_short' }, audio: { content: latestShortRecording.audioBase64 } });
         return Response.json({ results: [{ alternatives: [{ transcript: 'Matt.' }] }], totalBilledTime: '2s' });
       }
       assert.equal(url, 'https://eu-speech.googleapis.com/v2/projects/reading-learner-test/locations/eu/recognizers/_:recognize');
@@ -115,11 +122,11 @@ test('HTTP model comparison sends each selected model to Google and returns its 
       assert.equal(transcription.transcript, 'Matt.');
       assert.deepEqual(transcription.usage, { totalBilledDuration: '2s' });
     }
-    const response = await fetch(endpoint, { method: 'POST', headers: authorizedHeaders, body: JSON.stringify({ ...recording, model: 'latest_short', sampleRateHertz: 48000 }) });
+    const response = await fetch(endpoint, { method: 'POST', headers: authorizedHeaders, body: JSON.stringify(latestShortRecording) });
     assert.equal(response.status, 200);
     const transcription = await response.json();
     assert.equal(transcription.model, 'latest_short');
-    assert.equal(transcription.configurationVersion, 'recorded-word-en-GB-v1-latest-short');
+    assert.equal(transcription.configurationVersion, 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2');
     assert.equal(transcription.transcript, 'Matt.');
     assert.deepEqual(transcription.usage, { totalBilledTime: '2s' });
   });
