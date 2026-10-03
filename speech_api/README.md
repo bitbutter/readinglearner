@@ -1,0 +1,162 @@
+# Recorded-word speech API
+
+This speech API accepts a recording and transcribes it with Google Cloud Speech-to-Text V2, model `chirp_3`, language `en-GB`, in Google's `eu` region. The evaluator uses it now; the server can also serve the reading app after its integration is published. That switch awaits evaluation against spoken reference words. Each submission makes one recognition request. It does not send the displayed word, accepted answers, vocabulary hints or transcript replacements to Google. It does not store recordings or sessions.
+
+Google's dedicated Speech-to-Text service is used here. The [Gemini Developer API terms](https://ai.google.dev/gemini-api/terms) prohibit clients directed toward or likely accessed by people under 18.
+
+## Set up the local API
+
+Use Node.js 22 or newer. In this directory, run `npm ci`.
+
+Create or select a Google Cloud project, enable billing and the **Cloud Speech-to-Text API** (`speech.googleapis.com`), then give the server identity the **Cloud Speech Client** role (`roles/speech.client`) and **Service Usage Consumer** role (`roles/serviceusage.serviceUsageConsumer`) on that project. For local development, the identity is the Google account you use below. Install the Google Cloud CLI and run:
+
+```powershell
+gcloud auth application-default login
+gcloud auth application-default set-quota-project YOUR_PROJECT_ID
+```
+
+The server uses Application Default Credentials and sends the configured project as the [REST request's quota project](https://docs.cloud.google.com/docs/authentication/rest#quota_project). No personal API key goes into the page. Set these values in the terminal that starts the API:
+
+```powershell
+$env:GOOGLE_CLOUD_PROJECT = 'YOUR_PROJECT_ID'
+$env:SPEECH_GATEWAY_TOKEN = (node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64url'))")
+Set-Clipboard -Value $env:SPEECH_GATEWAY_TOKEN
+npm start
+```
+
+These commands copy the generated gateway token to the clipboard. Keep it private and paste it into the evaluation page's access-token field for that browser session. A hosted server should use its own Google Cloud service identity, rather than a developer's login or credentials embedded in the page.
+
+The default address is `http://127.0.0.1:8081/transcribe`. Press Ctrl+C to stop it. Local mode binds to this computer's loopback address. A tablet cannot reach it through its own `127.0.0.1`; using the API from Brave on Android requires the deployed HTTPS service below.
+
+## Limits and browser access
+
+The page must send a private access token and originate from an exact allowed origin. Defaults are `https://bitbutter.github.io`, `http://localhost:8080`, and `http://127.0.0.1:8080`. To change these, set `SPEECH_ALLOWED_ORIGINS` to a comma-separated list of exact origins. A replay command without a browser Origin header still requires the access token.
+
+| Environment setting | Default |
+| --- | --- |
+| `PORT` | `8081` |
+| `SPEECH_GATEWAY_HOST` | `127.0.0.1`; explicitly `0.0.0.0` for Cloud Run |
+| `SPEECH_GATEWAY_MAX_CONCURRENT` | `2` requests, including uploads |
+| `SPEECH_GATEWAY_REQUESTS_PER_MINUTE` | `20` recognition submissions |
+| `SPEECH_GATEWAY_REQUESTS_PER_DAY` | `200` recognition submissions per UTC day |
+| `SPEECH_GATEWAY_TIMEOUT_MS` | `15000` milliseconds |
+
+Each recording must declare a positive duration below 60 seconds and contain at most 10 MiB of audio. Google independently enforces the synchronous recognition duration limit: a client-supplied duration cannot authorize longer recordings. Supported containers are WebM/Opus, Ogg/Opus, MP4/AAC and PCM WAV. Google detects the actual encoding from the recording. Incorrect or unsupported bytes produce an explicit error.
+
+Rate and daily counters live only in this local process and reset when it restarts. They are useful for local evaluation, but are not a durable spending cap for a deployed service. There are no automatic retries.
+
+## Cloud Run setup
+
+The deployed endpoint is [reading-learner-speech](https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe), in project `readinglearner-speech-bitbu`. Cloud Build and container startup succeeded for revision `reading-learner-speech-00001-tdv` on 3 October 2026. Keep its access token private; the endpoint URL alone does not authorize transcription.
+
+Live checks verified missing-token rejection, rejected an unapproved browser origin, and allowed the GitHub Pages browser preflight. One 1.812-second public Google audio sample returned “How old is the Brooklyn Bridge?” with the correct model, language and original-audio SHA-256. Both the service-wide and revision instance maximums are set to one. No child's recording was used for this check.
+
+For another deployment, use [Google Cloud Shell](https://shell.cloud.google.com/) in the browser. It already has Google's command-line tools; nothing needs to be installed on this computer. First create a project and link billing in the Google Cloud console. Review the chosen project, identities and deployment settings before running the following setup.
+
+Upload the prepared `speech-api-cloud-source.zip` using Cloud Shell's upload button. Extract it into a new directory and open that directory. The archive contains server source and build configuration only. The included Dockerfile uses Node.js 24.21.0 and runs as the `node` user. Strict `.gcloudignore` and `.dockerignore` lists exclude recordings, local dependencies, tests and credentials.
+
+The account deploying from source needs **Cloud Run Source Developer**, **Service Usage Consumer**, and **Service Account User** on the chosen runtime identity. The build account needs **Cloud Run Builder** (`roles/run.builder`) on the project. This setup explicitly selects the Compute Engine default service account for builds. Project administrators may already have the deployer permissions. [Source deployment instructions](https://docs.cloud.google.com/run/docs/deploying-source-code), [build identity instructions](https://docs.cloud.google.com/run/docs/configuring/services/build-service-account).
+
+An administrator must also authorize public access and configure the secret. **Cloud Run Admin** includes the required `run.services.setIamPolicy` permission; the source-developer role alone does not. The deployment command disables Cloud Run's Invoker IAM check, as Google's [public-access instructions](https://docs.cloud.google.com/run/docs/authenticating/public) recommend. The speech API continues to enforce its own private access token.
+
+In Cloud Shell, set the project and enable the required APIs:
+
+```bash
+set -euo pipefail
+SPEECH_PROJECT_ID='YOUR_PROJECT_ID'
+SPEECH_EXPECTED_PROJECT_NUMBER='YOUR_PROJECT_NUMBER_FROM_CONSOLE'
+SPEECH_PROJECT_NUMBER="$(gcloud projects describe "$SPEECH_PROJECT_ID" --format='value(projectNumber)')"
+test "$SPEECH_PROJECT_NUMBER" = "$SPEECH_EXPECTED_PROJECT_NUMBER" || { printf '%s\n' 'Unexpected project number; stop and review.' >&2; exit 1; }
+SPEECH_BUILD_SERVICE_ACCOUNT="${SPEECH_PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+gcloud config set project "$SPEECH_PROJECT_ID"
+gcloud services enable speech.googleapis.com run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com
+```
+
+Before granting build permissions, inspect this identity's existing project roles:
+
+```bash
+gcloud iam service-accounts describe "$SPEECH_BUILD_SERVICE_ACCOUNT" --project "$SPEECH_PROJECT_ID" --format='value(email)'
+gcloud projects get-iam-policy "$SPEECH_PROJECT_ID" \
+  --flatten='bindings[].members' \
+  --filter="bindings.members=serviceAccount:${SPEECH_BUILD_SERVICE_ACCOUNT}" \
+  --format='value(bindings.role)'
+```
+
+Google automatically granted this Compute identity **Editor** (`roles/editor`) in our new project. We confirmed that it was unused by other workloads, removed Editor, granted Cloud Run Builder, and verified that its only project role was `roles/run.builder`. For a dedicated new project, review and remove an unused identity's broad default grant before building. In an existing project, stop and check dependencies with its administrator; do not automatically remove roles from an identity used by other services. The build identity should receive only the permissions required for this deployment.
+
+Create a dedicated runtime account, `reading-learner-speech`. Give it **Cloud Speech Client** (`roles/speech.client`) and **Service Usage Consumer** (`roles/serviceusage.serviceUsageConsumer`) on this project. Attach this account to the Cloud Run service. Its attached identity provides Google credentials automatically; do not create or upload a service-account key. [Service identity instructions](https://docs.cloud.google.com/run/docs/configuring/services/service-identity).
+
+Create a Secret Manager secret named `reading-learner-speech-token` containing a random private token of at least 24 characters without whitespace. Give the runtime account **Secret Manager Secret Accessor** (`roles/secretmanager.secretAccessor`) on that secret alone. Use secret version `1` for `SPEECH_GATEWAY_TOKEN`; keep the value out of source files and deployment arguments. Copy it directly from Secret Manager into the evaluation page's access-token field. [Secret configuration instructions](https://docs.cloud.google.com/run/docs/configuring/services/secrets).
+
+With the source directory open in Cloud Shell and the verified project number, accounts and secret ready, deploy with pinned runtime and build identities:
+
+```bash
+gcloud run deploy reading-learner-speech \
+  --source . \
+  --project "$SPEECH_PROJECT_ID" \
+  --region europe-west1 \
+  --service-account "reading-learner-speech@${SPEECH_PROJECT_ID}.iam.gserviceaccount.com" \
+  --build-service-account "projects/${SPEECH_PROJECT_ID}/serviceAccounts/${SPEECH_BUILD_SERVICE_ACCOUNT}" \
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=${SPEECH_PROJECT_ID},SPEECH_GATEWAY_HOST=0.0.0.0,SPEECH_ALLOWED_ORIGINS=https://bitbutter.github.io" \
+  --set-secrets SPEECH_GATEWAY_TOKEN=reading-learner-speech-token:1 \
+  --no-invoker-iam-check \
+  --concurrency 2 \
+  --max 1 \
+  --max-instances 1 \
+  --min 0 \
+  --min-instances 0 \
+  --memory 512Mi \
+  --cpu 1 \
+  --cpu-throttling \
+  --no-cpu-boost \
+  --timeout 60
+```
+
+`--max 1` limits the whole service; `--max-instances 1` limits each revision. Both are explicit: the first deployment's audit found a service maximum of 20 despite a revision maximum of 1. Verify both `metadata.annotations.run.googleapis.com/maxScale` and `spec.template.metadata.annotations.autoscaling.knative.dev/maxScale` are `1` in the deployed service configuration. The minimums are zero, CPU is throttled outside requests, and startup CPU boost is disabled. [Maximum-instance settings](https://docs.cloud.google.com/run/docs/configuring/max-instances), [deployment flags](https://docs.cloud.google.com/sdk/gcloud/reference/run/deploy).
+
+Cloud Run supplies the listening `PORT`; this service explicitly listens on `0.0.0.0` inside its container. HTTPS is provided by Cloud Run. Allowing unauthenticated Cloud Run access permits the browser to reach the endpoint; the API still requires its private bearer token before accepting any recognition request. Use the resulting service URL followed by `/transcribe` in the evaluation page. An ordinary browser visit reports that POST is required and does not call Google Speech.
+
+The default limits remain 20 submissions per minute and 200 per UTC day **per process**. Instances can restart, and Cloud Run scaling settings are not a spending guarantee. Review Google's Speech, Cloud Run, build, image-storage and Secret Manager costs and set billing alerts before deployment. To stop this service later, delete `reading-learner-speech` in Cloud Run; stored build images and the Secret Manager secret remain separately removable.
+
+## Request and evidence
+
+```text
+POST /transcribe
+Authorization: Bearer YOUR_GATEWAY_TOKEN
+Content-Type: application/json
+```
+
+```json
+{
+  "model": "chirp_3",
+  "audioBase64": "BASE64_OF_ORIGINAL_AUDIO_BYTES",
+  "mimeType": "audio/webm;codecs=opus",
+  "durationMs": 2000
+}
+```
+
+The response identifies the provider, model, language, `configurationVersion` (`recorded-word-en-GB-chirp3-v1`), the recording's SHA-256, elapsed request time, transcript, Google usage metadata, and Google's response. It preserves the returned transcript text; multiple sequential speech segments are joined with a space. `alternatives` is empty because the API does not invent complete alternate transcripts from segment hypotheses; those hypotheses remain in `providerResponse`.
+
+A completed request with no Google results produces an empty transcript. Operational failures are separate HTTP errors containing `error.code` and `error.message`; Google's rejection response is preserved with credentials removed. No failure changes the selected model or becomes a successful transcript.
+
+## Re-evaluate a saved dataset
+
+Extract the evaluation ZIP into a directory. Its `manifest.json` must have `schemaVersion: 2` and reference the original audio files. In a terminal with the same private gateway token, run:
+
+```powershell
+node rerun_dataset.mjs 'C:/path/to/dataset/manifest.json' 'C:/path/to/dataset/chirp3-results.json'
+```
+
+An optional third argument selects an HTTPS speech API or another loopback address. This command sends recordings to Google and can incur charges. It evaluates every nonvoid attempt, including re-recordings, and skips capture errors. It verifies each file's size and SHA-256 first. Submissions are paced to `SPEECH_GATEWAY_REQUESTS_PER_MINUTE` (default 20); use the same setting as the chosen server. Labels stay in the local manifest and are never sent to the recognition API. Results are written to a new file keyed by attempt ID and saved after every attempt; originals and earlier results cannot be overwritten. Review the saved errors before evaluating another set.
+
+## Cost and accuracy
+
+[Google's current V2 standard pricing](https://cloud.google.com/speech-to-text/pricing) is $0.016 per minute at the first usage tier, rounded up to the next whole second per request and billed per audio channel. Exactly two seconds of mono audio costs about $0.000533, or **$0.53 for 1,000 recordings**, excluding other services and taxes. A 2.01-second recording is charged as three seconds. Silence is still processed audio; an empty transcription can still incur a charge.
+
+Accuracy on this child's isolated words has not been established. Keep the same recordings for blind comparison, including silence and intentionally incorrect words. The recognizer should not receive the expected answer. Use the recording labels only afterward to score recognition.
+
+## Verify without contacting Google
+
+Run `npm test`. Tests simulate the Google service and credentials; they do not submit recordings or make paid recognition calls.
+
+Reference: [Chirp 3 model](https://docs.cloud.google.com/speech-to-text/docs/models/chirp-3), [V2 synchronous recognition](https://docs.cloud.google.com/speech-to-text/docs/reference/rest/v2/projects.locations.recognizers/recognize), [audio decoding](https://docs.cloud.google.com/speech-to-text/docs/reference/rest/v2/projects.locations.recognizers#AutoDetectDecodingConfig).

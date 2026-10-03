@@ -1,0 +1,8 @@
+# Only the server's runtime source and build configuration enter the image build.
+**
+!Dockerfile
+!.dockerignore
+!package.json
+!package-lock.json
+!server.mjs
+!providers.mjs

@@ -503,7 +503,7 @@ const WORDS_CONTENT = [
   // Level 1: Simple sounds (short a)
   { id: 'word:cat',   display: 'cat',    accepted: ['cat'],             level: 1 },
   { id: 'word:hat',   display: 'hat',    accepted: ['hat'],             level: 1 },
-  { id: 'word:mat',   display: 'mat',    accepted: ['mat'],             level: 1 },
+  { id: 'word:mat',   display: 'mat',    accepted: ['mat','matt'],      level: 1 },
   { id: 'word:bat',   display: 'bat',    accepted: ['bat'],             level: 1 },
   { id: 'word:rat',   display: 'rat',    accepted: ['rat'],             level: 1 },
   { id: 'word:sat',   display: 'sat',    accepted: ['sat'],             level: 1 },
@@ -818,6 +818,7 @@ const WORDS_CONTENT = [
 // Applied on every load so existing users benefit even after the one-time
 // acceptedPruned migration has already run.
 const ACCEPTED_OVERRIDES = {
+  'word:mat':  ['matt'],  // Spoken "mat" and the name "Matt" are identical.
   'word:are':  ['our', 'r', 'ah'],  // Chrome en-GB often returns nothing or 'our'/'r' for 'are'
 };
 
@@ -1553,22 +1554,14 @@ function evaluateVosk() {
 // ANSWER MATCHING
 // ============================================================
 
-// Called in every "no transcript" path. If the child held the button for
-// >= 500 ms, Chrome simply failed to transcribe the word (common for very
-// short function words like "are"). Treat the hold as a correct attempt
-// rather than telling a child who clearly spoke that we didn't hear them.
+// An empty recognition result gives no evidence that the displayed word was
+// spoken correctly. Retry without changing the child's progress.
 function handleNoTranscript() {
   const item = gs.currentItem;
   const held = Date.now() - micHoldStart;
   DBG('noTranscript', { held, display: item?.display });
-  if (held >= 500 && item && !gs.awaitingResult) {
-    DBG('noTranscript', 'accepting on hold duration');
-    setHeardDisplay(item.display);
-    handleAnswer(true);
-  } else {
-    setMicState('ready');
-    if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
-  }
+  setMicState('ready');
+  if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
 }
 
 function normText(s) {

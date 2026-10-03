@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ASR eval — does the recognizer hear him right?</title>
+<title>Speech recordings &amp; model evaluation</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -31,8 +31,10 @@
     cursor: pointer; padding: 0;
   }
   .cell.hit    { background: rgba(61,220,132,.35); color: #3ddc84; border-color: #3ddc84; }
+  .cell.recorded { background: rgba(140,160,255,.3); color: #c1ccff; border-color: #a5b5ff; }
   .cell.conf   { background: rgba(255,183,77,.30); color: #ffb74d; border-color: #ffb74d; }
   .cell.miss   { background: rgba(255,110,110,.30); color: #ff6e6e; border-color: #ff6e6e; }
+  .cell.error  { background: rgba(255,183,77,.15); color: #ffb74d; border-color: #ffb74d; }
   .cell.voided { background: rgba(255,255,255,.06); color: rgba(255,255,255,.35); border-color: rgba(255,255,255,.25); text-decoration: line-through; }
   .cell.cur    { outline: 3px solid #fff; outline-offset: 1px; }
 
@@ -75,28 +77,62 @@
   .bigstat { font-size: 1.6rem; font-weight: 800; margin: .3rem .5rem; display: inline-block; }
   audio { width: 130px; height: 30px; }
   .note { font-size: .8rem; opacity: .55; max-width: 640px; margin: .8rem auto 0; }
+  .settings { margin-bottom: 1rem; text-align: left; }
+  .settings label { display: block; margin-top: .7rem; font-size: .9rem; }
+  select, input { width: 100%; font: inherit; color: #fff; background: #252246; border: 1px solid #777; border-radius: .4rem; padding: .6rem; }
+  .settings .small { margin-top: .5rem; }
+  #problem { white-space: pre-wrap; }
+  #trials { overflow-x: auto; }
+  #summary td { max-width: 240px; overflow-wrap: anywhere; }
 </style>
 </head>
 <body>
-  <h1>ASR eval — Google Web Speech, exactly as the app uses it</h1>
-  <p class="sub">Roam freely: ◀ ▶ or tap a number. Re-record or void any word, any time. Nothing is final until you export.</p>
+  <h1>Speech recordings &amp; model evaluation</h1>
+  <p class="sub">Record once, compare recognizers later. Every take keeps its original audio.</p>
+
+  <div class="card settings">
+    <label for="saved-session">Saved session</label>
+    <select id="saved-session" disabled></select>
+    <button id="new-session" class="small" disabled>New session</button>
+    <label for="recognition-mode">After recording</label>
+    <select id="recognition-mode">
+      <option value="record-only">Save audio only</option>
+      <option value="chirp_3">Transcribe with Google Chirp 3</option>
+    </select>
+    <div id="api-settings" hidden>
+      <label for="gateway-url">Transcription address</label>
+      <input id="gateway-url" type="url" value="https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe" autocomplete="off">
+      <label for="gateway-token">Speech server access code</label>
+      <input id="gateway-token" type="password" autocomplete="off">
+      <p class="note">The Google credentials belong on the speech server. This access code is kept only in this tab.</p>
+    </div>
+    <p id="archive-status" role="status">Opening saved recordings…</p>
+    <p id="problem" class="bad" role="alert" hidden></p>
+    <button id="retry-save" class="small" hidden>Retry saving this recording</button>
+    <button id="download-unsaved" class="small" hidden>Download unsaved audio</button>
+    <div id="legacy-session" hidden>
+      <p class="note">The earlier evaluator saved text only across reloads. Its old text record is still available.</p>
+      <button id="export-legacy" class="small">Download earlier text record</button>
+    </div>
+  </div>
 
   <div id="session" class="card">
     <div id="strip"></div>
     <div id="counter"></div>
     <div id="prompt"></div>
     <button id="tts" class="small" title="Say the word for him first">🔊 say it first</button>
+    <button id="enable-mic" class="small" disabled>Enable microphone</button>
 
     <div id="meterwrap">
       <div id="metertrack"><div id="meterbar"></div></div>
-      <div id="miclabel">asking for microphone…</div>
+      <div id="miclabel">Microphone not enabled</div>
       <div id="meterwarn"></div>
     </div>
 
     <div>
-      <button id="mic" class="mic" aria-label="Hold and speak" disabled>🎤</button>
+      <button id="mic" class="mic" aria-label="Hold to record" disabled>🎤</button>
     </div>
-    <div id="status" title="Tap here while Thinking to accept what we have so far">Hold the button and speak</div>
+    <div id="status" role="status">Enable the microphone, then hold the button and speak</div>
     <div id="heard"></div>
     <div class="alts" id="alts"></div>
     <div class="verdict" id="verdict"></div>
@@ -105,6 +141,7 @@
       <button id="prev" class="small">◀ back</button>
       <button id="redo" class="small">↻ re-record this word</button>
       <button id="void" class="small">✋ void / unvoid</button>
+      <button id="transcribe" class="small" disabled>Transcribe saved audio</button>
       <button id="next" class="small">next ▶</button>
     </div>
     <div class="row">
@@ -119,499 +156,13 @@
     <div id="trials"></div>
     <div class="row">
       <button id="back2" class="small">◀ back to session</button>
-      <button id="export" class="small">⬇ Export JSON (with audio)</button>
-      <button id="restart" class="small">↺ New session</button>
+      <button id="export" class="small">⬇ Download audio &amp; manifest ZIP</button>
     </div>
   </div>
 
-  <p class="note">Mirrors the app: Chrome Web Speech, en-GB, single-shot, warm-up guarded, token-containment matching. Records top-5 alternatives (the app only sees #1) and audio — audio replays live in this tab; after a reload only the text survives. The meter shows the system DEFAULT mic, the device Chrome's recognizer uses.</p>
+  <p class="note">Audio recording works independently of browser speech recognition, including in Brave. Recordings stay in this browser across reloads; download the ZIP for a portable copy. Clearing browser storage deletes local recordings. Chirp 3 requires a configured speech server and sends the saved audio to Google. The expected word is never sent to the recognizer. Scores compare the transcript with the displayed prompt, not a human-verified account of what was spoken.</p>
 
-<script>
-'use strict';
-
-// ── Word list: minimal pairs + the function words where recognizers guess ──
-const PAIRS = [
-  ['mat', 'mad'], ['cat', 'cut'], ['pen', 'pin'], ['bed', 'bad'],
-  ['sit', 'six'], ['hop', 'hot'], ['bus', 'but'], ['was', 'wash'],
-];
-const SINGLES = ['so', 'no', 'go', 'he', 'we', 'be', 'is', 'it', 'in', 'the', 'to', 'do'];
-const ACCEPTED = {
-  mat: ['mat'], mad: ['mad'], cat: ['cat'], cut: ['cut'], pen: ['pen'], pin: ['pin'],
-  bed: ['bed'], bad: ['bad'], sit: ['sit'], six: ['six'], hop: ['hop'], hot: ['hot'],
-  bus: ['bus'], but: ['but'], was: ['was'], wash: ['wash'],
-  so: ['so', 'sew'], no: ['no', 'know'], go: ['go'], he: ['he'], we: ['we'],
-  be: ['be', 'bee'], is: ['is'], it: ['it'], in: ['in'], the: ['the'],
-  to: ['to', 'too', 'two'], do: ['do', 'dew', 'due'],
-};
-const ALL_WORDS = Object.keys(ACCEPTED);
-
-// ── Matching, cloned from app.js ────────────────────────────────────────────
-const normText = (s) => s.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
-function containsTokenRun(tokens, run) {
-  outer: for (let i = 0; i + run.length <= tokens.length; i++) {
-    for (let j = 0; j < run.length; j++) if (tokens[i + j] !== run[j]) continue outer;
-    return true;
-  }
-  return false;
-}
-function matchesWord(transcript, word) {
-  const tokens = normText(transcript).split(' ').filter(t => t && t !== 'unk');
-  if (!tokens.length) return false;
-  return ACCEPTED[word].map(a => normText(a).split(' ')).some(run => containsTokenRun(tokens, run));
-}
-
-// ── Session state: trials are indexed by word position, freely editable ────
-const KEY = 'asrEval.v1';
-let session = null;
-let trialIdx = 0;
-let audioBlobs = {};   // idx -> Blob (this tab only)
-
-function shuffle(a) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function pairOf(w) { for (const p of PAIRS) if (p.includes(w)) return p; return null; }
-
-function buildOrder() {
-  const words = shuffle(ALL_WORDS);
-  for (let tries = 0; tries < 50; tries++) {
-    let ok = true;
-    for (let i = 1; i < words.length; i++) {
-      const p = pairOf(words[i]);
-      if (p && p.includes(words[i - 1])) { ok = false; break; }
-    }
-    if (ok) return words;
-    words.push(words.shift());
-  }
-  return words;
-}
-
-function newSession() {
-  session = { startedAt: new Date().toISOString(), device: navigator.userAgent, trials: [], order: buildOrder() };
-  trialIdx = 0;
-  audioBlobs = {};
-  save();
-}
-function save() { try { localStorage.setItem(KEY, JSON.stringify(session)); } catch (e) {} }
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return false;
-    const p = JSON.parse(raw);
-    if (!p || !p.trials) return false;
-    // normalise: trials indexed by position (old saves were push-ordered)
-    const byIdx = [];
-    for (const t of p.trials) byIdx[t.i] = t;
-    p.trials = byIdx;
-    session = p;
-    trialIdx = session.order.findIndex((w, i) => !session.trials[i]);
-    if (trialIdx < 0) trialIdx = session.order.length - 1;
-    return true;
-  } catch (e) { return false; }
-}
-
-// ── Input meter: always on, default mic (what the recognizer hears) ────────
-let meterStream = null, analyser = null, audioCtx = null, flatSince = null;
-let holding = false, settling = false;
-async function startMeter() {
-  try {
-    meterStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const track = meterStream.getAudioTracks()[0];
-    document.getElementById('miclabel').textContent = '🎙 ' + (track.label || 'default mic');
-    if (session) { session.micLabel = track.label || 'default mic'; save(); }
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 512;
-    audioCtx.createMediaStreamSource(meterStream).connect(analyser);
-    const buf = new Uint8Array(analyser.fftSize);
-    const tick = () => {
-      analyser.getByteTimeDomainData(buf);
-      let peak = 0;
-      for (let i = 0; i < buf.length; i++) peak = Math.max(peak, Math.abs(buf[i] - 128));
-      const level = Math.min(1, peak / 50);
-      const bar = document.getElementById('meterbar');
-      bar.style.width = (level * 100).toFixed(0) + '%';
-      bar.classList.toggle('hot', level > 0.55);
-      const now = Date.now();
-      if (level < 0.02) flatSince = flatSince || now; else flatSince = null;
-      document.getElementById('meterwarn').textContent =
-        audioCtx.state !== 'running' ? 'tap anywhere once to activate the meter' :
-        (flatSince && now - flatSince > 3000 && !holding) ? 'no input — check the default mic in system settings' : '';
-      requestAnimationFrame(tick);
-    };
-    tick();
-    document.getElementById('mic').disabled = false;
-  } catch (e) {
-    document.getElementById('miclabel').textContent = 'microphone unavailable';
-    document.getElementById('meterwarn').textContent = 'mic blocked — allow microphone access and reload';
-  }
-}
-
-// ── Recognition: mirrors app.js startWSR ────────────────────────────────────
-const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-const WARM_MIN_MS = 500, WARM_MAX_MS = 850;
-const GRACE_MS = 2500, HARD_MS = 4000;
-let rec = null, gen = 0, interim = null, audioLive = false;
-let settledGen = -1, settledIdx = -1;   // recognition already written to this trial?
-let gotErr = null, gotFinal = null, gotConf = null, gotAlts = [], settledVia = null;
-let graceTimer = null, hardTimer = null, thinkTick = null;
-let mr = null, mrChunks = [];
-let retryCount = 0;             // meter-release retries this hold
-let meterReleased = false;
-
-const $ = (id) => document.getElementById(id);
-const speak = (t) => { try { const u = new SpeechSynthesisUtterance(t); u.lang = 'en-GB'; u.rate = .85; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {} };
-
-// ── Rendering ───────────────────────────────────────────────────────────────
-function renderStrip() {
-  const s = $('strip');
-  s.innerHTML = '';
-  session.order.forEach((w, i) => {
-    const t = session.trials[i];
-    const b = document.createElement('button');
-    let cls = 'cell';
-    if (t) cls += t.voided ? ' voided' : ' ' + (t.verdict === 'hit' ? 'hit' : t.verdict === 'pair-confusion' ? 'conf' : 'miss');
-    if (i === trialIdx) cls += ' cur';
-    b.className = cls;
-    b.textContent = i + 1;
-    b.title = w + (t ? ` — ${t.transcript || '—'}${t.voided ? ' (voided)' : ''}` : ' — not recorded');
-    b.addEventListener('click', () => { if (!holding && !settling) { trialIdx = i; showTrial(); } });
-    s.appendChild(b);
-  });
-}
-
-function verdictHTML(t) {
-  if (!t) return { text: '', cls: '' };
-  let cls;
-  if (t.verdict === 'hit') cls = 'ok';
-  else if (t.verdict === 'pair-confusion') cls = 'conf';
-  else cls = 'bad';
-  let text = t.verdict === 'hit' ? '✓ correct'
-    : t.verdict === 'pair-confusion' ? `⚠ PAIR CONFUSION — recognized as “${t.confusedWith}”`
-    : (t.transcript ? `✗ confused — recognized as “${t.transcript}”` : '✗ nothing recognized');
-  if (t.settledVia && t.settledVia !== 'final') text += `  [${t.settledVia}]`;
-  if (t.voided) text += ' — VOIDED';
-  return { text, cls };
-}
-
-function showTrial() {
-  if (trialIdx >= session.order.length) { finish(); return; }
-  const t = session.trials[trialIdx];
-  $('prompt').textContent = session.order[trialIdx];
-  $('counter').textContent = `word ${trialIdx + 1} / ${session.order.length}` + (t ? ' — recorded' : '');
-  if (t) {
-    $('heard').textContent = t.transcript
-      ? `heard: “${t.transcript}”${t.confidence != null && t.confidence > 0 ? `  (${Math.round(t.confidence * 100)}%)` : ''}`
-      : 'heard: (nothing)';
-    $('alts').textContent = (t.alternatives || []).length > 1 ? 'alternatives: ' + t.alternatives.slice(1).filter(Boolean).map(a => `“${a}”`).join(' ') : '';
-    const v = verdictHTML(t);
-    $('verdict').textContent = v.text;
-    $('verdict').className = 'verdict ' + v.cls;
-    $('status').textContent = 'Re-record, void, or move on';
-    const rp = $('replay');
-    rp.innerHTML = '';
-    if (audioBlobs[trialIdx]) {
-      const a = document.createElement('audio');
-      a.controls = true;
-      a.src = URL.createObjectURL(audioBlobs[trialIdx]);
-      rp.appendChild(a);
-    } else {
-      rp.textContent = t.hadAudio ? 'audio from before the reload is gone' : '';
-    }
-  } else {
-    $('heard').textContent = '';
-    $('alts').textContent = '';
-    $('verdict').textContent = '';
-    $('verdict').className = 'verdict';
-    $('replay').innerHTML = '';
-    $('status').textContent = 'Hold the button and speak';
-  }
-  renderStrip();
-  save();
-}
-
-function setMic(cls) { $('mic').className = 'mic' + (cls ? ' ' + cls : ''); }
-
-// ── Record flow ─────────────────────────────────────────────────────────────
-function beginHold(e) {
-  if (e) e.preventDefault();
-  if (holding || settling || !WSR || $('mic').disabled) return;
-  holding = true;
-  gotFinal = null; gotConf = null; gotAlts = []; interim = null; settledVia = null; gotErr = null;
-  audioLive = false;              // reset: otherwise trial 2+ skips the warm-up
-  settledGen = -1; settledIdx = -1;
-  retryCount = 0;
-  setMic('waiting');
-  $('status').textContent = 'Getting ready…';
-  $('verdict').textContent = '';
-  $('replay').innerHTML = '';
-
-  armRecognition();
-
-  // audio capture for replay/export, reusing the always-on meter stream
-  try {
-    if (meterStream && !meterReleased) {
-      mrChunks = [];
-      mr = new MediaRecorder(meterStream);
-      mr.ondataavailable = (ev) => mrChunks.push(ev.data);
-      mr.onstop = () => { if (mrChunks.length) audioBlobs[trialIdx] = new Blob(mrChunks, { type: mr.mimeType }); };
-      mr.start();
-    }
-  } catch (e) {}
-
-  setTimeout(() => { if (holding) { setMic('listening'); $('status').textContent = 'Listening — speak now, then let go'; } }, audioLive ? 0 : WARM_MIN_MS);
-  setTimeout(() => { if (holding && !$('mic').classList.contains('listening')) { setMic('listening'); $('status').textContent = 'Listening — speak now, then let go'; } }, WARM_MAX_MS);
-}
-
-function armRecognition() {
-  gen++;
-  const myGen = gen;
-  const r = new WSR();
-  r.lang = 'en-GB'; r.continuous = false; r.interimResults = true;
-  r.maxAlternatives = 5;
-  rec = r;
-  r.onaudiostart = () => { if (myGen === gen) audioLive = true; console.log('[asr_eval] audio started'); };
-  r.onstart = () => { if (myGen === gen) audioLive = true; console.log('[asr_eval] recognition started'); };
-  r.onresult = (ev) => {
-    if (myGen !== gen) return;
-    const res = ev.results[ev.results.length - 1];
-    const alts = [...res].map(a => (a.transcript || '').toLowerCase().trim());
-    if (!res.isFinal) { interim = alts[0] || interim; return; }
-    gotFinal = alts[0];
-    gotConf = res[0].confidence ?? null;
-    gotAlts = alts;
-    settledVia = 'final';
-    settle();
-  };
-  r.onerror = (ev) => {
-    if (myGen !== gen) return;
-    gotErr = ev.error;
-    console.log('[asr_eval] recognizer error:', ev.error);
-    if (gotFinal !== null) return;
-    // A capture/system-level error may be the meter stream and the
-    // recognizer fighting over the mic. Retry once with the meter fully
-    // released — if the retry works, the conflict is proven.
-    const conflictish = ['audio-capture', 'network', 'service-not-allowed', 'aborted', 'unknown'].includes(ev.error);
-    if (conflictish && retryCount === 0 && meterStream && !meterReleased) {
-      retryCount++;
-      meterReleased = true;
-      releaseMeter();
-      $('status').textContent = 'Mic was busy — retrying without the meter…';
-      setTimeout(() => {
-        if (gotFinal !== null) return;
-        try { armRecognition(); } catch (e) { gotFinal = interim || ''; settledVia = 'error'; settle(); }
-      }, 400);
-      return;
-    }
-    gotFinal = interim || '';
-    settledVia = ev.error === 'no-speech' ? 'no-speech' : 'error';
-    settle();
-  };
-  r.onend = () => {
-    if (myGen !== gen) return;
-    if (gotFinal === null && interim) { gotFinal = interim; settledVia = 'interim-end'; settle(); }
-  };
-  try { r.start(); } catch (err) { holding = false; setMic(''); $('status').textContent = 'Recognizer failed: ' + err.name; return; }
-}
-
-function releaseMeter() {
-  try { if (meterStream) meterStream.getTracks().forEach(t => t.stop()); } catch (e) {}
-  meterStream = null;
-  document.getElementById('miclabel').textContent = 'meter paused — recognizer has the mic';
-  document.getElementById('meterbar').style.width = '0%';
-}
-
-function endHold() {
-  if (!holding) return;
-  holding = false;
-  settling = true;
-  setMic('waiting');
-  const t0 = Date.now();
-  thinkTick = setInterval(() => {
-    $('status').textContent = `Thinking… ${((Date.now() - t0) / 1000).toFixed(1)}s — tap here to accept what we have`;
-  }, 200);
-  graceTimer = setTimeout(() => { if (interim) forceSettle('interim-grace'); }, GRACE_MS);
-  hardTimer = setTimeout(() => forceSettle('timeout'), HARD_MS);
-  if (mr && mr.state === 'recording') mr.stop();
-}
-
-function forceSettle(via) {
-  if (gotFinal === null) { gotFinal = interim || ''; settledVia = via; }
-  settle();
-}
-
-function settle() {
-  // A late event for an already-settled recognition may only update the SAME
-  // trial — never the one the user has navigated to in the meantime.
-  if (settledGen === gen && settledIdx !== trialIdx) return;
-  if (settledVia === null && gotFinal !== null) settledVia = 'final';
-  clearInterval(thinkTick); clearTimeout(graceTimer); clearTimeout(hardTimer);
-  thinkTick = null; graceTimer = null; hardTimer = null;
-  settling = false; holding = false;
-  try { rec && rec.stop && rec.stop(); } catch (e) {}
-  try { if (mr && mr.state === 'recording') mr.stop(); } catch (e) {}
-  setMic('');
-
-  const prompt = session.order[trialIdx];
-  const transcript = gotFinal === null ? '' : gotFinal;
-  const t = normText(transcript);
-  $('heard').textContent = t ? `heard: “${t}”${gotConf != null && gotConf > 0 ? `  (${Math.round(gotConf * 100)}%)` : ''}` : 'heard: (nothing)';
-  $('alts').textContent = gotAlts.length > 1 ? 'alternatives: ' + gotAlts.slice(1).filter(Boolean).map(a => `“${a}”`).join(' ') : '';
-
-  let verdict, cls;
-  if (!t) { verdict = gotErr === 'not-allowed' ? 'microphone blocked' : 'nothing recognized' + (gotErr ? ' — ' + gotErr : ''); cls = 'bad'; }
-  else if (matchesWord(transcript, prompt)) { verdict = '✓ correct'; cls = 'ok'; }
-  else {
-    const confusedWith = ALL_WORDS.filter(w => w !== prompt && matchesWord(transcript, w));
-    if (confusedWith.length) {
-      const isPair = confusedWith.some(w => pairOf(prompt)?.includes(w));
-      verdict = `${isPair ? '⚠ PAIR CONFUSION' : '✗ confused'} — recognized as “${confusedWith[0]}”`;
-      cls = isPair ? 'conf' : 'bad';
-    } else { verdict = '✗ miss (not matched)'; cls = 'bad'; }
-  }
-  if (settledVia !== 'final') verdict += `  [${settledVia}]`;
-  $('verdict').textContent = verdict;
-  $('verdict').className = 'verdict ' + cls;
-  $('status').textContent = 'Re-record, void, or move on';
-
-  const prev = session.trials[trialIdx];
-  session.trials[trialIdx] = {
-    i: trialIdx, prompt, ts: new Date().toISOString(),
-    transcript: t, alternatives: gotAlts, confidence: gotConf,
-    verdict: cls === 'ok' ? 'hit' : (cls === 'conf' ? 'pair-confusion' : 'miss'),
-    confusedWith: cls === 'conf' ? ALL_WORDS.filter(w => w !== prompt && matchesWord(transcript, w))[0] : null,
-    settledVia, err: gotErr || null,
-    voided: prev?.voided ?? false,               // a late final must not un-void
-    updatedFinal: prev ? true : undefined,       // this record replaced an earlier settle
-    hadAudio: !!audioBlobs[trialIdx] || (prev?.hadAudio ?? false),
-  };
-  settledGen = gen;
-  settledIdx = trialIdx;
-  gotErr = null;
-
-  // If the meter was released to free the mic for a retry, bring it back
-  // for the next word (permission already granted — no prompt).
-  if (meterReleased) { meterReleased = false; startMeter(); }
-  save();
-  renderStrip();
-}
-
-// ── Buttons ────────────────────────────────────────────────────────────────
-// Chrome autoplay policy: an AudioContext created outside a user gesture
-// starts suspended and the meter would sit at 0%. Wake it on any tap/keypress.
-document.addEventListener('pointerdown', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
-document.addEventListener('keydown', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
-
-$('mic').addEventListener('pointerdown', beginHold);
-$('mic').addEventListener('pointerup', endHold);
-$('mic').addEventListener('pointercancel', endHold);
-$('mic').addEventListener('pointerleave', () => holding && endHold());
-window.addEventListener('keydown', (e) => {
-  const summaryShown = $('summary').style.display === 'block';
-  if (summaryShown) return;
-  if (e.code === 'Space' && !e.repeat && !holding && !settling) beginHold(e);
-  if (e.code === 'ArrowRight' && !holding && !settling) { if (trialIdx < session.order.length) { trialIdx++; showTrial(); } }
-  if (e.code === 'ArrowLeft' && !holding && !settling && trialIdx > 0) { trialIdx--; showTrial(); }
-});
-window.addEventListener('keyup', (e) => { if (e.code === 'Space') endHold(); });
-$('status').addEventListener('click', () => { if (settling) forceSettle('tap'); });
-$('tts').addEventListener('click', () => speak($('prompt').textContent));
-
-$('prev').addEventListener('click', () => { if (!holding && !settling && trialIdx > 0) { trialIdx--; showTrial(); } });
-$('next').addEventListener('click', () => { if (!holding && !settling) { if (trialIdx >= session.order.length) finish(); else { trialIdx++; showTrial(); } } });
-$('redo').addEventListener('click', () => {
-  if (holding || settling) return;
-  const old = session.trials[trialIdx];
-  if (old) {
-    session.replaced = session.replaced || [];
-    session.replaced.push({ ...old, supersededTs: new Date().toISOString() });
-  }
-  delete session.trials[trialIdx];
-  delete audioBlobs[trialIdx];
-  save();
-  showTrial();
-});
-$('void').addEventListener('click', () => {
-  if (holding || settling) return;
-  const t = session.trials[trialIdx];
-  if (!t) return;
-  t.voided = !t.voided;
-  save();
-  showTrial();
-});
-$('finish').addEventListener('click', () => { if (settling || holding) forceSettle('finish'); finish(); });
-$('back2').addEventListener('click', () => { $('summary').style.display = 'none'; $('session').style.display = 'block'; });
-
-function finish() {
-  $('session').style.display = 'none';
-  $('summary').style.display = 'block';
-  renderSummary();
-}
-
-function renderSummary() {
-  const all = session.trials.filter(Boolean);
-  const ts = all.filter(t => !t.voided);
-  const hits = ts.filter(t => t.verdict === 'hit').length;
-  const finalHits = ts.filter(t => t.verdict === 'hit' && t.settledVia === 'final').length;
-  const salvaged = hits - finalHits;
-  const conf = ts.filter(t => t.verdict === 'pair-confusion');
-  const miss = ts.filter(t => t.verdict === 'miss');
-  const lateUpdates = ts.filter(t => t.updatedFinal).length;
-  $('stats').innerHTML =
-    `<span class="bigstat ok">${hits}</span> correct` +
-    `<span style="font-size:.85rem;opacity:.7">(${finalHits} confirmed final${salvaged ? `, ${salvaged} salvaged from interim` : ''}${lateUpdates ? `, ${lateUpdates} updated by a late final` : ''})</span><br>` +
-    `<span class="bigstat conf">${conf.length}</span> pair confusions` +
-    `<span class="bigstat bad">${miss.length}</span> missed / unrecognized` +
-    `<span class="bigstat">${ts.length}</span> valid of ${session.order.length} words` +
-    (all.length > ts.length ? ` <span class="bigstat">${all.length - ts.length}</span> voided` : '') +
-    (session.replaced?.length ? `<br><span style="font-size:.85rem;opacity:.7">${session.replaced.length} superseded attempt${session.replaced.length > 1 ? 's' : ''} kept in the export</span>` : '');
-
-  let m = '<h3>Minimal pairs</h3><table><tr><th>he said…</th><th>came back as…</th><th></th></tr>';
-  for (const p of PAIRS) {
-    for (const w of p) {
-      for (const t of ts.filter(t => t.prompt === w)) {
-        m += `<tr><td>${w}</td><td>${t.transcript || '—'}</td>` +
-             `<td class="${t.verdict === 'hit' ? 'ok' : (t.verdict === 'pair-confusion' ? 'conf' : 'bad')}">${t.verdict === 'hit' ? '✓' : (t.verdict === 'pair-confusion' ? '⚠ ' + t.confusedWith : '✗')}</td></tr>`;
-      }
-    }
-  }
-  m += '</table><h3>All recorded trials</h3><table><tr><th>#</th><th>prompt</th><th>heard</th><th>conf</th><th>alts</th><th>via</th><th>audio</th></tr>';
-  for (const t of all) {
-    m += `<tr><td>${t.i + 1}</td><td>${t.prompt}</td><td>${t.transcript || '—'}</td>` +
-         `<td>${t.confidence != null && t.confidence > 0 ? Math.round(t.confidence * 100) + '%' : '—'}</td>` +
-         `<td>${(t.alternatives || []).slice(1).filter(Boolean).join(' | ') || '—'}</td>` +
-         `<td>${t.settledVia || '—'}</td>` +
-         `<td>${audioBlobs[t.i] ? `<audio controls src="${URL.createObjectURL(audioBlobs[t.i])}"></audio>` : '—'}</td>` +
-         `${t.voided ? '<td>voided</td>' : ''}</tr>`;
-  }
-  m += '</table>';
-  $('trials').innerHTML = m;
-  $('pairmatrix').innerHTML = conf.length
-    ? `<p class="conf">⚠ ${conf.length} pair confusion${conf.length > 1 ? 's' : ''}: ` +
-      conf.map(t => `said “${t.prompt}” → heard “${t.transcript}”`).join('; ') + '</p>'
-    : '<p class="ok">No pair confusions 🎉</p>';
-}
-
-$('export').addEventListener('click', async () => {
-  const out = JSON.parse(JSON.stringify(session));
-  out.trials = out.trials.filter(Boolean);
-  for (const t of out.trials) {
-    const b = audioBlobs[t.i];
-    if (b) t.audioB64 = await blobToB64(b);
-  }
-  const blob = new Blob([JSON.stringify(out)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `asr-eval-${session.startedAt.slice(0, 10)}.json`;
-  a.click();
-});
-const blobToB64 = (b) => new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(b); });
-
-$('restart').addEventListener('click', () => { localStorage.removeItem(KEY); location.reload(); });
-
-// ── Boot ───────────────────────────────────────────────────────────────────
-if (!WSR) $('status').textContent = 'This browser has no Web Speech recognition — use Chrome.';
-if (!load()) newSession();
-if (!session.order) session.order = buildOrder();
-if (trialIdx >= session.order.length) finish(); else showTrial();
-startMeter();
-</script>
+<script src="asr_recordings.js"></script>
+<script src="asr_eval.js"></script>
 </body>
 </html>

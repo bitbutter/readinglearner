@@ -1,0 +1,9 @@
+# Cloud Build uploads only these files. Credentials and recordings stay local.
+*
+!Dockerfile
+!.dockerignore
+!.gcloudignore
+!package.json
+!package-lock.json
+!server.mjs
+!providers.mjs
