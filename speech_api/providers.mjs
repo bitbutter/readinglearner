@@ -12,7 +12,8 @@ export const SPEECH_MODEL_CONFIGURATION_VERSIONS = Object.freeze({
   latest_short: 'recorded-word-en-GB-v1-latest-short-leading-silence-preroll-300ms-v3',
 });
 const RECORDING_MIME_TYPES = new Set(['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/wav']);
-const REQUEST_FIELDS = new Set(['model', 'audioBase64', 'mimeType', 'durationMs']);
+const AUDIO_REQUEST_FIELDS = new Set(['audioBase64', 'mimeType', 'durationMs']);
+const TRANSCRIPTION_REQUEST_FIELDS = new Set(['model', ...AUDIO_REQUEST_FIELDS]);
 
 export class SpeechGatewayError extends Error {
   constructor(httpStatus, code, message, details = {}) {
@@ -31,14 +32,13 @@ function configurationVersionForSpeechModel(model) {
   return SPEECH_MODEL_CONFIGURATION_VERSIONS[model];
 }
 
-export function validateRecordingRequest(request) {
+function requireAudioRequestObject(request) {
   if (!request || typeof request !== 'object' || Array.isArray(request)) {
     throw new SpeechGatewayError(400, 'invalid_recording', 'Send a JSON object containing the recording.');
   }
-  if (Object.keys(request).some(field => !REQUEST_FIELDS.has(field))) {
-    throw new SpeechGatewayError(400, 'unexpected_recording_fields', 'Only model, audioBase64, mimeType and durationMs are accepted.');
-  }
-  configurationVersionForSpeechModel(request.model);
+}
+
+function validateAudioRequestFields(request) {
   if (!Number.isFinite(request.durationMs) || request.durationMs <= 0 || request.durationMs >= 60_000) {
     throw new SpeechGatewayError(400, 'invalid_recording_duration', 'Recording duration must be positive and shorter than 60 seconds.');
   }
@@ -67,13 +67,29 @@ export function validateRecordingRequest(request) {
     throw new SpeechGatewayError(413, 'recording_too_large', 'Recordings may contain at most 10 MiB of audio.');
   }
   return {
-    model: request.model,
     audioBase64,
     audioBytes,
     mimeType: request.mimeType,
     durationMs: request.durationMs,
     audioSha256: createHash('sha256').update(audioBytes).digest('hex'),
   };
+}
+
+export function validateAudioPreparationRequest(request) {
+  requireAudioRequestObject(request);
+  if (Object.keys(request).some(field => !AUDIO_REQUEST_FIELDS.has(field))) {
+    throw new SpeechGatewayError(400, 'unexpected_recording_fields', 'Only audioBase64, mimeType and durationMs are accepted for a playback preview.');
+  }
+  return validateAudioRequestFields(request);
+}
+
+export function validateRecordingRequest(request) {
+  requireAudioRequestObject(request);
+  if (Object.keys(request).some(field => !TRANSCRIPTION_REQUEST_FIELDS.has(field))) {
+    throw new SpeechGatewayError(400, 'unexpected_recording_fields', 'Only model, audioBase64, mimeType and durationMs are accepted.');
+  }
+  configurationVersionForSpeechModel(request.model);
+  return { model: request.model, ...validateAudioRequestFields(request) };
 }
 
 function redactCredential(value, accessToken) {

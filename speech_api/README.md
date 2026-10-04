@@ -1,6 +1,6 @@
 # Recorded-word speech API
 
-The evaluator supports two separate kinds of checks. Google Cloud Speech-to-Text V2 `chirp_3` and `short`, plus V1 `latest_short`, transcribe a take in `en-GB`/EU. A Google check sends audio to Google without the displayed word or vocabulary hints. Separately, a parent can explicitly approve a take as a private word reference; that original audio and its word label are stored in Cloud Storage. Comparing a later take sends its audio and displayed word to this server for similarity ranking, without storing the candidate or sending it to Google. Rankings are experimental and are not pronunciation verdicts. The child reading app remains unchanged.
+The evaluator supports two separate kinds of checks. Google Cloud Speech-to-Text V2 `chirp_3` and `short`, plus V1 `latest_short`, transcribe a take in `en-GB`/EU. A Google check sends audio to Google without the displayed word or vocabulary hints. Separately, a parent can explicitly approve a take as a private word reference; that original audio and its word label are stored in Cloud Storage. Comparing a later take sends its audio and displayed word to this server for similarity ranking, without storing the candidate or sending it to Google. Rankings are experimental and are not pronunciation verdicts. The evaluator can also return a temporary trimmed, mono 16 kHz WAV preview using the exact same speech-preparation pipeline; the original is unchanged, and preview audio is not stored or sent to Google. Loudness normalization remains part of similarity features, not the playable audio. The child reading app remains unchanged.
 
 Google's dedicated Speech-to-Text service is used here. The [Gemini Developer API terms](https://ai.google.dev/gemini-api/terms) prohibit clients directed toward or likely accessed by people under 18.
 
@@ -51,7 +51,7 @@ Rate and daily counters live only in this local process and reset when it restar
 
 ## Cloud Run setup
 
-The deployed revision is `reading-learner-speech-00006-7sq`. It serves the private reference library from `reading-learner-speech-references-775355867708` with public access prevention and a bucket-scoped runtime permission. The child reading app remains unchanged. Keep the access code private; the endpoint URL alone does not authorize requests.
+The Cloud Run service serves the private reference library from `reading-learner-speech-references-775355867708` with public access prevention and a bucket-scoped runtime permission. The child reading app remains unchanged. Keep the access code private; the endpoint URL alone does not authorize requests.
 
 The silence-trim revision is ready and serves 100% of traffic. Live checks on this revision verified the allowed GitHub Pages browser preflight (`204`), missing-token rejection (`401`), and unapproved-origin rejection (`403`). These checks submitted no saved speech audio and made no recognition request. An earlier revision transcribed one 1.812-second public Google sample as “How old is the Brooklyn Bridge?” with the expected model, language and original-audio SHA-256; V1 `latest_short` has not yet transcribed a saved take. Both the service-wide and revision instance maximums are set to one. No child's recording was used for these checks.
 
@@ -169,11 +169,14 @@ GET    /references
 POST   /references
 POST   /compare
 DELETE /references/{referenceId}
+POST   /playback-preview
 ```
 
 `POST /references` accepts an `attemptId`, the parent-confirmed `word`, MIME type, duration and base64 audio. The object name is tied to the recording ID so the same take cannot be approved twice. The server saves the original audio, normalized word label, trim metadata and versioned speech features in the private bucket. `GET /references` returns word and recording metadata only; it does not return audio.
 
 `POST /compare` accepts a different recording ID, its displayed `expectedWord`, MIME type, duration and base64 audio. The server rejects any take already approved as a reference, prepares the audio with the same silence-trimming pipeline, then compares its speech features against all approved references. Candidate audio is held only for the request. Results include per-word average and minimum DTW distances, closest word and the target word's rank. The matcher has no threshold and never returns a pronunciation `hit` or `miss`; its distances need evaluation against real recordings before they can support that kind of decision. The browser saves comparison metadata beside the candidate take in its local archive.
+
+`POST /playback-preview` accepts only MIME type, duration and base64 audio, then returns the WAV created by the exact shared preparation function used for Google transcription and reference matching, along with the original audio hash and trim metadata. The evaluator requests it only after the parent selects the preview button. The copy is returned for in-tab playback and is not written to Cloud Storage or sent to Google Speech. The preview keeps the recording's volume; the matcher's volume normalization happens later in its numeric sound features and cannot be played as audio.
 
 `DELETE /references/{referenceId}` removes one approved object from the library. The evaluator asks for confirmation before sending this request. The object is stored by the runtime identity; it is not publicly addressable.
 

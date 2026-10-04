@@ -2,9 +2,11 @@ import { createServer } from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import {
-  createGoogleSpeechTranscriber, MAX_REQUEST_BYTES, SPEECH_MODEL_CONFIGURATION_VERSIONS, SpeechGatewayError, validateRecordingRequest,
+  createGoogleSpeechTranscriber, MAX_REQUEST_BYTES, SPEECH_MODEL_CONFIGURATION_VERSIONS, SpeechGatewayError,
+  validateAudioPreparationRequest, validateRecordingRequest,
 } from './providers.mjs';
 import { createGoogleCloudReferenceLibrary, MAX_REFERENCE_REQUEST_BYTES, ReferenceLibraryError } from './reference_library.mjs';
+import { prepareSpeechAudio, SPEECH_AUDIO_PREPROCESSING_VERSION } from './audio_preprocessing.mjs';
 
 function positiveInteger(value, defaultValue, name) {
   if (value === undefined || value === '') return defaultValue;
@@ -94,7 +96,7 @@ function requestOperationSignal(response, timeoutMs) {
   return AbortSignal.any([clientDisconnected.signal, AbortSignal.timeout(timeoutMs)]);
 }
 
-export function createSpeechGateway({ configuration, transcribe, referenceLibrary, now = () => Date.now() }) {
+export function createSpeechGateway({ configuration, transcribe, referenceLibrary, prepareAudio = prepareSpeechAudio, now = () => Date.now() }) {
   const transcribeRecording = transcribe || createGoogleSpeechTranscriber({ projectId: configuration.projectId, timeoutMs: configuration.timeoutMs });
   const approvedWordReferences = referenceLibrary || createGoogleCloudReferenceLibrary({ bucketName: configuration.referenceBucket });
   let requestsInFlight = 0;
@@ -132,10 +134,10 @@ export function createSpeechGateway({ configuration, transcribe, referenceLibrar
       const referenceIdMatch = requestUrl.pathname.match(/^\/references\/([0-9a-f-]{36})$/i);
       const routePath = referenceIdMatch ? '/references/:referenceId' : requestUrl.pathname;
       const routeMethods = {
-        '/transcribe': ['POST'], '/references': ['GET', 'POST'], '/compare': ['POST'], '/references/:referenceId': ['DELETE'],
+        '/transcribe': ['POST'], '/playback-preview': ['POST'], '/references': ['GET', 'POST'], '/compare': ['POST'], '/references/:referenceId': ['DELETE'],
       };
       const allowedMethods = routeMethods[routePath];
-      if (!allowedMethods) throw new SpeechGatewayError(404, 'unknown_endpoint', 'Use /transcribe, /references or /compare.');
+      if (!allowedMethods) throw new SpeechGatewayError(404, 'unknown_endpoint', 'Use /transcribe, /playback-preview, /references or /compare.');
       const origin = request.headers.origin;
       if (origin !== undefined && !configuration.allowedOrigins.has(origin)) {
         throw new SpeechGatewayError(403, 'origin_not_allowed', 'This browser origin is not allowed to use the speech API.');
@@ -176,6 +178,24 @@ export function createSpeechGateway({ configuration, transcribe, referenceLibrar
         const recording = validateRecordingRequest(await readJsonBody(request, configuration.timeoutMs, MAX_REQUEST_BYTES));
         admitProviderRequest();
         send(200, await transcribeRecording(recording, { signal: requestOperationSignal(response, configuration.timeoutMs) }));
+      } else if (routePath === '/playback-preview') {
+        const recording = validateAudioPreparationRequest(await readJsonBody(request, configuration.timeoutMs, MAX_REQUEST_BYTES));
+        const preparedAudio = await prepareAudio({
+          audioBytes: recording.audioBytes, mimeType: recording.mimeType, durationMs: recording.durationMs,
+          signal: requestOperationSignal(response, configuration.timeoutMs),
+        });
+        if (!Buffer.isBuffer(preparedAudio?.audioBytes) || preparedAudio.mimeType !== 'audio/wav' ||
+            preparedAudio.preprocessing?.version !== SPEECH_AUDIO_PREPROCESSING_VERSION ||
+            preparedAudio.preprocessing.sampleRateHertz !== 16_000 || preparedAudio.preprocessing.audioChannelCount !== 1 ||
+            !Number.isInteger(preparedAudio.preprocessing.trimmedLeadingSilenceMs) || preparedAudio.preprocessing.trimmedLeadingSilenceMs < 0 ||
+            !Number.isInteger(preparedAudio.preprocessing.outputDurationMs) || preparedAudio.preprocessing.outputDurationMs <= 0 ||
+            !/^[a-f0-9]{64}$/.test(preparedAudio.preprocessing.preparedAudioSha256 || '')) {
+          throw new SpeechGatewayError(500, 'audio_preview_preparation_failed', 'The processed playback preview could not be prepared consistently.');
+        }
+        send(200, {
+          audioBase64: preparedAudio.audioBytes.toString('base64'), mimeType: preparedAudio.mimeType,
+          originalAudioSha256: recording.audioSha256, preprocessing: preparedAudio.preprocessing,
+        });
       } else if (routePath === '/references' && request.method === 'POST') {
         const approvedReference = await approvedWordReferences.approveReference(await readJsonBody(request, configuration.timeoutMs, MAX_REFERENCE_REQUEST_BYTES), {
           signal: requestOperationSignal(response, 45_000),

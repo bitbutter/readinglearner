@@ -313,7 +313,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     Object.defineProperty(browserWindow, name, { get() { throw new Error('Recording must not access the browser speech constructor'); } });
   }
   const context = vm.createContext({
-    window: browserWindow, document, navigator, Blob, FileReader, MediaRecorder, Uint8Array, Date: BrowserDate,
+    window: browserWindow, document, navigator, Blob, FileReader, MediaRecorder, Uint8Array, atob, btoa, Date: BrowserDate,
     URL: BrowserURL, ASRRecordings: archive, crypto: { randomUUID, subtle: webcrypto.subtle }, AbortSignal,
     structuredClone, location: { protocol: 'https:', reload() {} }, console,
     localStorage: { getItem: key => storedValues.get(key) ?? null, setItem: (key, value) => storedValues.set(key, value), removeItem: key => storedValues.delete(key) },
@@ -336,6 +336,12 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
       }
       if (!responseFactory && route === '/references' && options.method === 'POST') {
         return { ok: true, status: 201, async json() { return { reference: { referenceId: request.body.attemptId, attemptId: request.body.attemptId, word: request.body.word } }; } };
+      }
+      if (!responseFactory && route === '/playback-preview') {
+        const originalAudioSha256 = createHash('sha256').update(Buffer.from(request.body.audioBase64, 'base64')).digest('hex');
+        return { ok: true, status: 200, async json() {
+          return { audioBase64: testPreparedAudioBytes.toString('base64'), mimeType: 'audio/wav', originalAudioSha256, preprocessing: testPreprocessing };
+        } };
       }
       if (!responseFactory && route === '/compare') {
         const audioSha256 = createHash('sha256').update(Buffer.from(request.body.audioBase64, 'base64')).digest('hex');
@@ -393,6 +399,10 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     },
     async record() { this.beginHold(); await flushBrowserPromises(); clockMilliseconds += 1200; this.endHold(); await this.idle(); },
     latestAttempt() { return vm.runInContext('currentAttempt()', context); },
+    playbackBlob(containerId) {
+      const player = elements.get(containerId).children.find(child => child.tagName === 'AUDIO');
+      return player ? blobUrls.get(player.src) : null;
+    },
     downloadBlob(index = downloadedLinks.length - 1) { return blobUrls.get(downloadedLinks[index].href); },
     downloadedLinks,
   };
@@ -569,10 +579,42 @@ const browserBehaviorTests = [
   ['Reload restores the saved original for replay without enabling microphone access', async () => {
     const page = createPage(); await page.idle(); await page.enableMicrophone(); await page.record();
     const reopened = createPage({ archive: page.archive }); await reopened.idle();
-    assert.equal(reopened.counts().microphoneRequests, 0); assert.equal(reopened.element('replay').children[0].tagName, 'AUDIO');
-    const player = reopened.element('replay').children[0];
+    assert.equal(reopened.counts().microphoneRequests, 0); assert.equal(reopened.element('original-replay').children[0].tagName, 'AUDIO');
+    const player = reopened.element('original-replay').children[0];
     assert.match(player.src, /^blob:/); assert.equal(reopened.latestAttempt().id, page.latestAttempt().id);
     assert.deepEqual(Buffer.from(await reopened.latestAttempt().audioBlob.arrayBuffer()), page.recorderBytes);
+  }],
+  ['Processed playback uses the shared server copy and leaves the original take unchanged', async () => {
+    const page = createPage(); await page.idle(); await page.enableMicrophone(); page.configureGateway(); await page.click('connect-references'); await page.record();
+    const attempt = page.latestAttempt();
+    assert.equal(page.element('play-prepared').disabled, false);
+    await page.click('play-prepared');
+    const previewRequest = page.fetchRequests.find(request => new URL(request.endpoint).pathname === '/playback-preview');
+    assert.deepEqual(Object.keys(previewRequest.body).sort(), ['audioBase64', 'durationMs', 'mimeType']);
+    assert.deepEqual(Buffer.from(previewRequest.body.audioBase64, 'base64'), page.recorderBytes);
+    const processedPlayer = page.element('prepared-replay').children.find(child => child.tagName === 'AUDIO');
+    assert.ok(processedPlayer, 'the prepared copy should play alongside the original');
+    assert.deepEqual(Buffer.from(await page.playbackBlob('prepared-replay').arrayBuffer()), testPreparedAudioBytes);
+    assert.match(page.element('prepared-audio-status').textContent, /350 ms.*volume is unchanged/i);
+    assert.deepEqual(Buffer.from(await page.latestAttempt().audioBlob.arrayBuffer()), page.recorderBytes);
+    assert.deepEqual(Buffer.from(await page.archive.attempts.get(attempt.id).audioBlob.arrayBuffer()), page.recorderBytes);
+    assert.equal(page.fetchRequests.some(request => new URL(request.endpoint).pathname === '/transcribe'), false);
+    await page.click('next');
+    assert.equal(page.element('prepared-replay').children.length, 0, 'a different take must not keep showing the prior preview');
+  }],
+  ['A processed preview for another take is rejected without replacing the original recording', async () => {
+    const page = createPage({ responseFactory: async request => {
+      if (new URL(request.endpoint).pathname === '/references') return { ok: true, status: 200, async json() { return { references: [] }; } };
+      return { ok: true, status: 200, async json() {
+        return { audioBase64: testPreparedAudioBytes.toString('base64'), mimeType: 'audio/wav', originalAudioSha256: '0'.repeat(64), preprocessing: testPreprocessing };
+      } };
+    } });
+    await page.idle(); await page.enableMicrophone(); page.configureGateway(); await page.click('connect-references'); await page.record();
+    const originalAudio = Buffer.from(await page.latestAttempt().audioBlob.arrayBuffer());
+    await page.click('play-prepared');
+    assert.match(page.element('problem').textContent, /does not match this recording/i);
+    assert.equal(page.element('prepared-replay').children.length, 0);
+    assert.deepEqual(Buffer.from(await page.latestAttempt().audioBlob.arrayBuffer()), originalAudio);
   }],
   ['An API error leaves original audio durable and excludes the attempt from scored totals', async () => {
     const page = createPage({ responseFactory: async () => { throw new Error('speech network unavailable'); } });

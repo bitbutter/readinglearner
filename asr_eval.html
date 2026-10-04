@@ -76,6 +76,9 @@
   th { background: rgba(255,255,255,.08); }
   .bigstat { font-size: 1.6rem; font-weight: 800; margin: .3rem .5rem; display: inline-block; }
   audio { width: 130px; height: 30px; }
+  #replay { display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+  #replay audio { width: min(320px, 82vw); height: 40px; }
+  .playback-label { font-weight: 650; margin: .45rem 0 .2rem; }
   .note { font-size: .8rem; opacity: .55; max-width: 640px; margin: .8rem auto 0; }
   .settings { margin-bottom: 1rem; text-align: left; }
   .settings h2 { font-size: 1.05rem; margin: 0 0 .4rem; }
@@ -166,7 +169,14 @@
     <div id="heard"></div>
     <div class="alts" id="alts"></div>
     <div class="verdict" id="verdict"></div>
-    <div id="replay"></div>
+    <div id="replay">
+      <p class="playback-label">Original recording</p>
+      <div id="original-replay"></div>
+      <p class="note">The original stays unchanged. If you request a preview, a temporary copy goes to the speech server for trimming; it is not stored there or sent to Google. It plays at the recording’s original volume. Volume normalization is part of the matcher’s sound-feature analysis, not the playable audio.</p>
+      <button id="play-prepared" class="small" disabled>Prepare and play trimmed copy</button>
+      <p id="prepared-audio-status" role="status" aria-live="polite">Connect to the speech server to enable a preview.</p>
+      <div id="prepared-replay" aria-label="Trimmed audio preview"></div>
+    </div>
     <div class="row">
       <button id="prev" class="small">◀ back</button>
       <button id="redo" class="small">Record again</button>

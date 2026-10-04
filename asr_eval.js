@@ -20,6 +20,7 @@ const MODEL_CONFIGURATION_VERSIONS = Object.freeze({
   latest_short: 'recorded-word-en-GB-v1-latest-short-leading-silence-preroll-300ms-v3',
 });
 const SPEECH_AUDIO_PREPROCESSING_VERSION = 'leading-silence-preroll-300ms-mono16k-v1';
+const MAX_PREPARED_AUDIO_BASE64_CHARACTERS = 3 * 1024 * 1024;
 const SPEECH_GATEWAY_RATE_LIMIT_RETRY_DELAY_MS = 61_000;
 const MINIMUM_SPEECH_BATCH_REQUEST_GAP_MS = 3200;
 const normText = (text) => text.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
@@ -168,7 +169,7 @@ function showProblem(message) {
 
 function refreshControls() {
   const locked = operationPending || !!activeCapture || !!pendingAudioSave || !!pendingModelSave || !!pendingReferenceMatchSave || !archiveReady;
-  for (const id of ['prev', 'next', 'redo', 'void', 'finish', 'back2', 'export', 'new-session', 'saved-session', 'recognition-mode', 'gateway-url', 'gateway-token', 'connect-references', 'tts']) {
+  for (const id of ['prev', 'next', 'redo', 'void', 'finish', 'back2', 'export', 'new-session', 'saved-session', 'recognition-mode', 'gateway-url', 'gateway-token', 'connect-references', 'tts', 'play-prepared']) {
     $(id).disabled = locked;
   }
   $('enable-mic').disabled = locked || !!microphoneStream;
@@ -182,6 +183,7 @@ function refreshControls() {
   const attempt = currentAttempt();
   $('approve-reference').disabled = locked || !referenceLibraryLoaded || !attempt || !!attempt.captureError || !!attempt.voided || attempt.durationMs > 10_000 || attemptIsApprovedReference(attempt);
   $('compare-reference').disabled = locked || !referenceLibraryLoaded || !attempt || !!attempt.captureError || !!attempt.voided || attempt.durationMs > 10_000 || attemptIsApprovedReference(attempt) || !referencesForWord(attempt.prompt).length;
+  $('play-prepared').disabled = locked || !referenceLibraryLoaded || !attempt || !!attempt.captureError || !!attempt.voided || attempt.durationMs > 10_000;
   $('retry-save').hidden = !pendingAudioSave && !pendingModelSave && !pendingReferenceMatchSave;
   $('retry-save').disabled = operationPending;
   $('retry-save').textContent = pendingModelSave ? 'Retry saving the model result' : pendingReferenceMatchSave ? 'Retry saving the comparison' : 'Retry saving this recording';
@@ -212,6 +214,64 @@ function audioPlayer(blob) {
   player.src = URL.createObjectURL(blob);
   replayUrls.push(player.src);
   return player;
+}
+
+function decodePreparedAudioBytes(audioBase64) {
+  if (typeof audioBase64 !== 'string' || audioBase64.length === 0 || audioBase64.length > MAX_PREPARED_AUDIO_BASE64_CHARACTERS ||
+      !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(audioBase64)) {
+    throw new Error('The speech server returned invalid preview audio.');
+  }
+  let binaryAudio;
+  try { binaryAudio = atob(audioBase64); }
+  catch { throw new Error('The speech server returned invalid preview audio.'); }
+  if (binaryAudio.length === 0 || btoa(binaryAudio) !== audioBase64) {
+    throw new Error('The speech server returned invalid preview audio.');
+  }
+  return Uint8Array.from(binaryAudio, character => character.charCodeAt(0));
+}
+
+async function validatePreparedAudioPreview(result, attempt) {
+  const preprocessing = result?.preprocessing;
+  if (!result || result.originalAudioSha256 !== attempt.audioSha256 || result.mimeType !== 'audio/wav' ||
+      !preprocessing || preprocessing.version !== SPEECH_AUDIO_PREPROCESSING_VERSION ||
+      preprocessing.sampleRateHertz !== 16_000 || preprocessing.audioChannelCount !== 1 ||
+      !Number.isInteger(preprocessing.trimmedLeadingSilenceMs) || preprocessing.trimmedLeadingSilenceMs < 0 ||
+      !Number.isInteger(preprocessing.inputDurationMs) || preprocessing.inputDurationMs <= 0 ||
+      !Number.isInteger(preprocessing.outputDurationMs) || preprocessing.outputDurationMs <= 0 ||
+      !/^[a-f0-9]{64}$/.test(preprocessing.preparedAudioSha256 || '')) {
+    throw new Error('The speech server returned a preview that does not match this recording.');
+  }
+  const audioBytes = decodePreparedAudioBytes(result.audioBase64);
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', audioBytes));
+  const audioSha256 = Array.from(digest, byte => byte.toString(16).padStart(2, '0')).join('');
+  if (audioSha256 !== preprocessing.preparedAudioSha256) {
+    throw new Error('The processed preview failed its audio integrity check.');
+  }
+  return { audioBlob: new Blob([audioBytes], { type: result.mimeType }), preprocessing };
+}
+
+async function prepareAndPlayCurrentTake() {
+  const attempt = currentAttempt();
+  if (!attempt || !attempt.audioBlob || attempt.captureError || attempt.voided) throw new Error('Record a usable take before preparing a preview.');
+  if (!referenceLibraryLoaded) throw new Error('Connect to the speech server before preparing a preview.');
+  if (attempt.durationMs > 10_000) throw new Error('Previews are limited to takes of 10 seconds or less.');
+  $('prepared-audio-status').textContent = 'Preparing a temporary copy for playback…';
+  $('prepared-replay').replaceChildren();
+  try {
+    const result = await requestSpeechServer('/playback-preview', 'POST', {
+      audioBase64: await blobBase64(attempt.audioBlob), mimeType: attempt.audioMimeType, durationMs: attempt.durationMs,
+    });
+    const preview = await validatePreparedAudioPreview(result, attempt);
+    const label = document.createElement('p');
+    label.className = 'playback-label';
+    label.textContent = 'Trimmed copy · mono · 16 kHz';
+    $('prepared-replay').appendChild(label);
+    $('prepared-replay').appendChild(audioPlayer(preview.audioBlob));
+    $('prepared-audio-status').textContent = `Removed ${preview.preprocessing.trimmedLeadingSilenceMs} ms of leading silence. Playback volume is unchanged.`;
+  } catch (error) {
+    $('prepared-audio-status').textContent = 'Could not prepare the preview; the original recording is unchanged.';
+    throw error;
+  }
 }
 
 function attemptDescription(attempt) {
@@ -273,8 +333,12 @@ function renderTrial() {
   $('verdict').className = 'verdict ' + description.className;
   $('verdict').setAttribute('aria-label', `Google transcript check: ${description.text || 'not checked'}`);
   $('status').textContent = microphoneStream ? 'Hold to say the word; release to save' : 'Enable the microphone, then hold the button and say the word';
-  $('replay').replaceChildren();
-  if (attempt) $('replay').appendChild(audioPlayer(attempt.audioBlob));
+  $('original-replay').replaceChildren();
+  $('prepared-replay').replaceChildren();
+  if (attempt) $('original-replay').appendChild(audioPlayer(attempt.audioBlob));
+  $('prepared-audio-status').textContent = !attempt ? 'Record a take first.'
+    : !referenceLibraryLoaded ? 'Connect to the speech server to enable a preview.'
+      : attempt.durationMs > 10_000 ? 'Previews are limited to takes of 10 seconds or less.' : 'The original recording is unchanged.';
   renderReferenceMatchResult(attempt);
   renderStrip();
   refreshControls();
@@ -891,6 +955,7 @@ $('tts').addEventListener('click', () => {
 });
 $('recognition-mode').addEventListener('change', refreshControls);
 $('connect-references').addEventListener('click', () => runOperation(loadReferenceLibrary));
+$('play-prepared').addEventListener('click', () => runOperation(prepareAndPlayCurrentTake));
 $('approve-reference').addEventListener('click', () => runOperation(approveCurrentTakeAsReference));
 $('compare-reference').addEventListener('click', () => runOperation(compareCurrentTakeWithReferences));
 $('transcribe').addEventListener('click', () => runOperation(() => transcribeAttempt(currentAttempt(), readTranscriptionSettings())));

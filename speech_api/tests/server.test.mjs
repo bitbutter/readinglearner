@@ -20,9 +20,9 @@ const preprocessing = {
 const prepareAudio = async () => ({ audioBytes: preparedAudioBytes, mimeType: 'audio/wav', preprocessing });
 const authorizedHeaders = { Authorization: `Bearer ${gatewayToken}`, 'Content-Type': 'application/json', Origin: 'http://localhost:8080' };
 
-async function withGateway(configChanges, transcribe, run, now, referenceLibrary) {
+async function withGateway(configChanges, transcribe, run, now, referenceLibrary, prepareAudio) {
   const configuration = { ...readGatewayConfiguration(gatewayEnvironment), ...configChanges };
-  const server = createSpeechGateway({ configuration, transcribe, now, referenceLibrary });
+  const server = createSpeechGateway({ configuration, transcribe, now, referenceLibrary, prepareAudio });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   try { await run(`http://127.0.0.1:${server.address().port}/transcribe`); }
   finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
@@ -74,11 +74,13 @@ test('token, origin, route, content type and target metadata are rejected before
 
 test('preflight allows only the configured origin, POST and necessary headers', async () => {
   await withGateway({}, async () => { throw new Error('preflight must not transcribe'); }, async endpoint => {
-    const response = await fetch(endpoint, { method: 'OPTIONS', headers: {
-      Origin: 'http://localhost:8080', 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization, content-type',
-    } });
-    assert.equal(response.status, 204);
-    assert.equal(response.headers.get('access-control-allow-origin'), 'http://localhost:8080');
+    for (const path of ['/transcribe', '/playback-preview']) {
+      const response = await fetch(new URL(path, endpoint), { method: 'OPTIONS', headers: {
+        Origin: 'http://localhost:8080', 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization, content-type',
+      } });
+      assert.equal(response.status, 204);
+      assert.equal(response.headers.get('access-control-allow-origin'), 'http://localhost:8080');
+    }
     const wrongMethod = await fetch(endpoint, { method: 'OPTIONS', headers: { Origin: 'http://localhost:8080', 'Access-Control-Request-Method': 'DELETE' } });
     assert.equal(wrongMethod.status, 400);
   });
@@ -143,6 +145,53 @@ test('reference endpoints require authorization and reject unsupported CORS meth
     });
     assert.equal(preflight.status, 400);
   }, undefined, referenceLibrary);
+});
+
+test('processed playback uses the shared preparation pipeline without Google or reference storage calls', async () => {
+  const preparationCalls = [], referenceCalls = [];
+  let transcriptionCalls = 0;
+  const referenceLibrary = {
+    async listReferences() { referenceCalls.push('list'); return []; },
+    async approveReference() { referenceCalls.push('approve'); return {}; },
+    async compareRecording() { referenceCalls.push('compare'); return {}; },
+    async deleteReference() { referenceCalls.push('delete'); return {}; },
+  };
+  const prepareAudio = async request => {
+    preparationCalls.push(request);
+    return { audioBytes: preparedAudioBytes, mimeType: 'audio/wav', preprocessing };
+  };
+  const previewRequestBody = { audioBase64: recording.audioBase64, mimeType: recording.mimeType, durationMs: recording.durationMs };
+  await withGateway({ requestsPerMinute: 1 }, async () => {
+    transcriptionCalls++;
+    return { transcript: 'mat' };
+  }, async endpoint => {
+    const previewResponse = await fetch(new URL('/playback-preview', endpoint), {
+      method: 'POST', headers: authorizedHeaders, body: JSON.stringify(previewRequestBody),
+    });
+    assert.equal(previewResponse.status, 200);
+    assert.equal(previewResponse.headers.get('cache-control'), 'no-store');
+    assert.deepEqual(await previewResponse.json(), {
+      audioBase64: preparedAudioBytes.toString('base64'), mimeType: 'audio/wav',
+      originalAudioSha256: createHash('sha256').update(Buffer.from(recording.audioBase64, 'base64')).digest('hex'),
+      preprocessing,
+    });
+    const labelLeakResponse = await fetch(new URL('/playback-preview', endpoint), {
+      method: 'POST', headers: authorizedHeaders, body: JSON.stringify({ ...previewRequestBody, expectedWord: 'mat' }),
+    });
+    assert.equal(labelLeakResponse.status, 400);
+    assert.equal((await labelLeakResponse.json()).error.code, 'unexpected_recording_fields');
+    assert.equal(preparationCalls.length, 1, 'invalid playback requests must fail before preparation');
+    const transcriptionResponse = await fetch(endpoint, { method: 'POST', headers: authorizedHeaders, body: JSON.stringify(recording) });
+    assert.equal(transcriptionResponse.status, 200, 'a preview must not consume Google transcription quota');
+    assert.equal((await transcriptionResponse.json()).transcript, 'mat');
+  }, undefined, referenceLibrary, prepareAudio);
+  assert.equal(preparationCalls.length, 1);
+  assert.deepEqual(preparationCalls[0].audioBytes, Buffer.from(recording.audioBase64, 'base64'));
+  assert.equal(preparationCalls[0].mimeType, recording.mimeType);
+  assert.equal(preparationCalls[0].durationMs, recording.durationMs);
+  assert.ok(preparationCalls[0].signal instanceof AbortSignal);
+  assert.equal(transcriptionCalls, 1);
+  assert.deepEqual(referenceCalls, []);
 });
 
 test('valid requests pass only validated recording fields and return evidence', async () => {
