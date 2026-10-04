@@ -7,7 +7,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
-COPY --chown=node:node server.mjs providers.mjs audio_preprocessing.mjs ./
+COPY --chown=node:node server.mjs providers.mjs audio_preprocessing.mjs reference_matcher.mjs reference_library.mjs ./
 USER node
 
 EXPOSE 8080

@@ -36,6 +36,9 @@ let activeCapture = null;
 let pendingAudioSave = null;
 let pendingModelSave = null;
 let replayUrls = [];
+let approvedReferences = [];
+let referenceLibraryLoaded = false;
+let pendingReferenceMatchSave = null;
 
 function containsTokenRun(tokens, run) {
   outer: for (let i = 0; i + run.length <= tokens.length; i++) {
@@ -66,13 +69,27 @@ function buildOrder() {
   return words;
 }
 
-function currentAttempt(wordIndex = recordingSession.currentTrialIndex) {
+function currentAttempt(wordIndex) {
+  if (!recordingSession) return null;
+  if (wordIndex === undefined) wordIndex = recordingSession.currentTrialIndex;
   return recordedAttempts.filter(attempt => attempt.wordIndex === wordIndex)
     .sort((left, right) => right.takeNumber - left.takeNumber)[0] || null;
 }
 
 function lastModelRun(attempt) {
   return attempt?.modelRuns?.at(-1) || null;
+}
+
+function lastReferenceMatchRun(attempt) {
+  return attempt?.referenceMatchRuns?.at(-1) || null;
+}
+
+function referencesForWord(word) {
+  return approvedReferences.filter(reference => reference.word === word);
+}
+
+function attemptIsApprovedReference(attempt) {
+  return !!attempt && approvedReferences.some(reference => reference.attemptId === attempt.id);
 }
 
 function isCurrentModelRun(run, model) {
@@ -150,8 +167,8 @@ function showProblem(message) {
 }
 
 function refreshControls() {
-  const locked = operationPending || !!activeCapture || !!pendingAudioSave || !!pendingModelSave || !archiveReady;
-  for (const id of ['prev', 'next', 'redo', 'void', 'finish', 'back2', 'export', 'new-session', 'saved-session', 'recognition-mode', 'gateway-url', 'gateway-token', 'tts']) {
+  const locked = operationPending || !!activeCapture || !!pendingAudioSave || !!pendingModelSave || !!pendingReferenceMatchSave || !archiveReady;
+  for (const id of ['prev', 'next', 'redo', 'void', 'finish', 'back2', 'export', 'new-session', 'saved-session', 'recognition-mode', 'gateway-url', 'gateway-token', 'connect-references', 'tts']) {
     $(id).disabled = locked;
   }
   $('enable-mic').disabled = locked || !!microphoneStream;
@@ -159,14 +176,18 @@ function refreshControls() {
   $('tts').disabled = locked || !window.speechSynthesis || !window.SpeechSynthesisUtterance;
   for (const cell of $('strip').children) cell.disabled = locked;
   // Keep the pressed button enabled until release; disabling it can suppress pointerup.
-  $('mic').disabled = operationPending || !!pendingAudioSave || !!pendingModelSave || !archiveReady || !microphoneStream;
+  $('mic').disabled = operationPending || !!pendingAudioSave || !!pendingModelSave || !!pendingReferenceMatchSave || !archiveReady || !microphoneStream;
   $('transcribe').disabled = locked || !currentAttempt() || !!currentAttempt()?.captureError || $('recognition-mode').value === 'record-only';
   $('transcribe-all').disabled = locked || $('recognition-mode').value === 'record-only' || !remainingCurrentAttemptsForModel($('recognition-mode').value).length;
-  $('retry-save').hidden = !pendingAudioSave && !pendingModelSave;
+  const attempt = currentAttempt();
+  $('approve-reference').disabled = locked || !referenceLibraryLoaded || !attempt || !!attempt.captureError || !!attempt.voided || attempt.durationMs > 10_000 || attemptIsApprovedReference(attempt);
+  $('compare-reference').disabled = locked || !referenceLibraryLoaded || !attempt || !!attempt.captureError || !!attempt.voided || attempt.durationMs > 10_000 || attemptIsApprovedReference(attempt) || !referencesForWord(attempt.prompt).length;
+  $('retry-save').hidden = !pendingAudioSave && !pendingModelSave && !pendingReferenceMatchSave;
   $('retry-save').disabled = operationPending;
-  $('retry-save').textContent = pendingModelSave ? 'Retry saving the model result' : 'Retry saving this recording';
+  $('retry-save').textContent = pendingModelSave ? 'Retry saving the model result' : pendingReferenceMatchSave ? 'Retry saving the comparison' : 'Retry saving this recording';
   $('download-unsaved').hidden = !pendingAudioSave;
   $('download-unsaved').disabled = operationPending;
+  $('void').textContent = attempt?.voided ? 'Restore this take' : 'Exclude this take';
 }
 
 async function runOperation(action) {
@@ -221,10 +242,11 @@ function renderStrip() {
     const description = attemptDescription(attempt);
     const cell = document.createElement('button');
     cell.className = 'cell' + (attempt?.voided ? ' voided' : description.className ? ` ${description.className === 'ok' ? 'hit' : description.className === 'conf' ? 'conf' : lastModelRun(attempt)?.status === 'error' || attempt?.captureError ? 'error' : 'miss'}` : attempt ? ' recorded' : '') + (wordIndex === recordingSession.currentTrialIndex ? ' cur' : '');
-    cell.textContent = wordIndex + 1;
+    cell.textContent = word;
     const latestRun = lastModelRun(attempt);
     const latestRunModel = latestRun?.model || latestRun?.requestedModel;
     cell.title = `${word}: ${attempt ? `${latestRunModel ? `${modelLabel(latestRunModel)} — ` : ''}${description.text}` : 'not recorded'}`;
+    cell.setAttribute('aria-label', `${word}, ${description.text || (attempt ? 'recorded, not checked by Google' : 'not recorded')}${wordIndex === recordingSession.currentTrialIndex ? ', current word' : ''}`);
     cell.disabled = operationPending || !!activeCapture || !!pendingAudioSave || !!pendingModelSave;
     cell.addEventListener('click', () => navigateToWord(wordIndex));
     $('strip').appendChild(cell);
@@ -247,11 +269,13 @@ function renderTrial() {
     return `${modelLabel(savedRun.model)}: “${transcript}” — ${verdict} · ${(savedRun.latencyMs / 1000).toFixed(1)}s`;
   }).join(' | ');
   const description = attemptDescription(attempt);
-  $('verdict').textContent = description.text + (attempt?.voided ? ' — VOIDED' : '');
+  $('verdict').textContent = (description.text ? `Google: ${description.text}` : '') + (attempt?.voided ? ' — excluded' : '');
   $('verdict').className = 'verdict ' + description.className;
-  $('status').textContent = microphoneStream ? 'Hold the button and speak; release to save' : 'Enable the microphone, then hold the button and speak';
+  $('verdict').setAttribute('aria-label', `Google transcript check: ${description.text || 'not checked'}`);
+  $('status').textContent = microphoneStream ? 'Hold to say the word; release to save' : 'Enable the microphone, then hold the button and say the word';
   $('replay').replaceChildren();
   if (attempt) $('replay').appendChild(audioPlayer(attempt.audioBlob));
+  renderReferenceMatchResult(attempt);
   renderStrip();
   refreshControls();
 }
@@ -341,10 +365,7 @@ async function enableMicrophone() {
       meterAnimation = requestAnimationFrame(tick);
     };
     tick();
-    if (navigator.storage?.persist) {
-      const persistent = await navigator.storage.persist();
-      $('archive-status').textContent = persistent ? 'Recordings saved on this device. Download a ZIP to keep a portable copy.' : 'Recordings saved locally. Download a ZIP to keep them outside this browser.';
-    }
+    if (navigator.storage?.persist) await navigator.storage.persist();
     renderTrial();
   } catch (error) {
     if (microphoneStream !== stream) stream.getTracks().forEach(track => track.stop());
@@ -352,23 +373,175 @@ async function enableMicrophone() {
   }
 }
 
-function readTranscriptionSettings() {
-  const model = $('recognition-mode').value;
-  if (model === 'record-only') return null;
-  if (!Object.hasOwn(MODEL_CONFIGURATION_VERSIONS, model)) throw new Error('Unknown transcription model.');
-  if (!$('gateway-url').value.trim() || !$('gateway-token').value.trim()) throw new Error('Enter the transcription address and access code, or choose “Save audio only”.');
+function readGatewayConnection() {
+  if (!$('gateway-url').value.trim() || !$('gateway-token').value.trim()) throw new Error('Enter the speech server address and access code first.');
   const serverUrl = new URL($('gateway-url').value.trim());
   const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(serverUrl.hostname);
   if (serverUrl.username || serverUrl.password || serverUrl.search || serverUrl.hash || (serverUrl.protocol !== 'https:' && !(loopback && serverUrl.protocol === 'http:' && location.protocol === 'http:'))) {
     throw new Error('Use an HTTPS speech server address. A local HTTP server can be used from a local HTTP evaluator.');
   }
-  if (serverUrl.pathname !== '/transcribe') throw new Error('The transcription address must end with /transcribe.');
-  return { model, endpoint: serverUrl.href, token: $('gateway-token').value.trim() };
+  if (serverUrl.pathname !== '/transcribe') throw new Error('The server address must end with /transcribe.');
+  const token = $('gateway-token').value.trim();
+  return {
+    token,
+    endpointFor(path) {
+      const endpoint = new URL(serverUrl.href);
+      endpoint.pathname = path;
+      return endpoint.href;
+    },
+  };
+}
+
+async function requestSpeechServer(path, method, body) {
+  const connection = readGatewayConnection();
+  const headers = { Authorization: `Bearer ${connection.token}` };
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  let response;
+  try {
+    response = await fetch(connection.endpointFor(path), {
+      method, headers, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(45000),
+    });
+  } catch (error) {
+    throw new Error(`Could not reach the speech server: ${error.message || String(error)}`);
+  }
+  let result;
+  try { result = await response.json(); }
+  catch { throw new Error(`The speech server returned an unreadable response (HTTP ${response.status}).`); }
+  if (!response.ok) throw new Error(result.error?.message || `Speech server returned HTTP ${response.status}.`);
+  return result;
+}
+
+function renderReferenceLibrary() {
+  const groups = new Map();
+  for (const reference of approvedReferences) groups.set(reference.word, (groups.get(reference.word) || 0) + 1);
+  $('reference-list').replaceChildren();
+  $('reference-manage-list').replaceChildren();
+  for (const [word, count] of groups) {
+    const chip = document.createElement('span');
+    chip.className = 'reference-chip';
+    chip.textContent = `${word} · ${count} example${count === 1 ? '' : 's'}`;
+    $('reference-list').appendChild(chip);
+  }
+  for (const reference of approvedReferences) {
+    const row = document.createElement('span');
+    row.className = 'reference-chip';
+    const label = document.createElement('span');
+    label.textContent = `${reference.word} example`;
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'small';
+    remove.textContent = 'Remove';
+    remove.addEventListener('click', () => runOperation(() => removeApprovedReference(reference)));
+    row.appendChild(label);
+    row.appendChild(remove);
+    $('reference-manage-list').appendChild(row);
+  }
+  $('manage-references').hidden = approvedReferences.length === 0;
+  const wordsWithReferences = groups.size;
+  $('reference-status').textContent = approvedReferences.length
+    ? `${approvedReferences.length} approved recording${approvedReferences.length === 1 ? '' : 's'} for ${wordsWithReferences} word${wordsWithReferences === 1 ? '' : 's'}.`
+    : 'No approved examples yet. Record a clear word, listen, then approve it here.';
+}
+
+async function removeApprovedReference(reference) {
+  if (!window.confirm(`Remove this approved “${reference.word}” recording from the private reference library? Existing comparison results stay in this browser.`)) return;
+  await requestSpeechServer(`/references/${encodeURIComponent(reference.referenceId)}`, 'DELETE');
+  await loadReferenceLibrary();
+}
+
+async function loadReferenceLibrary() {
+  $('reference-status').textContent = 'Loading approved word references…';
+  const result = await requestSpeechServer('/references', 'GET');
+  if (!Array.isArray(result.references) || result.references.some(reference =>
+    !reference || typeof reference.referenceId !== 'string' || typeof reference.attemptId !== 'string' || typeof reference.word !== 'string')) {
+    throw new Error('The speech server returned an invalid reference list.');
+  }
+  approvedReferences = result.references;
+  referenceLibraryLoaded = true;
+  renderReferenceLibrary();
+  renderTrial();
+  refreshControls();
+}
+
+async function approveCurrentTakeAsReference() {
+  const attempt = currentAttempt();
+  if (!attempt || attempt.captureError || attempt.voided) throw new Error('Record a usable take before approving it as a reference.');
+  if (attemptIsApprovedReference(attempt)) throw new Error('This take is already an approved reference.');
+  const approved = window.confirm(`Have you listened to this “${attempt.prompt}” take and confirmed it is a clear example? Approving it uploads the audio to your private reference library.`);
+  if (!approved) return;
+  $('reference-status').textContent = `Uploading the approved “${attempt.prompt}” example…`;
+  const result = await requestSpeechServer('/references', 'POST', {
+    attemptId: attempt.id, word: attempt.prompt, mimeType: attempt.audioMimeType,
+    durationMs: attempt.durationMs, audioBase64: await blobBase64(attempt.audioBlob),
+  });
+  if (!result.reference || result.reference.attemptId !== attempt.id || result.reference.word !== attempt.prompt) {
+    throw new Error('The speech server approval response did not match this take.');
+  }
+  await loadReferenceLibrary();
+  $('reference-status').textContent = `“${attempt.prompt}” is now in the private reference library.`;
+}
+
+function validateReferenceComparison(result, attempt) {
+  if (result.scoringStatus !== 'experimental-uncalibrated' || result.matcherVersion !== 'mono16k-mfcc12-delta-constrained-dtw-v1' ||
+      result.attemptId !== attempt.id || result.targetWord !== attempt.prompt || !Array.isArray(result.rankedWords) ||
+      !result.rankedWords.length || result.rankedWords.some(row => !row || typeof row.word !== 'string' ||
+        !Number.isInteger(row.referenceCount) || row.referenceCount < 1 || !Number.isFinite(row.averageDistance) ||
+        !Number.isFinite(row.minimumDistance)) || !Number.isInteger(result.targetRank) ||
+      result.targetRank < 1 || result.targetRank > result.rankedWords.length ||
+      result.rankedWords[result.targetRank - 1].word !== attempt.prompt ||
+      result.closestWord !== result.rankedWords[0].word || !Number.isInteger(result.referenceCountForTarget) || result.referenceCountForTarget < 1 ||
+      result.audioSha256 !== attempt.audioSha256) {
+    throw new Error('The speech server returned a comparison that does not match this take and reference list.');
+  }
+}
+
+async function compareCurrentTakeWithReferences() {
+  const attempt = currentAttempt();
+  if (!attempt || attempt.captureError || attempt.voided) throw new Error('Record a usable take before comparing it.');
+  if (attemptIsApprovedReference(attempt)) throw new Error('Choose a different take; a reference cannot be compared with itself.');
+  if (!referencesForWord(attempt.prompt).length) throw new Error(`There are no approved “${attempt.prompt}” examples yet.`);
+  $('reference-results').textContent = `Comparing this “${attempt.prompt}” take…`;
+  const result = await requestSpeechServer('/compare', 'POST', {
+    attemptId: attempt.id, expectedWord: attempt.prompt, mimeType: attempt.audioMimeType,
+    durationMs: attempt.durationMs, audioBase64: await blobBase64(attempt.audioBlob),
+  });
+  validateReferenceComparison(result, attempt);
+  pendingReferenceMatchSave = {
+    attemptId: attempt.id,
+    run: { id: crypto.randomUUID(), completedAt: new Date().toISOString(), ...result },
+  };
+  await savePendingReferenceMatchRun();
+}
+
+function renderReferenceMatchResult(attempt) {
+  const output = $('reference-results');
+  if (!attempt) { output.textContent = ''; return; }
+  const run = lastReferenceMatchRun(attempt);
+  if (run) {
+    const target = run.rankedWords.find(row => row.word === run.targetWord);
+    output.textContent = `${run.targetWord} ranked ${run.targetRank} of ${run.rankedWords.length}; closest example: “${run.closestWord}”. Average distance for this word: ${target.averageDistance.toFixed(2)}. Experimental similarity only; use the recording to judge.`;
+  } else if (attemptIsApprovedReference(attempt)) {
+    output.textContent = 'This take is a reference example. Compare a different take for this word.';
+  } else if (attempt.durationMs > 10_000) {
+    output.textContent = 'This take is longer than 10 seconds. Record a shorter example to compare.';
+  } else if (referencesForWord(attempt.prompt).length) {
+    output.textContent = `Ready to compare with ${referencesForWord(attempt.prompt).length} approved “${attempt.prompt}” example${referencesForWord(attempt.prompt).length === 1 ? '' : 's'}.`;
+  } else {
+    output.textContent = '';
+  }
+}
+
+function readTranscriptionSettings() {
+  const model = $('recognition-mode').value;
+  if (model === 'record-only') return null;
+  if (!Object.hasOwn(MODEL_CONFIGURATION_VERSIONS, model)) throw new Error('Unknown transcription model.');
+  const connection = readGatewayConnection();
+  return { model, endpoint: connection.endpointFor('/transcribe'), token: connection.token };
 }
 
 function beginHold(event) {
   if (event) event.preventDefault();
-  if (operationPending || activeCapture || pendingAudioSave || pendingModelSave || !microphoneStream || !archiveReady) return;
+  if (operationPending || activeCapture || pendingAudioSave || pendingModelSave || pendingReferenceMatchSave || !microphoneStream || !archiveReady) return;
   try {
     const transcriptionSettings = readTranscriptionSettings();
     window.speechSynthesis?.cancel();
@@ -383,7 +556,7 @@ function beginHold(event) {
       attempt: { id: crypto.randomUUID(), prompt: recordingSession.order[wordIndex], wordIndex,
         takeNumber: recordedAttempts.length + 1, startedAt: new Date().toISOString(),
         micLabel: microphoneStream.getAudioTracks()[0].label || 'default microphone',
-        microphoneSettings: microphoneStream.getAudioTracks()[0].getSettings(), voided: false, modelRuns: [] },
+        microphoneSettings: microphoneStream.getAudioTracks()[0].getSettings(), voided: false, modelRuns: [], referenceMatchRuns: [] },
     };
     capture.stopped = new Promise(resolve => {
       recorder.ondataavailable = audioEvent => { if (audioEvent.data.size) capture.chunks.push(audioEvent.data); };
@@ -587,6 +760,22 @@ async function savePendingModelRun() {
   }
 }
 
+async function savePendingReferenceMatchRun() {
+  const pending = pendingReferenceMatchSave;
+  if (!pending) return;
+  const attempt = recordedAttempts.find(recording => recording.id === pending.attemptId);
+  if (!attempt) throw new Error('The saved take for this comparison is missing.');
+  try {
+    const saved = await ASRRecordings.appendReferenceMatchRun(recordingSession.id, attempt.id, pending.run);
+    Object.assign(attempt, saved);
+    pendingReferenceMatchSave = null;
+    renderTrial();
+    if ($('summary').style.display === 'block') renderSummary();
+  } catch (error) {
+    throw new Error(`The comparison finished, but its result could not be saved: ${error.message}. Keep this tab open and retry saving it.`);
+  }
+}
+
 function download(blob, filename) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -612,11 +801,12 @@ function renderSummary() {
   };
   const models = [...new Set(recordedAttempts.flatMap(attempt => (attempt.modelRuns || []).map(run => run.model || run.requestedModel).filter(Boolean)))];
   const captureErrors = selected.filter(attempt => !attempt.voided && attempt.captureError).length;
-  $('stats').textContent = `${recordedAttempts.length} audio files saved · ${selected.length}/${recordingSession.order.length} words recorded · ${models.map(scoreModel).join(' · ') || 'No model results yet'} · ${captureErrors} recording errors · ${selected.filter(attempt => attempt.voided).length} voided`;
-  $('pairmatrix').textContent = 'Each model is scored against the same latest saved take for each word. Every transcript and original audio file remains in the ZIP.';
+  const referenceComparisons = selected.reduce((count, attempt) => count + (attempt.referenceMatchRuns || []).length, 0);
+  $('stats').textContent = `${recordedAttempts.length} takes saved · ${selected.length}/${recordingSession.order.length} words recorded · ${models.map(scoreModel).join(' · ') || 'No Google transcript checks yet'} · ${referenceComparisons} experimental reference comparison${referenceComparisons === 1 ? '' : 's'} · ${captureErrors} recording errors · ${selected.filter(attempt => attempt.voided).length} excluded`;
+  $('pairmatrix').textContent = 'Google transcript checks compare text with the displayed word. Reference comparisons rank sound similarity to approved recordings; they are experimental and do not mark words right or wrong. The ZIP includes audio and saved results.';
   const table = document.createElement('table');
   const header = document.createElement('tr');
-  for (const label of ['Prompt', ...Object.values(MODEL_LABELS).map(label => `${label} transcript / outcome`), 'Audio']) {
+  for (const label of ['Word', ...Object.values(MODEL_LABELS).map(label => `${label} transcript check`), 'Reference similarity (experimental)', 'Audio']) {
     const cell = document.createElement('th'); cell.textContent = label; header.appendChild(cell);
   }
   table.appendChild(header);
@@ -649,6 +839,12 @@ function renderSummary() {
       const cell = document.createElement('td'); cell.textContent = text; row.appendChild(cell);
     }
     if (attempt.voided) row.children[0].textContent += ' — VOIDED';
+    const latestReferenceRun = lastReferenceMatchRun(attempt);
+    const referenceCell = document.createElement('td');
+    referenceCell.textContent = latestReferenceRun
+      ? `target ranked ${latestReferenceRun.targetRank}/${latestReferenceRun.rankedWords.length}; closest “${latestReferenceRun.closestWord}”; average distance ${latestReferenceRun.rankedWords.find(result => result.word === attempt.prompt)?.averageDistance.toFixed(2)}`
+      : '—';
+    row.appendChild(referenceCell);
     const audioCell = document.createElement('td');
     audioCell.appendChild(audioPlayer(attempt.audioBlob));
     row.appendChild(audioCell);
@@ -693,10 +889,13 @@ $('tts').addEventListener('click', () => {
   utterance.lang = 'en-GB'; utterance.rate = .85;
   speechSynthesis.cancel(); speechSynthesis.speak(utterance);
 });
-$('recognition-mode').addEventListener('change', () => { $('api-settings').hidden = $('recognition-mode').value === 'record-only'; refreshControls(); });
+$('recognition-mode').addEventListener('change', refreshControls);
+$('connect-references').addEventListener('click', () => runOperation(loadReferenceLibrary));
+$('approve-reference').addEventListener('click', () => runOperation(approveCurrentTakeAsReference));
+$('compare-reference').addEventListener('click', () => runOperation(compareCurrentTakeWithReferences));
 $('transcribe').addEventListener('click', () => runOperation(() => transcribeAttempt(currentAttempt(), readTranscriptionSettings())));
 $('transcribe-all').addEventListener('click', () => runOperation(() => transcribeRemainingCurrentTakes(readTranscriptionSettings())));
-$('retry-save').addEventListener('click', () => runOperation(() => pendingAudioSave ? savePendingAudio() : savePendingModelRun()));
+$('retry-save').addEventListener('click', () => runOperation(() => pendingAudioSave ? savePendingAudio() : pendingModelSave ? savePendingModelRun() : savePendingReferenceMatchRun()));
 $('download-unsaved').addEventListener('click', () => {
   const capture = pendingAudioSave;
   if (capture) download(capture.blob, `${capture.attempt.id}-${capture.attempt.prompt}.${ASRRecordings.audioExtension(capture.blob.type)}`);
@@ -724,7 +923,7 @@ async function initialize() {
   await refreshSessionChoices();
   $('legacy-session').hidden = !localStorage.getItem('asrEval.v1');
   archiveReady = true;
-  $('archive-status').textContent = 'Every take is saved locally with its original audio. Download a ZIP when finished.';
+  $('archive-status').textContent = 'Takes are saved in this browser. Download a ZIP backup when finished.';
 }
 
 runOperation(initialize);

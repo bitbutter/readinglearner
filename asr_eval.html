@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Speech recordings &amp; model evaluation</title>
+<title>Word recording evaluator</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -13,8 +13,8 @@
     background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
     padding: 1rem; text-align: center;
   }
-  h1 { font-size: 1.15rem; opacity: .8; margin: .4rem 0 0; font-weight: 600; }
-  .sub { font-size: .85rem; opacity: .6; margin-bottom: 1rem; }
+  h1 { font-size: 1.35rem; margin: .4rem 0 0; font-weight: 700; }
+  .sub { font-size: .95rem; opacity: .78; margin-bottom: 1rem; max-width: 620px; }
   .card { background: rgba(0,0,0,.35); border-radius: 1rem; padding: 1.2rem 1.4rem; width: min(720px, 96vw); }
   #prompt {
     font-size: clamp(4rem, 20vmin, 9rem); font-weight: 800; margin: .8rem 0 .2rem;
@@ -25,10 +25,10 @@
   /* progress strip */
   #strip { display: flex; flex-wrap: wrap; gap: .35rem; justify-content: center; margin: .6rem 0; }
   .cell {
-    width: 2rem; height: 2rem; border-radius: .45rem; font-size: .8rem; font-weight: 700;
+    min-width: 2.7rem; min-height: 2.4rem; border-radius: .45rem; font-size: .85rem; font-weight: 700;
     display: inline-flex; align-items: center; justify-content: center;
     background: rgba(255,255,255,.12); color: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.2);
-    cursor: pointer; padding: 0;
+    cursor: pointer; padding: .2rem .35rem;
   }
   .cell.hit    { background: rgba(61,220,132,.35); color: #3ddc84; border-color: #3ddc84; }
   .cell.recorded { background: rgba(140,160,255,.3); color: #c1ccff; border-color: #a5b5ff; }
@@ -78,6 +78,16 @@
   audio { width: 130px; height: 30px; }
   .note { font-size: .8rem; opacity: .55; max-width: 640px; margin: .8rem auto 0; }
   .settings { margin-bottom: 1rem; text-align: left; }
+  .settings h2 { font-size: 1.05rem; margin: 0 0 .4rem; }
+  details { text-align: left; margin: .75rem auto; max-width: 720px; }
+  summary { cursor: pointer; font-weight: 650; padding: .4rem 0; }
+  .reference-actions { display: flex; justify-content: center; gap: .5rem; flex-wrap: wrap; margin: .6rem 0; }
+  .reference-list { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center; }
+  .reference-chip { border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: .3rem .65rem; font-size: .85rem; }
+  .reference-run { font-size: .95rem; opacity: .9; margin: .4rem auto; max-width: 640px; }
+  .reference-help { max-width: 640px; margin: .4rem auto; line-height: 1.45; }
+  .connection { max-width: 480px; margin: .3rem auto; }
+  .section-label { font-size: .8rem; opacity: .65; margin: .3rem auto; }
   .settings label { display: block; margin-top: .7rem; font-size: .9rem; }
   select, input { width: 100%; font: inherit; color: #fff; background: #252246; border: 1px solid #777; border-radius: .4rem; padding: .6rem; }
   .settings .small { margin-top: .5rem; }
@@ -87,46 +97,60 @@
 </style>
 </head>
 <body>
-  <h1>Speech recordings &amp; model evaluation</h1>
-  <p class="sub">Record once, compare recognizers later. Every take keeps its original audio.</p>
+  <h1>Word recording evaluator</h1>
+  <p class="sub">Record a word, approve a clear example as a reference, then compare a different take against it.</p>
 
   <div class="card settings">
-    <label for="saved-session">Saved session</label>
-    <select id="saved-session" disabled></select>
-    <button id="new-session" class="small" disabled>New session</button>
-    <label for="recognition-mode">After recording / saved-take model</label>
-    <select id="recognition-mode">
-      <option value="record-only">Save audio only</option>
-      <option value="chirp_3">Transcribe with Google Chirp 3</option>
-      <option value="short">Transcribe with Google short (V2)</option>
-      <option value="latest_short">Transcribe with Google latest_short (V1)</option>
-    </select>
-    <p class="note">To compare models, select one and choose <b>Transcribe remaining saved takes</b>. Every model receives the same speech-prepared copy of a take; the original audio stays unchanged. After silence-trimming changes, earlier model runs remain in history and the selected model can be run again.</p>
-    <button id="transcribe-all" class="small">Transcribe remaining saved takes with selected model</button>
-    <p class="note">The batch sends each prompt's current valid take to the selected model, one at a time. Successful results are skipped on later runs. A failed request stops the batch; retrying a failed request may make another billable request.</p>
-    <p id="batch-status" role="status" aria-live="polite"></p>
-    <div id="api-settings" hidden>
-      <label for="gateway-url">Transcription address</label>
-      <input id="gateway-url" type="url" value="https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe" autocomplete="off">
+    <h2>Speech server</h2>
+    <div class="connection">
+      <label for="gateway-url">Server address</label>
+      <input id="gateway-url" type="url" value="https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe" autocomplete="url">
       <label for="gateway-token">Speech server access code</label>
       <input id="gateway-token" type="password" autocomplete="off">
-      <p class="note">The Google credentials belong on the speech server. This access code is kept only in this tab.</p>
+      <button id="connect-references" class="small">Connect and load references</button>
+      <p class="note">The access code stays in this tab. Google Cloud credentials stay on the server.</p>
     </div>
     <p id="archive-status" role="status">Opening saved recordings…</p>
     <p id="problem" class="bad" role="alert" hidden></p>
     <button id="retry-save" class="small" hidden>Retry saving this recording</button>
     <button id="download-unsaved" class="small" hidden>Download unsaved audio</button>
-    <div id="legacy-session" hidden>
-      <p class="note">The earlier evaluator saved text only across reloads. Its old text record is still available.</p>
+    <details id="session-tools">
+      <summary>Recording sessions</summary>
+      <label for="saved-session">Choose a saved session</label>
+      <select id="saved-session" disabled></select>
+      <button id="new-session" class="small" disabled>Start a new session</button>
+      <p class="note">Each session has its own word order. Saved audio stays in this browser unless you approve it below as a reference.</p>
+    </details>
+    <details id="legacy-session" hidden>
+      <summary>Earlier text-only results</summary>
+      <p class="note">This is a record from an older version of the evaluator. It contains no audio.</p>
       <button id="export-legacy" class="small">Download earlier text record</button>
+    </details>
+  </div>
+
+  <div class="card settings" id="reference-library">
+    <h2>Approved word references</h2>
+    <p class="reference-help">Listen to a take first. Approving uploads that recording to your private speech storage. A comparison sends a different take and its displayed word to the speech server for analysis; the candidate audio is not added to the library or sent to Google.</p>
+    <div class="reference-actions">
+      <button id="approve-reference" class="small" disabled>Approve this take as a reference</button>
+      <button id="compare-reference" class="small" disabled>Compare this take with references</button>
     </div>
+    <p id="reference-status" role="status" aria-live="polite">Connect to the speech server to view approved references.</p>
+    <div id="reference-list" class="reference-list"></div>
+    <details id="manage-references" hidden>
+      <summary>Manage approved recordings</summary>
+      <div id="reference-manage-list" class="reference-list"></div>
+    </details>
+    <div id="reference-results" class="reference-run" aria-live="polite"></div>
+    <p class="note">Similarity rankings are experimental and do not say whether a word was pronounced correctly. Use them as clues alongside the recording.</p>
   </div>
 
   <div id="session" class="card">
+    <p id="strip-label" class="section-label">Word colors show Google transcript-check results when available; they are not pronunciation judgments.</p>
     <div id="strip"></div>
     <div id="counter"></div>
     <div id="prompt"></div>
-    <button id="tts" class="small" title="Say the word for him first">🔊 say it first</button>
+    <button id="tts" class="small" title="Play the word aloud">🔊 Hear the word</button>
     <button id="enable-mic" class="small" disabled>Enable microphone</button>
 
     <div id="meterwrap">
@@ -138,20 +162,20 @@
     <div>
       <button id="mic" class="mic" aria-label="Hold to record" disabled>🎤</button>
     </div>
-    <div id="status" role="status">Enable the microphone, then hold the button and speak</div>
+    <div id="status" role="status">Enable the microphone, then hold the button and say the word</div>
     <div id="heard"></div>
     <div class="alts" id="alts"></div>
     <div class="verdict" id="verdict"></div>
     <div id="replay"></div>
     <div class="row">
       <button id="prev" class="small">◀ back</button>
-      <button id="redo" class="small">↻ re-record this word</button>
-      <button id="void" class="small">✋ void / unvoid</button>
-      <button id="transcribe" class="small" disabled>Transcribe saved audio</button>
+      <button id="redo" class="small">Record again</button>
+      <button id="void" class="small">Exclude this take</button>
+      <button id="transcribe" class="small" disabled>Check transcript with Google</button>
       <button id="next" class="small">next ▶</button>
     </div>
     <div class="row">
-      <button id="finish" class="small">Finish &amp; see results</button>
+      <button id="finish" class="small">Review this session</button>
     </div>
   </div>
 
@@ -166,7 +190,22 @@
     </div>
   </div>
 
-  <p class="note">Audio recording works independently of browser speech recognition, including in Brave. Recordings stay in this browser across reloads; download the ZIP for a portable copy. Clearing browser storage deletes local recordings. For Google Chirp 3 (V2), short (V2) and latest_short (V1), the speech server trims detected leading silence from a separate copy and keeps 300 ms before speech; saved recordings remain unchanged. The expected word is never sent to the recognizer. Scores compare each transcript with the displayed prompt, not a human-verified account of what was spoken.</p>
+  <details class="card settings" id="google-checks">
+    <summary>Optional Google speech checks</summary>
+    <p class="reference-help">Google transcribes the recording; it does not receive the displayed word. This is separate from comparing a take with your approved recordings. Sending a check can incur charges.</p>
+    <label for="recognition-mode">Check each new recording with</label>
+    <select id="recognition-mode">
+      <option value="record-only">Save audio only</option>
+      <option value="chirp_3">Google Chirp 3 (V2)</option>
+      <option value="short">Google short (V2)</option>
+      <option value="latest_short">Google latest_short (V1)</option>
+    </select>
+    <button id="transcribe-all" class="small">Check untested takes with this model</button>
+    <p id="batch-status" role="status" aria-live="polite"></p>
+    <p class="note">All three models get the same silence-trimmed copy. The original audio remains unchanged. Failed checks are saved and are not retried automatically.</p>
+  </details>
+
+  <p class="note">Original recordings and comparison results are saved in this browser; download the ZIP for a portable copy. Only recordings you explicitly approve are uploaded as shared references. A comparison clip is sent to the speech server for analysis and is not added to the reference library. Google receives audio only when you choose a Google speech check. Browser storage can be cleared in browser settings.</p>
 
 <script src="asr_recordings.js"></script>
 <script src="asr_eval.js"></script>

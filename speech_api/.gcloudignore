@@ -8,3 +8,5 @@
 !server.mjs
 !providers.mjs
 !audio_preprocessing.mjs
+!reference_matcher.mjs
+!reference_library.mjs

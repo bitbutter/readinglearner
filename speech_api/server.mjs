@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import {
   createGoogleSpeechTranscriber, MAX_REQUEST_BYTES, SPEECH_MODEL_CONFIGURATION_VERSIONS, SpeechGatewayError, validateRecordingRequest,
 } from './providers.mjs';
+import { createGoogleCloudReferenceLibrary, MAX_REFERENCE_REQUEST_BYTES, ReferenceLibraryError } from './reference_library.mjs';
 
 function positiveInteger(value, defaultValue, name) {
   if (value === undefined || value === '') return defaultValue;
@@ -30,8 +31,12 @@ export function readGatewayConfiguration(environment = process.env) {
   if (!['127.0.0.1', '0.0.0.0'].includes(host)) {
     throw new Error('SPEECH_GATEWAY_HOST must be 127.0.0.1 for local use or explicitly 0.0.0.0 for container deployment.');
   }
+  const referenceBucket = environment.SPEECH_REFERENCE_BUCKET;
+  if (typeof referenceBucket !== 'string' || !/^[a-z0-9][a-z0-9._-]{1,220}[a-z0-9]$/.test(referenceBucket) || referenceBucket.includes('..')) {
+    throw new Error('Set SPEECH_REFERENCE_BUCKET to the private Cloud Storage bucket for approved word recordings.');
+  }
   return {
-    gatewayToken, allowedOrigins: new Set(allowedOrigins), port, host,
+    gatewayToken, allowedOrigins: new Set(allowedOrigins), port, host, referenceBucket,
     projectId: environment.GOOGLE_CLOUD_PROJECT,
     maxConcurrent: positiveInteger(environment.SPEECH_GATEWAY_MAX_CONCURRENT, 2, 'SPEECH_GATEWAY_MAX_CONCURRENT'),
     requestsPerMinute: positiveInteger(environment.SPEECH_GATEWAY_REQUESTS_PER_MINUTE, 20, 'SPEECH_GATEWAY_REQUESTS_PER_MINUTE'),
@@ -47,10 +52,10 @@ function bearerTokenMatches(authorization, configuredToken) {
   return supplied.length === expected.length && timingSafeEqual(supplied, expected);
 }
 
-function readRecordingBody(request, timeoutMs) {
+function readJsonBody(request, timeoutMs, maximumBytes) {
   const contentLength = request.headers['content-length'];
-  if (contentLength !== undefined && (!/^\d+$/.test(contentLength) || Number(contentLength) > MAX_REQUEST_BYTES)) {
-    throw new SpeechGatewayError(413, 'request_too_large', 'The recording request is too large.');
+  if (contentLength !== undefined && (!/^\d+$/.test(contentLength) || Number(contentLength) > maximumBytes)) {
+    throw new SpeechGatewayError(413, 'request_too_large', 'The request is too large.');
   }
   return new Promise((resolve, reject) => {
     let byteLength = 0;
@@ -66,7 +71,7 @@ function readRecordingBody(request, timeoutMs) {
     const finish = error => { cleanup(); request.pause(); reject(error); };
     const onData = chunk => {
       byteLength += chunk.length;
-      if (byteLength > MAX_REQUEST_BYTES) { finish(new SpeechGatewayError(413, 'request_too_large', 'The recording request is too large.')); return; }
+      if (byteLength > maximumBytes) { finish(new SpeechGatewayError(413, 'request_too_large', 'The request is too large.')); return; }
       chunks.push(chunk);
     };
     const onEnd = () => {
@@ -83,8 +88,15 @@ function readRecordingBody(request, timeoutMs) {
   });
 }
 
-export function createSpeechGateway({ configuration, transcribe, now = () => Date.now() }) {
+function requestOperationSignal(response, timeoutMs) {
+  const clientDisconnected = new AbortController();
+  response.once('close', () => { if (!response.writableFinished) clientDisconnected.abort(); });
+  return AbortSignal.any([clientDisconnected.signal, AbortSignal.timeout(timeoutMs)]);
+}
+
+export function createSpeechGateway({ configuration, transcribe, referenceLibrary, now = () => Date.now() }) {
   const transcribeRecording = transcribe || createGoogleSpeechTranscriber({ projectId: configuration.projectId, timeoutMs: configuration.timeoutMs });
+  const approvedWordReferences = referenceLibrary || createGoogleCloudReferenceLibrary({ bucketName: configuration.referenceBucket });
   let requestsInFlight = 0;
   let admittedAt = [];
   let quotaDay = '';
@@ -115,45 +127,73 @@ export function createSpeechGateway({ configuration, transcribe, now = () => Dat
     const closeUploadAfterResponse = () => response.once('finish', () => request.destroy());
     let ownsRequestSlot = false;
     try {
-      if (request.url !== '/transcribe') throw new SpeechGatewayError(404, 'unknown_endpoint', 'Use POST /transcribe.');
+      const requestUrl = new URL(request.url, 'http://localhost');
+      if (requestUrl.search || requestUrl.hash) throw new SpeechGatewayError(404, 'unknown_endpoint', 'Use one of the documented speech API paths without query parameters.');
+      const referenceIdMatch = requestUrl.pathname.match(/^\/references\/([0-9a-f-]{36})$/i);
+      const routePath = referenceIdMatch ? '/references/:referenceId' : requestUrl.pathname;
+      const routeMethods = {
+        '/transcribe': ['POST'], '/references': ['GET', 'POST'], '/compare': ['POST'], '/references/:referenceId': ['DELETE'],
+      };
+      const allowedMethods = routeMethods[routePath];
+      if (!allowedMethods) throw new SpeechGatewayError(404, 'unknown_endpoint', 'Use /transcribe, /references or /compare.');
       const origin = request.headers.origin;
       if (origin !== undefined && !configuration.allowedOrigins.has(origin)) {
         throw new SpeechGatewayError(403, 'origin_not_allowed', 'This browser origin is not allowed to use the speech API.');
       }
       if (origin) response.setHeader('Access-Control-Allow-Origin', origin);
       if (request.method === 'OPTIONS') {
-        if (!origin || request.headers['access-control-request-method'] !== 'POST') {
-          throw new SpeechGatewayError(400, 'invalid_preflight', 'A browser preflight must request POST from an allowed origin.');
+        const requestedMethod = request.headers['access-control-request-method'];
+        if (!origin || !allowedMethods.includes(requestedMethod)) {
+          throw new SpeechGatewayError(400, 'invalid_preflight', 'A browser preflight must request a method supported by this path.');
         }
         const requestedHeaders = (request.headers['access-control-request-headers'] || '').toLowerCase().split(',').map(value => value.trim()).filter(Boolean);
         if (requestedHeaders.some(header => !['authorization', 'content-type'].includes(header))) {
           throw new SpeechGatewayError(400, 'unsupported_preflight_headers', 'Only Authorization and Content-Type request headers are supported.');
         }
         response.writeHead(204, {
-          'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Max-Age': '300',
+          'Access-Control-Allow-Methods': allowedMethods.join(', '), 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Max-Age': '300',
         });
         response.end();
         return;
       }
-      if (request.method !== 'POST') throw new SpeechGatewayError(405, 'unsupported_method', 'Use POST /transcribe.');
+      if (!allowedMethods.includes(request.method)) throw new SpeechGatewayError(405, 'unsupported_method', `Use ${allowedMethods.join(' or ')} for this path.`);
       if (!bearerTokenMatches(request.headers.authorization, configuration.gatewayToken)) {
-        throw new SpeechGatewayError(401, 'gateway_token_required', 'A valid speech API access token is required.');
+        throw new SpeechGatewayError(401, 'gateway_token_required', 'A valid speech server access code is required.');
       }
-      if ((request.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase() !== 'application/json') {
-        throw new SpeechGatewayError(415, 'json_required', 'Send the recording as application/json.');
+      if (request.method === 'POST' && (request.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase() !== 'application/json') {
+        throw new SpeechGatewayError(415, 'json_required', 'Send this request as application/json.');
       }
-      if (requestsInFlight >= configuration.maxConcurrent) throw new SpeechGatewayError(429, 'transcription_busy', 'The speech API is already processing its maximum number of recordings.');
+      if (routePath === '/references' && request.method === 'GET') {
+        send(200, { references: await approvedWordReferences.listReferences({ signal: requestOperationSignal(response, 45_000) }) });
+        return;
+      }
+      if (requestsInFlight >= configuration.maxConcurrent) {
+        throw new SpeechGatewayError(429, routePath === '/transcribe' ? 'transcription_busy' : 'speech_gateway_busy', 'The speech API is already processing its maximum number of recordings.');
+      }
       requestsInFlight++;
       ownsRequestSlot = true;
-      const recording = validateRecordingRequest(await readRecordingBody(request, configuration.timeoutMs));
-      admitProviderRequest();
-      const clientDisconnected = new AbortController();
-      response.once('close', () => { if (!response.writableFinished) clientDisconnected.abort(); });
-      const transcription = await transcribeRecording(recording, { signal: clientDisconnected.signal });
-      send(200, transcription);
+      if (routePath === '/transcribe') {
+        const recording = validateRecordingRequest(await readJsonBody(request, configuration.timeoutMs, MAX_REQUEST_BYTES));
+        admitProviderRequest();
+        send(200, await transcribeRecording(recording, { signal: requestOperationSignal(response, configuration.timeoutMs) }));
+      } else if (routePath === '/references' && request.method === 'POST') {
+        const approvedReference = await approvedWordReferences.approveReference(await readJsonBody(request, configuration.timeoutMs, MAX_REFERENCE_REQUEST_BYTES), {
+          signal: requestOperationSignal(response, 45_000),
+        });
+        send(201, { reference: approvedReference });
+      } else if (routePath === '/compare') {
+        const comparison = await approvedWordReferences.compareRecording(await readJsonBody(request, configuration.timeoutMs, MAX_REFERENCE_REQUEST_BYTES), {
+          signal: requestOperationSignal(response, 45_000),
+        });
+        send(200, comparison);
+      } else if (routePath === '/references/:referenceId') {
+        send(200, await approvedWordReferences.deleteReference(referenceIdMatch[1], { signal: requestOperationSignal(response, 45_000) }));
+      }
     } catch (error) {
       closeUploadAfterResponse();
       if (error instanceof SpeechGatewayError) send(error.httpStatus, { error: { code: error.code, message: error.message, ...error.details } });
+      else if (error instanceof ReferenceLibraryError) send(error.httpStatus, { error: { code: error.code, message: error.message } });
+      else if (Number.isInteger(error?.httpStatus) && typeof error?.code === 'string') send(error.httpStatus, { error: { code: error.code, message: error.message || 'The audio could not be prepared.' } });
       else send(500, { error: { code: 'gateway_failure', message: 'The speech API could not complete this request.' } });
     } finally {
       if (ownsRequestSlot) requestsInFlight--;

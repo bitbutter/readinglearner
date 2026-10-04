@@ -212,6 +212,12 @@ class RecordingArchive {
     if (current.modelRuns.some(run => run.id === modelRun.id)) throw new Error('Duplicate model run ID');
     return this.updateAttempt(sessionId, { ...current, modelRuns: [...current.modelRuns, modelRun] });
   }
+  async appendReferenceMatchRun(sessionId, attemptId, referenceMatchRun) {
+    const current = this.attempts.get(attemptId);
+    const runs = current.referenceMatchRuns || [];
+    if (runs.some(run => run.id === referenceMatchRun.id)) throw new Error('Duplicate comparison ID');
+    return this.updateAttempt(sessionId, { ...current, referenceMatchRuns: [...runs, referenceMatchRun] });
+  }
   async getSession(sessionId) {
     const attempts = [...this.attempts.values()].filter(attempt => attempt.sessionId === sessionId).sort((left, right) => left.takeNumber - right.takeNumber);
     const selected = new Map(attempts.map(attempt => [attempt.wordIndex, attempt.id]));
@@ -302,7 +308,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     static createObjectURL(blob) { const url = 'blob:test-' + blobUrls.size; blobUrls.set(url, blob); return url; }
     static revokeObjectURL() {}
   }
-  Object.assign(browserWindow, { AudioContext, MediaRecorder, isSecureContext: true });
+  Object.assign(browserWindow, { AudioContext, MediaRecorder, isSecureContext: true, confirm: () => true });
   for (const name of ['SpeechRecognition', 'webkitSpeechRecognition']) {
     Object.defineProperty(browserWindow, name, { get() { throw new Error('Recording must not access the browser speech constructor'); } });
   }
@@ -323,12 +329,37 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     },
     clearTimeout: id => timers.delete(id),
     async fetch(endpoint, options) {
-      const request = { endpoint, options, body: JSON.parse(options.body), submittedAt: clockMilliseconds }; fetchRequests.push(request);
-      const originalBytes = Buffer.from(request.body.audioBase64, 'base64');
-      const transcription = { transcript: 'Matt', provider: 'google-cloud-stt', model: request.body.model,
-        languageCode: 'en-GB', configurationVersion: testModelConfigurationVersions[request.body.model], preprocessing: testPreprocessing, latencyMs: 123,
-        audioSha256: createHash('sha256').update(originalBytes).digest('hex') };
-      return responseFactory ? responseFactory(request, transcription) : { ok: true, status: 200, async json() { return transcription; } };
+      const request = { endpoint, options, body: options.body ? JSON.parse(options.body) : undefined, submittedAt: clockMilliseconds }; fetchRequests.push(request);
+      const route = new URL(endpoint).pathname;
+      if (!responseFactory && route === '/references' && options.method === 'GET') {
+        return { ok: true, status: 200, async json() { return { references: [] }; } };
+      }
+      if (!responseFactory && route === '/references' && options.method === 'POST') {
+        return { ok: true, status: 201, async json() { return { reference: { referenceId: request.body.attemptId, attemptId: request.body.attemptId, word: request.body.word } }; } };
+      }
+      if (!responseFactory && route === '/compare') {
+        const audioSha256 = createHash('sha256').update(Buffer.from(request.body.audioBase64, 'base64')).digest('hex');
+        const targetWord = request.body.expectedWord;
+        const rankedWords = [
+          { word: targetWord, referenceCount: 1, averageDistance: 0.12, minimumDistance: 0.12 },
+          { word: 'mad', referenceCount: 1, averageDistance: 0.75, minimumDistance: 0.75 },
+        ];
+        const comparison = { matcherVersion: 'mono16k-mfcc12-delta-constrained-dtw-v1', scoringStatus: 'experimental-uncalibrated',
+          attemptId: request.body.attemptId, targetWord, closestWord: targetWord, targetRank: 1, rankedWords,
+          referenceCountForTarget: 1, audioSha256 };
+        return { ok: true, status: 200, async json() { return comparison; } };
+      }
+      if (!responseFactory && route.startsWith('/references/') && options.method === 'DELETE') {
+        return { ok: true, status: 200, async json() { return { deleted: true }; } };
+      }
+      const transcription = route === '/transcribe' ? (() => {
+        const originalBytes = Buffer.from(request.body.audioBase64, 'base64');
+        return { transcript: 'Matt', provider: 'google-cloud-stt', model: request.body.model,
+          languageCode: 'en-GB', configurationVersion: testModelConfigurationVersions[request.body.model], preprocessing: testPreprocessing, latencyMs: 123,
+          audioSha256: createHash('sha256').update(originalBytes).digest('hex') };
+      })() : null;
+      if (responseFactory) return responseFactory(request, transcription);
+      return { ok: true, status: 200, async json() { return transcription; } };
     },
   });
   vm.runInContext(pageScript, context, { filename: 'asr_eval.js', timeout: 1000 });
@@ -354,6 +385,9 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     async enableMicrophone() { await this.click('enable-mic'); assert.equal(elements.get('mic').disabled, false, elements.get('problem').textContent); },
     configureTranscription(model = 'chirp_3') {
       elements.get('recognition-mode').value = model; elements.get('recognition-mode').dispatch('change');
+      this.configureGateway();
+    },
+    configureGateway() {
       elements.get('gateway-url').value = 'https://speech.example/transcribe';
       elements.get('gateway-token').value = 'tab-only-secret-token';
     },
@@ -398,6 +432,75 @@ function currentCompletedRun(model, transcript) {
 }
 
 const browserBehaviorTests = [
+  ['The evaluator presents actual prompt words and distinguishes approved references from transcript checks', async () => {
+    const serverReferences = [];
+    const page = createPage({ responseFactory: async (request, transcription) => {
+      const route = new URL(request.endpoint).pathname;
+      if (route === '/references' && request.options.method === 'GET') {
+        return { ok: true, status: 200, async json() { return { references: serverReferences }; } };
+      }
+      if (route === '/references' && request.options.method === 'POST') {
+        const reference = { referenceId: request.body.attemptId, attemptId: request.body.attemptId, word: request.body.word };
+        serverReferences.push(reference);
+        return { ok: true, status: 201, async json() { return { reference }; } };
+      }
+      if (route === '/compare') {
+        const targetWord = request.body.expectedWord;
+        const audioSha256 = createHash('sha256').update(Buffer.from(request.body.audioBase64, 'base64')).digest('hex');
+        const result = { matcherVersion: 'mono16k-mfcc12-delta-constrained-dtw-v1', scoringStatus: 'experimental-uncalibrated',
+          attemptId: request.body.attemptId, targetWord, closestWord: targetWord, targetRank: 1,
+          rankedWords: [{ word: targetWord, referenceCount: 1, averageDistance: 0.12, minimumDistance: 0.12 },
+            { word: 'mad', referenceCount: 1, averageDistance: 0.75, minimumDistance: 0.75 }],
+          referenceCountForTarget: 1, audioSha256 };
+        return { ok: true, status: 200, async json() { return result; } };
+      }
+      return { ok: true, status: 200, async json() { return transcription; } };
+    } });
+    await page.idle();
+    assert.deepEqual(page.element('strip').children.map(cell => cell.textContent), ['mat', 'mad', 'cat', 'cut']);
+    assert.match(pageHtml, /Only recordings you explicitly approve are uploaded/);
+    assert.doesNotMatch(pageHtml, /The expected word is never sent to the recognizer/);
+    await page.enableMicrophone(); page.configureGateway();
+    await page.click('connect-references');
+    await page.record();
+    const referenceTake = page.latestAttempt();
+    assert.equal(page.element('approve-reference').disabled, false);
+    await page.click('approve-reference');
+    assert.equal(serverReferences.length, 1);
+    assert.equal(serverReferences[0].attemptId, referenceTake.id);
+    const approvalRequest = page.fetchRequests.find(request => new URL(request.endpoint).pathname === '/references' && request.options.method === 'POST');
+    assert.equal(approvalRequest.body.word, 'mat');
+    assert.deepEqual(Buffer.from(approvalRequest.body.audioBase64, 'base64'), page.recorderBytes);
+    assert.equal(page.element('compare-reference').disabled, true, 'the same take cannot be compared with itself');
+    await page.record();
+    const candidateTake = page.latestAttempt();
+    await page.click('compare-reference');
+    assert.notEqual(candidateTake.id, referenceTake.id);
+    assert.equal(page.latestAttempt().referenceMatchRuns.length, 1);
+    assert.equal(page.latestAttempt().referenceMatchRuns[0].targetRank, 1);
+    assert.match(page.element('reference-results').textContent, /experimental similarity only/i);
+    const comparisonRequest = page.fetchRequests.find(request => new URL(request.endpoint).pathname === '/compare');
+    assert.equal(comparisonRequest.body.expectedWord, 'mat');
+    assert.doesNotMatch(JSON.stringify(page.latestAttempt()), /audioBase64|tab-only-secret-token/);
+  }],
+  ['Reference comparison rejects verdict-shaped or mismatched server output without saving a score', async () => {
+    const serverReferences = [];
+    const page = createPage({ responseFactory: async (request, transcription) => {
+      const route = new URL(request.endpoint).pathname;
+      if (route === '/references' && request.options.method === 'GET') return { ok: true, status: 200, async json() { return { references: serverReferences }; } };
+      if (route === '/references' && request.options.method === 'POST') {
+        const reference = { referenceId: request.body.attemptId, attemptId: request.body.attemptId, word: request.body.word };
+        serverReferences.push(reference);
+        return { ok: true, status: 201, async json() { return { reference }; } };
+      }
+      if (route === '/compare') return { ok: true, status: 200, async json() { return { verdict: 'hit' }; } };
+      return { ok: true, status: 200, async json() { return transcription; } };
+    } });
+    await page.idle(); await page.enableMicrophone(); page.configureGateway(); await page.click('connect-references');
+    await page.record(); await page.click('approve-reference'); await page.record(); await page.click('compare-reference');
+    assert.match(page.element('problem').textContent, /does not match this take/);
+    assert.equal(page.latestAttempt().referenceMatchRuns?.length || 0, 0);
+  }],
   ['The main app canonical and fresh accepted spellings match Matt as a whole token', async () => {
     const app = createAppWordRestoration();
     assert.deepEqual(app.canonicalMat().accepted, ['mat', 'matt']);

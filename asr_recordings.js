@@ -65,9 +65,26 @@
     }
   }
 
+  function requireReferenceMatchHistory(referenceMatchRuns) {
+    if (!Array.isArray(referenceMatchRuns)) throw new Error('Reference comparison history must be an array.');
+    const runIds = new Set();
+    for (const run of referenceMatchRuns) {
+      if (!run || typeof run.id !== 'string' || !run.id) throw new Error('Each reference comparison must have a stable ID.');
+      if (runIds.has(run.id)) throw new Error('Each reference comparison ID may appear only once in the saved history.');
+      runIds.add(run.id);
+      stableModelRunJson(run);
+    }
+  }
+
   function requirePreservedModelRuns(previousRuns, updatedRuns) {
     if (updatedRuns.length < previousRuns.length || previousRuns.some((run, index) => stableModelRunJson(run) !== stableModelRunJson(updatedRuns[index]))) {
       throw new Error('Saved model result history is newer or different. Reload this session before saving; existing model runs cannot be removed or changed.');
+    }
+  }
+
+  function requirePreservedReferenceMatchRuns(previousRuns = [], updatedRuns = []) {
+    if (updatedRuns.length < previousRuns.length || previousRuns.some((run, index) => stableModelRunJson(run) !== stableModelRunJson(updatedRuns[index]))) {
+      throw new Error('Saved reference comparison history is newer or different. Reload this session before saving; existing comparisons cannot be removed or changed.');
     }
   }
 
@@ -103,8 +120,10 @@
     if (typeof attempt.voided !== 'boolean') throw new Error('Recording attempt voided flag must be a boolean.');
     if (!Array.isArray(attempt.modelRuns)) throw new Error('Recording attempt modelRuns must be an array.');
     requireModelRunHistory(attempt.modelRuns);
+    const referenceMatchRuns = attempt.referenceMatchRuns || [];
+    requireReferenceMatchHistory(referenceMatchRuns);
     if (attempt.audioSha256 !== undefined && !/^[0-9a-f]{64}$/.test(attempt.audioSha256)) throw new Error('Recording attempt audioSha256 must be a lowercase SHA-256 hex digest.');
-    const metadata = { ...attempt, sessionId };
+    const metadata = { ...attempt, referenceMatchRuns, sessionId };
     delete metadata.audioBlob;
     delete metadata.superseded;
     return structuredClone(metadata);
@@ -226,6 +245,7 @@
         afterRead(attempts.get(metadata.id), previousAttempt => {
           if (!previousAttempt || previousAttempt.sessionId !== sessionId) throw new Error(`Recording attempt does not exist in this session: ${metadata.id}.`);
           requirePreservedModelRuns(previousAttempt.modelRuns, metadata.modelRuns);
+          requirePreservedReferenceMatchRuns(previousAttempt.referenceMatchRuns, metadata.referenceMatchRuns);
           for (const field of CAPTURE_FIELDS) {
             const previousValue = previousAttempt[field], updatedValue = metadata[field];
             const identical = Object.is(previousValue, updatedValue) ||
@@ -258,6 +278,32 @@
           afterRead(transaction.objectStore(AUDIO_STORE).get(attemptId), original => {
             if (!original?.audioBlob) throw new Error(`Original audio is missing for recording attempt: ${attemptId}.`);
             const updatedAttempt = withOriginalAudioMetadata({ ...currentAttempt, modelRuns: [...currentAttempt.modelRuns, savedRun] }, original.audioBlob);
+            attempts.put(updatedAttempt);
+            remember(updatedAttempt);
+          }, fail);
+        }, fail);
+      }, fail);
+    });
+  }
+
+  async function appendReferenceMatchRun(sessionId, attemptId, referenceMatchRun) {
+    requireUUID(sessionId, 'Recording session ID');
+    requireUUID(attemptId, 'Recording attempt ID');
+    requireReferenceMatchHistory([referenceMatchRun]);
+    const savedRun = structuredClone(referenceMatchRun);
+    return transact([SESSION_STORE, ATTEMPT_STORE, AUDIO_STORE], 'readwrite', (transaction, remember, fail) => {
+      const attempts = transaction.objectStore(ATTEMPT_STORE);
+      afterRead(transaction.objectStore(SESSION_STORE).get(sessionId), session => {
+        if (!session) throw new Error(`Recording session does not exist: ${sessionId}.`);
+        afterRead(attempts.get(attemptId), currentAttempt => {
+          if (!currentAttempt || currentAttempt.sessionId !== sessionId) throw new Error(`Recording attempt does not exist in this session: ${attemptId}.`);
+          const previousRuns = currentAttempt.referenceMatchRuns || [];
+          if (previousRuns.some(run => run.id === savedRun.id)) throw new Error('Each reference comparison ID may appear only once in the saved history.');
+          afterRead(transaction.objectStore(AUDIO_STORE).get(attemptId), original => {
+            if (!original?.audioBlob) throw new Error(`Original audio is missing for recording attempt: ${attemptId}.`);
+            const updatedAttempt = withOriginalAudioMetadata({
+              ...currentAttempt, referenceMatchRuns: [...previousRuns, savedRun],
+            }, original.audioBlob);
             attempts.put(updatedAttempt);
             remember(updatedAttempt);
           }, fail);
@@ -394,6 +440,6 @@
   }
 
   globalThis.ASRRecordings = Object.freeze({
-    open, listSessions, createSession, saveSession, saveAttempt, updateAttempt, appendModelRun, getSession, deleteSession, exportSession, audioExtension,
+    open, listSessions, createSession, saveSession, saveAttempt, updateAttempt, appendModelRun, appendReferenceMatchRun, getSession, deleteSession, exportSession, audioExtension,
   });
 })();

@@ -7,6 +7,8 @@ import { SPEECH_AUDIO_PREPROCESSING_VERSION, SpeechAudioPreparationError } from 
 import { createGoogleSpeechTranscriber, MAX_REQUEST_BYTES } from '../providers.mjs';
 
 const gatewayToken = 'fake-gateway-token-at-least-24-characters';
+const referenceBucket = 'reading-learner-test-references';
+const gatewayEnvironment = { SPEECH_GATEWAY_TOKEN: gatewayToken, SPEECH_REFERENCE_BUCKET: referenceBucket };
 const recording = { model: 'chirp_3', audioBase64: Buffer.from('recording').toString('base64'), mimeType: 'audio/webm', durationMs: 2000 };
 const latestShortRecording = { ...recording, model: 'latest_short' };
 const preparedAudioBytes = Buffer.from('prepared mono WAV bytes');
@@ -18,9 +20,9 @@ const preprocessing = {
 const prepareAudio = async () => ({ audioBytes: preparedAudioBytes, mimeType: 'audio/wav', preprocessing });
 const authorizedHeaders = { Authorization: `Bearer ${gatewayToken}`, 'Content-Type': 'application/json', Origin: 'http://localhost:8080' };
 
-async function withGateway(configChanges, transcribe, run, now) {
-  const configuration = { ...readGatewayConfiguration({ SPEECH_GATEWAY_TOKEN: gatewayToken }), ...configChanges };
-  const server = createSpeechGateway({ configuration, transcribe, now });
+async function withGateway(configChanges, transcribe, run, now, referenceLibrary) {
+  const configuration = { ...readGatewayConfiguration(gatewayEnvironment), ...configChanges };
+  const server = createSpeechGateway({ configuration, transcribe, now, referenceLibrary });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   try { await run(`http://127.0.0.1:${server.address().port}/transcribe`); }
   finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
@@ -28,19 +30,20 @@ async function withGateway(configChanges, transcribe, run, now) {
 
 test('configuration requires a private token and exact allowed origins', () => {
   assert.throws(() => readGatewayConfiguration({}), /SPEECH_GATEWAY_TOKEN/);
-  assert.throws(() => readGatewayConfiguration({ SPEECH_GATEWAY_TOKEN: gatewayToken, SPEECH_ALLOWED_ORIGINS: '*' }), /exact/);
-  assert.throws(() => readGatewayConfiguration({ SPEECH_GATEWAY_TOKEN: gatewayToken, SPEECH_ALLOWED_ORIGINS: 'https://example.com/path' }), /exact/);
+  assert.throws(() => readGatewayConfiguration({ ...gatewayEnvironment, SPEECH_ALLOWED_ORIGINS: '*' }), /exact/);
+  assert.throws(() => readGatewayConfiguration({ ...gatewayEnvironment, SPEECH_ALLOWED_ORIGINS: 'https://example.com/path' }), /exact/);
+  assert.throws(() => readGatewayConfiguration({ SPEECH_GATEWAY_TOKEN: gatewayToken }), /SPEECH_REFERENCE_BUCKET/);
 });
 
 test('network exposure requires an explicit container host; local binding remains the default', () => {
-  const localConfiguration = readGatewayConfiguration({ SPEECH_GATEWAY_TOKEN: gatewayToken });
+  const localConfiguration = readGatewayConfiguration(gatewayEnvironment);
   assert.equal(localConfiguration.host, '127.0.0.1');
   assert.equal(localConfiguration.port, 8081);
-  const containerConfiguration = readGatewayConfiguration({ SPEECH_GATEWAY_TOKEN: gatewayToken, SPEECH_GATEWAY_HOST: '0.0.0.0', PORT: '8080' });
+  const containerConfiguration = readGatewayConfiguration({ ...gatewayEnvironment, SPEECH_GATEWAY_HOST: '0.0.0.0', PORT: '8080' });
   assert.equal(containerConfiguration.host, '0.0.0.0');
   assert.equal(containerConfiguration.port, 8080);
   for (const host of ['', 'localhost', '::', '192.168.1.1', 'example.com', '0.0.0.0 ']) {
-    assert.throws(() => readGatewayConfiguration({ SPEECH_GATEWAY_TOKEN: gatewayToken, SPEECH_GATEWAY_HOST: host }), /SPEECH_GATEWAY_HOST/);
+    assert.throws(() => readGatewayConfiguration({ ...gatewayEnvironment, SPEECH_GATEWAY_HOST: host }), /SPEECH_GATEWAY_HOST/);
   }
 });
 
@@ -79,6 +82,67 @@ test('preflight allows only the configured origin, POST and necessary headers', 
     const wrongMethod = await fetch(endpoint, { method: 'OPTIONS', headers: { Origin: 'http://localhost:8080', 'Access-Control-Request-Method': 'DELETE' } });
     assert.equal(wrongMethod.status, 400);
   });
+});
+
+test('reference-library requests use the private token and stay separate from Google transcription quota', async () => {
+  const referenceCalls = [];
+  const reference = { referenceId: '20000000-0000-4000-8000-000000000001', word: 'mat', attemptId: '20000000-0000-4000-8000-000000000001' };
+  const referenceLibrary = {
+    async listReferences() { referenceCalls.push(['list']); return [reference]; },
+    async approveReference(body) { referenceCalls.push(['approve', body]); return reference; },
+    async compareRecording(body) { referenceCalls.push(['compare', body]); return { scoringStatus: 'experimental-uncalibrated', targetRank: 1 }; },
+    async deleteReference(id) { referenceCalls.push(['delete', id]); return { referenceId: id, deleted: true }; },
+  };
+  let transcriptions = 0;
+  await withGateway({ requestsPerMinute: 1 }, async () => { transcriptions++; return { transcript: 'mat' }; }, async endpoint => {
+    const referencesUrl = new URL('/references', endpoint);
+    const getResponse = await fetch(referencesUrl, { headers: authorizedHeaders });
+    assert.equal(getResponse.status, 200);
+    assert.deepEqual(await getResponse.json(), { references: [reference] });
+    const comparisonResponse = await fetch(new URL('/compare', endpoint), {
+      method: 'POST', headers: authorizedHeaders, body: JSON.stringify({ attemptId: 'candidate' }),
+    });
+    assert.equal(comparisonResponse.status, 200);
+    assert.equal((await comparisonResponse.json()).scoringStatus, 'experimental-uncalibrated');
+    const approvalResponse = await fetch(referencesUrl, {
+      method: 'POST', headers: authorizedHeaders, body: JSON.stringify({ attemptId: 'approved' }),
+    });
+    assert.equal(approvalResponse.status, 201);
+    const deleteResponse = await fetch(new URL(`/references/${reference.referenceId}`, endpoint), {
+      method: 'DELETE', headers: { Authorization: authorizedHeaders.Authorization, Origin: authorizedHeaders.Origin },
+    });
+    assert.equal(deleteResponse.status, 200);
+    assert.equal((await deleteResponse.json()).deleted, true);
+    const transcriptionResponse = await fetch(endpoint, { method: 'POST', headers: authorizedHeaders, body: JSON.stringify(recording) });
+    assert.equal(transcriptionResponse.status, 200);
+    assert.equal((await transcriptionResponse.json()).transcript, 'mat');
+    const secondTranscription = await fetch(endpoint, { method: 'POST', headers: authorizedHeaders, body: JSON.stringify(recording) });
+    assert.equal((await secondTranscription.json()).error.code, 'transcription_rate_limit');
+  }, undefined, referenceLibrary);
+  assert.deepEqual(referenceCalls.map(call => call[0]), ['list', 'compare', 'approve', 'delete']);
+  assert.equal(transcriptions, 1);
+});
+
+test('reference endpoints require authorization and reject unsupported CORS methods', async () => {
+  const referenceLibrary = {
+    async listReferences() { throw new Error('unauthorized reference list must not be read'); },
+    async approveReference() { throw new Error('unauthorized reference must not be saved'); },
+    async compareRecording() { throw new Error('unauthorized comparison must not run'); },
+    async deleteReference() { throw new Error('unauthorized reference must not be deleted'); },
+  };
+  await withGateway({}, async () => ({ transcript: 'mat' }), async endpoint => {
+    const response = await fetch(new URL('/references', endpoint), {
+      headers: { Origin: authorizedHeaders.Origin },
+    });
+    assert.equal(response.status, 401);
+    assert.equal((await response.json()).error.code, 'gateway_token_required');
+    const preflight = await fetch(new URL('/references/20000000-0000-4000-8000-000000000001', endpoint), {
+      method: 'OPTIONS', headers: {
+        Origin: authorizedHeaders.Origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'authorization',
+      },
+    });
+    assert.equal(preflight.status, 400);
+  }, undefined, referenceLibrary);
 });
 
 test('valid requests pass only validated recording fields and return evidence', async () => {

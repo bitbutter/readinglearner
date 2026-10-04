@@ -431,6 +431,22 @@ const recordingTests = [
     assert.equal(retained.voided, true);
     assert.deepEqual(plainMetadata(retained.modelRuns), [reorderedProperties, secondRun]);
   }],
+  ['Reference comparison history is append-only and survives reload and ZIP export', async () => {
+    const { recordings } = loadRecordingStore();
+    await recordings.createSession(recordingSession());
+    const saved = await recordings.saveAttempt(sessionId, recordingAttempt(1), new Blob(['candidate audio'], { type: 'audio/wav' }));
+    const comparison = { id: 'reference-run-1', scoringStatus: 'experimental-uncalibrated', targetWord: 'mat', targetRank: 1,
+      closestWord: 'mat', rankedWords: [{ word: 'mat', averageDistance: 0.2, minimumDistance: 0.2 }] };
+    await recordings.appendReferenceMatchRun(sessionId, saved.id, comparison);
+    const restored = (await recordings.getSession(sessionId)).attempts[0];
+    assert.deepEqual(plainMetadata(restored.referenceMatchRuns), [comparison]);
+    await assert.rejects(recordings.appendReferenceMatchRun(sessionId, saved.id, comparison), /only once/i);
+    await assert.rejects(recordings.updateAttempt(sessionId, { ...restored, referenceMatchRuns: [] }), /cannot be removed or changed/i);
+    const exported = await recordings.exportSession(sessionId);
+    const files = await decodeStoredZip(exported.blob);
+    const manifest = JSON.parse(files.get('manifest.json').toString('utf8'));
+    assert.deepEqual(manifest.attempts[0].referenceMatchRuns, [comparison]);
+  }],
   ['Microphone settings and capture interruption metadata remain immutable', async () => {
     const { recordings } = loadRecordingStore();
     await recordings.createSession(recordingSession());
