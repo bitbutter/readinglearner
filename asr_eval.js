@@ -20,6 +20,8 @@ const MODEL_CONFIGURATION_VERSIONS = Object.freeze({
   latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2',
 });
 const V1_OPUS_SAMPLE_RATES_HERTZ = new Set([8000, 12000, 16000, 24000, 48000]);
+const SPEECH_GATEWAY_RATE_LIMIT_RETRY_DELAY_MS = 61_000;
+const MINIMUM_SPEECH_BATCH_REQUEST_GAP_MS = 3200;
 const normText = (text) => text.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
 const $ = (id) => document.getElementById(id);
 let recordingSession = null;
@@ -85,6 +87,18 @@ function remainingCurrentAttemptsForModel(model) {
 
 function latestModelError(attempt, model) {
   return [...(attempt?.modelRuns || [])].reverse().find(run => (run.model === model || run.requestedModel === model) && run.status === 'error') || null;
+}
+
+function latestSpeechRateLimitErrorStartedAt() {
+  let latestStartedAt = Number.NEGATIVE_INFINITY;
+  for (const attempt of recordedAttempts) {
+    for (const run of attempt.modelRuns || []) {
+      if (run.status !== 'error' || run.serverError?.code !== 'transcription_rate_limit') continue;
+      const startedAt = Date.parse(run.speechGatewayRequestSentAt || run.startedAt);
+      if (Number.isFinite(startedAt)) latestStartedAt = Math.max(latestStartedAt, startedAt);
+    }
+  }
+  return Number.isFinite(latestStartedAt) ? latestStartedAt : null;
 }
 
 function modelRunErrorText(run) {
@@ -167,7 +181,7 @@ function attemptDescription(attempt) {
   const score = scoreTranscript(run.transcript, attempt.prompt);
   if (score.verdict === 'hit') return { text: '✓ matches the displayed word', className: 'ok' };
   if (score.verdict === 'pair-confusion') return { text: `⚠ pair confusion — “${score.confusedWith}”`, className: 'conf' };
-  return { text: run.transcript ? '✗ does not match the displayed word' : '✗ nothing recognized', className: 'bad' };
+  return { text: run.transcript ? '✗ does not match the displayed word' : '✗ Google returned no transcript; audio is saved', className: 'bad' };
 }
 
 function renderStrip() {
@@ -178,7 +192,9 @@ function renderStrip() {
     const cell = document.createElement('button');
     cell.className = 'cell' + (attempt?.voided ? ' voided' : description.className ? ` ${description.className === 'ok' ? 'hit' : description.className === 'conf' ? 'conf' : lastModelRun(attempt)?.status === 'error' || attempt?.captureError ? 'error' : 'miss'}` : attempt ? ' recorded' : '') + (wordIndex === recordingSession.currentTrialIndex ? ' cur' : '');
     cell.textContent = wordIndex + 1;
-    cell.title = `${word}: ${attempt ? description.text : 'not recorded'}`;
+    const latestRun = lastModelRun(attempt);
+    const latestRunModel = latestRun?.model || latestRun?.requestedModel;
+    cell.title = `${word}: ${attempt ? `${latestRunModel ? `${modelLabel(latestRunModel)} — ` : ''}${description.text}` : 'not recorded'}`;
     cell.disabled = operationPending || !!activeCapture || !!pendingAudioSave || !!pendingModelSave;
     cell.addEventListener('click', () => navigateToWord(wordIndex));
     $('strip').appendChild(cell);
@@ -194,7 +210,7 @@ function renderTrial() {
   const takes = recordedAttempts.filter(recording => recording.wordIndex === wordIndex).length;
   $('counter').textContent = `word ${wordIndex + 1} / ${recordingSession.order.length}` + (takes ? ` — ${takes} saved take${takes === 1 ? '' : 's'}` : '');
   const completedRuns = (attempt?.modelRuns || []).filter(savedRun => savedRun.status === 'complete');
-  $('heard').textContent = run?.status === 'complete' ? (run.transcript ? `heard: “${run.transcript}”` : 'heard: (nothing)') : '';
+  $('heard').textContent = run?.status === 'complete' ? (run.transcript ? `heard: “${run.transcript}”` : 'heard: (Google returned no transcript)') : '';
   $('alts').textContent = completedRuns.map(savedRun => {
     const transcript = savedRun.transcript || '(nothing)';
     const verdict = scoreTranscript(savedRun.transcript, attempt.prompt).verdict;
@@ -420,7 +436,7 @@ async function blobBase64(blob) {
   });
 }
 
-async function transcribeAttempt(attempt, settings) {
+async function transcribeAttempt(attempt, settings, beforeSpeechGatewayRequest = null) {
   $('status').textContent = 'Audio saved — asking Google to transcribe it…';
   const run = { id: crypto.randomUUID(), startedAt: new Date().toISOString(), requestedModel: settings.model, status: 'error' };
   const startedAtMs = Date.now();
@@ -438,11 +454,14 @@ async function transcribeAttempt(attempt, settings) {
       }
       requestBody.sampleRateHertz = sampleRateHertz;
     }
-    const response = await fetch(settings.endpoint, {
+    const requestOptions = {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${settings.token}` },
       body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(45000),
-    });
+    };
+    if (beforeSpeechGatewayRequest) await beforeSpeechGatewayRequest();
+    run.speechGatewayRequestSentAt = new Date().toISOString();
+    const response = await fetch(settings.endpoint, requestOptions);
     const transcription = await response.json();
     if (!response.ok) {
       run.serverError = transcription.error;
@@ -468,7 +487,16 @@ async function transcribeRemainingCurrentTakes(settings) {
     $('batch-status').textContent = `No current saved takes need ${label}.`;
     return;
   }
+  const latestRateLimitErrorStartedAt = latestSpeechRateLimitErrorStartedAt();
+  if (latestRateLimitErrorStartedAt !== null) {
+    const rateLimitCooldownMs = Math.max(0, latestRateLimitErrorStartedAt + SPEECH_GATEWAY_RATE_LIMIT_RETRY_DELAY_MS - Date.now());
+    if (rateLimitCooldownMs > 0) {
+      $('batch-status').textContent = `Waiting ${Math.ceil(rateLimitCooldownMs / 1000)}s for the previous request limit to clear; no audio is being sent.`;
+      await new Promise(resolve => setTimeout(resolve, rateLimitCooldownMs));
+    }
+  }
   $('batch-status').textContent = `Starting ${label} for ${attempts.length} current saved takes, one at a time.`;
+  let previousSpeechBatchRequestAt = null;
   for (let index = 0; index < attempts.length; index++) {
     const attempt = attempts[index];
     if (!attempt.audioBlob || !attempt.audioSha256 || !attempt.audioMimeType || !Number.isFinite(attempt.durationMs)) {
@@ -476,7 +504,19 @@ async function transcribeRemainingCurrentTakes(settings) {
     }
     $('batch-status').textContent = `Transcribing with ${label}: ${index + 1}/${attempts.length} — “${attempt.prompt}”.`;
     let run;
-    try { run = await transcribeAttempt(attempt, settings); }
+    try {
+      run = await transcribeAttempt(attempt, settings, async () => {
+        if (previousSpeechBatchRequestAt !== null) {
+          const remainingGapMs = Math.max(0, MINIMUM_SPEECH_BATCH_REQUEST_GAP_MS - (Date.now() - previousSpeechBatchRequestAt));
+          if (remainingGapMs > 0) {
+            $('batch-status').textContent = `Waiting ${Math.ceil(remainingGapMs / 1000)}s before ${index + 1}/${attempts.length} to stay within the speech server request limit.`;
+            await new Promise(resolve => setTimeout(resolve, remainingGapMs));
+          }
+        }
+        $('batch-status').textContent = `Transcribing with ${label}: ${index + 1}/${attempts.length} — “${attempt.prompt}”.`;
+        previousSpeechBatchRequestAt = Date.now();
+      });
+    }
     catch (error) {
       $('batch-status').textContent = `Batch stopped at “${attempt.prompt}”: ${error.message}. Earlier saved results are kept.`;
       throw error;
@@ -541,7 +581,7 @@ function renderSummary() {
   for (const attempt of selected) {
     const row = document.createElement('tr');
     const formatRun = (model, modelRun) => {
-      if (modelRun) return `${modelRun.transcript || '(nothing)'} — ${scoreTranscript(modelRun.transcript, attempt.prompt).verdict}`;
+      if (modelRun) return `${modelRun.transcript || 'No transcript returned'} — ${scoreTranscript(modelRun.transcript, attempt.prompt).verdict}`;
       const errorRun = latestModelError(attempt, model);
       return errorRun ? `request error — ${modelRunErrorText(errorRun)}` : '—';
     };

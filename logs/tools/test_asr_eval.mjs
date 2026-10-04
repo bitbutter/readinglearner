@@ -7,6 +7,7 @@ import { createHash, randomUUID, webcrypto } from 'node:crypto';
 
 const pageHtml = readFileSync(new URL('../../asr_eval.html', import.meta.url), 'utf8');
 const pageScript = readFileSync(new URL('../../asr_eval.js', import.meta.url), 'utf8');
+const minimumSpeechBatchRequestGapMs = 3200;
 assert.match(pageHtml, /src="asr_eval\.js"/, 'HTML must load the tested evaluator script');
 const appScript = readFileSync(new URL('../../app.js', import.meta.url), 'utf8');
 
@@ -218,8 +219,9 @@ async function flushBrowserPromises() {
   await new Promise(resolve => setImmediate(resolve));
 }
 
-function createPage({ archive = new RecordingArchive(), manualRecorderDelivery = false, responseFactory, recorderBytes = Buffer.from([0, 255, 17, 128, 1]) } = {}) {
+function createPage({ archive = new RecordingArchive(), manualRecorderDelivery = false, responseFactory, recorderBytes = Buffer.from([0, 255, 17, 128, 1]), audioEncodingDelaysMs = [] } = {}) {
   const downloadedLinks = [], elements = new Map(), blobUrls = new Map(), recorders = [], fetchRequests = [];
+  const remainingAudioEncodingDelaysMs = [...audioEncodingDelaysMs];
   for (const match of pageHtml.matchAll(/<([a-z]+)\b([^>]*\bid="([^"]+)"[^>]*)>/gi)) {
     const element = new PageElement(match[1], downloadedLinks);
     element.id = match[3]; element.disabled = /\bdisabled\b/.test(match[2]); element.hidden = /\bhidden\b/.test(match[2]);
@@ -269,6 +271,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
   }
   class FileReader {
     readAsDataURL(blob) {
+      clockMilliseconds += remainingAudioEncodingDelaysMs.shift() || 0;
       blob.arrayBuffer().then(bytes => {
         this.result = 'data:' + blob.type + ';base64,' + Buffer.from(bytes).toString('base64');
         this.onload?.();
@@ -277,6 +280,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
   }
   const storedValues = new Map();
   let clockMilliseconds = Date.parse('2026-10-03T10:00:00.000Z'), nextTimerId = 0;
+  let fastForwardSpeechBatchTimers = false;
   const timers = new Map();
   class BrowserDate extends Date {
     constructor(...args) { super(...(args.length ? args : [clockMilliseconds])); }
@@ -297,10 +301,17 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     localStorage: { getItem: key => storedValues.get(key) ?? null, setItem: (key, value) => storedValues.set(key, value), removeItem: key => storedValues.delete(key) },
     speechSynthesis: { cancel() {}, speak() {} }, SpeechSynthesisUtterance: class { constructor(text) { this.text = text; } },
     requestAnimationFrame() { return 1; }, cancelAnimationFrame() {},
-    setTimeout(callback, delay = 0) { const id = ++nextTimerId; timers.set(id, { callback, due: clockMilliseconds + delay }); return id; },
+    setTimeout(callback, delay = 0) {
+      const id = ++nextTimerId;
+      if (fastForwardSpeechBatchTimers && (delay === minimumSpeechBatchRequestGapMs || (delay > 10_000 && delay < 60_000))) {
+        clockMilliseconds += delay;
+        queueMicrotask(callback);
+      } else timers.set(id, { callback, due: clockMilliseconds + delay });
+      return id;
+    },
     clearTimeout: id => timers.delete(id),
     async fetch(endpoint, options) {
-      const request = { endpoint, options, body: JSON.parse(options.body) }; fetchRequests.push(request);
+      const request = { endpoint, options, body: JSON.parse(options.body), submittedAt: clockMilliseconds }; fetchRequests.push(request);
       const originalBytes = Buffer.from(request.body.audioBase64, 'base64');
       const transcription = { transcript: 'Matt', provider: 'google-cloud-stt', model: request.body.model,
         languageCode: 'en-GB', configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2' })[request.body.model], latencyMs: 123,
@@ -314,6 +325,8 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     element: id => document.getElementById(id),
     evaluate: expression => vm.runInContext(expression, context),
     counts: () => ({ microphoneRequests, microphoneStops, recorderStarts }),
+    get fastForwardSpeechBatchTimers() { return fastForwardSpeechBatchTimers; },
+    set fastForwardSpeechBatchTimers(value) { fastForwardSpeechBatchTimers = value; },
     beginHold() { return elements.get('mic').dispatch('pointerdown', { pointerId: 1 }); },
     endHold() { return elements.get('mic').dispatch('pointerup', { pointerId: 1 }); },
     deliverStoppedAudio() { recorders.at(-1).deliverStoppedAudio(); },
@@ -505,12 +518,15 @@ const browserBehaviorTests = [
     await seedSavedTake(archive, 3, { voided: true });
     const page = createPage({ archive }); await page.idle(); page.configureTranscription('short');
     assert.equal(page.element('transcribe-all').disabled, false);
+    assert.match(page.element('strip').children[0].className, /\bmiss\b/);
     await page.click('transcribe-all');
     assert.equal(page.fetchRequests.length, 1);
     assert.equal(page.fetchRequests[0].body.model, 'short');
     assert.deepEqual(Buffer.from(page.fetchRequests[0].body.audioBase64, 'base64'), first.audioBytes);
     assert.equal(page.archive.attempts.get(first.attempt.id).modelRuns.length, 2);
     assert.deepEqual(page.archive.attempts.get(second.attempt.id).modelRuns.map(run => run.transcript), ['mad']);
+    assert.match(page.element('strip').children[0].className, /\bhit\b/);
+    assert.match(page.element('strip').children[0].title, /short \(V2\)/);
     assert.match(page.element('batch-status').textContent, /1\/1 remaining takes transcribed and saved/);
     assert.equal(page.element('transcribe-all').disabled, true);
     await page.click('finish');
@@ -531,10 +547,13 @@ const browserBehaviorTests = [
       return { ok: true, status: 200, async json() { return transcription; } };
     } });
     await page.idle(); page.configureTranscription('short');
+    page.fastForwardSpeechBatchTimers = true;
     await page.click('transcribe-all');
     assert.equal(page.fetchRequests.length, 2, 'The third take must wait after the second take fails');
     assert.match(page.element('batch-status').textContent, /stopped at “mad” after 2\/3/);
     assert.match(page.element('batch-status').textContent, /Google HTTP 400.*INVALID_ARGUMENT.*Invalid sampleRateHertz/);
+    assert.match(page.element('strip').children[1].title, /short \(V2\).*Transcription failed/);
+    assert.doesNotMatch(page.element('strip').children[1].title, /undefined/);
     assert.equal(archive.attempts.get(takes[0].attempt.id).modelRuns.length, 1);
     assert.equal(archive.attempts.get(takes[1].attempt.id).modelRuns[0].status, 'error');
     await page.click('next');
@@ -550,11 +569,49 @@ const browserBehaviorTests = [
     assert.equal(archive.attempts.get(takes[2].attempt.id).modelRuns.length, 1);
     assert.match(page.element('batch-status').textContent, /2\/2 remaining takes transcribed and saved/);
   }],
+  ['A batch longer than the server rate window spaces requests below its 20-per-minute ceiling', async () => {
+    const archive = new RecordingArchive();
+    archive.sessions.set(existingSessionId, { ...archive.sessions.get(existingSessionId), order: [
+      'mat', 'mad', 'cat', 'cut', 'pen', 'pin', 'bed', 'bad', 'sit', 'six', 'hop',
+      'hot', 'bus', 'but', 'was', 'wash', 'so', 'no', 'go', 'he', 'we',
+    ] });
+    for (let wordIndex = 0; wordIndex < 21; wordIndex++) await seedSavedTake(archive, wordIndex);
+    const page = createPage({ archive, audioEncodingDelaysMs: [5000] }); await page.idle(); page.configureTranscription('short');
+    page.fastForwardSpeechBatchTimers = true;
+    await page.click('transcribe-all');
+    const submittedAt = page.fetchRequests.map(request => request.submittedAt);
+    assert.equal(submittedAt.length, 21);
+    assert.ok(submittedAt.slice(1).every((timestamp, index) => timestamp - submittedAt[index] >= minimumSpeechBatchRequestGapMs));
+    for (const start of submittedAt) {
+      assert.ok(submittedAt.filter(timestamp => timestamp >= start && timestamp - start < 60_000).length <= 20);
+    }
+    assert.match(page.element('batch-status').textContent, /21\/21 remaining takes transcribed and saved/);
+  }],
+  ['A resumed batch waits out a saved speech rate-limit response before sending audio', async () => {
+    const archive = new RecordingArchive();
+    const currentTime = Date.parse('2026-10-03T10:00:00.000Z');
+    const rateLimitedAt = currentTime - 30_000;
+    const first = await seedSavedTake(archive, 0, { modelRuns: [{
+      id: randomUUID(), startedAt: new Date(rateLimitedAt).toISOString(), requestedModel: 'short', status: 'error',
+      error: 'Too many recording requests.', serverError: { code: 'transcription_rate_limit' },
+    }] });
+    await seedSavedTake(archive, 1);
+    const page = createPage({ archive }); await page.idle(); page.configureTranscription('short');
+    page.fastForwardSpeechBatchTimers = true;
+    await page.click('transcribe-all');
+    assert.equal(page.fetchRequests.length, 2);
+    assert.ok(page.fetchRequests[0].submittedAt >= rateLimitedAt + 61_000);
+    assert.equal(page.archive.attempts.get(first.attempt.id).modelRuns.at(-1).status, 'complete');
+    assert.match(page.element('batch-status').textContent, /2\/2 remaining takes transcribed and saved/);
+  }],
   ['A successful empty API transcript is a scored miss', async () => {
     const page = createPage({ responseFactory: async (request, response) => ({ ok: true, status: 200, async json() { return { ...response, transcript: '' }; } }) });
     await page.idle(); await page.enableMicrophone(); page.configureTranscription(); await page.record();
     assert.equal(page.latestAttempt().modelRuns[0].status, 'complete'); assert.equal(page.latestAttempt().modelRuns[0].verdict, 'miss');
+    assert.match(page.element('heard').textContent, /Google returned no transcript/);
+    assert.match(page.element('verdict').textContent, /audio is saved/);
     await page.click('finish'); expectScore(page, 0, 1);
+    assert.match(page.element('trials').textContent, /No transcript returned — miss/);
   }],
   ['An audio save failure preserves unsaved bytes and locks session controls until an explicit retry', async () => {
     const archive = new RecordingArchive(); archive.failAudioSaves = 1;
