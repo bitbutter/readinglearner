@@ -207,12 +207,13 @@ export function createGoogleCloudReferenceLibrary({
 
   async function uploadReference(reference, signal) {
     const objectName = `${REFERENCE_OBJECT_PREFIX}${reference.referenceId}.json`;
-    const metadataDocument = { name: objectName, contentType: 'application/json', metadata: objectMetadata(reference) };
+    const referenceContentType = 'application/json';
+    const metadataDocument = { name: objectName, contentType: referenceContentType, metadata: objectMetadata(reference) };
     const boundary = `readinglearner-${randomUUID()}`;
     const content = JSON.stringify(reference);
     const body = Buffer.from(
       `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadataDocument)}\r\n` +
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n--${boundary}--`,
+      `--${boundary}\r\nContent-Type: ${referenceContentType}\r\n\r\n${content}\r\n--${boundary}--`,
     );
     const url = new URL(`https://storage.googleapis.com/upload/storage/v1/b/${encodeURIComponent(bucket)}/o`);
     url.searchParams.set('uploadType', 'multipart');

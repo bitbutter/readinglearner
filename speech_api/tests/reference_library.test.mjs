@@ -28,12 +28,15 @@ function createStorageFixture({ uploadResponse, reportStorageRejection = () => {
       assert.equal(url.searchParams.get('ifGenerationMatch'), '0');
       const boundary = options.headers['Content-Type'].match(/boundary=([^;]+)/)[1];
       const content = options.body.toString('utf8');
+      const partContentTypes = [...content.matchAll(/(?:^|\r\n)Content-Type: ([^\r\n]+)/g)].map((match) => match[1]);
+      assert.deepEqual(partContentTypes, ['application/json; charset=UTF-8', 'application/json']);
       const firstStart = content.indexOf('\r\n\r\n') + 4;
       const firstEnd = content.indexOf(`\r\n--${boundary}`, firstStart);
       const secondStart = content.indexOf('\r\n\r\n', firstEnd) + 4;
       const secondEnd = content.lastIndexOf(`\r\n--${boundary}--`);
       const objectMetadata = JSON.parse(content.slice(firstStart, firstEnd));
       const reference = JSON.parse(content.slice(secondStart, secondEnd));
+      assert.equal(partContentTypes[1], objectMetadata.contentType);
       if (objects.has(objectMetadata.name)) return new Response(null, { status: 412 });
       objects.set(objectMetadata.name, { metadata: objectMetadata.metadata, reference, timeCreated: reference.createdAt });
       return Response.json({ name: objectMetadata.name });
