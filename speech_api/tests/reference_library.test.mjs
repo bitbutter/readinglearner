@@ -131,7 +131,7 @@ test('Cloud Storage rejection reports safe status details without exposing its r
   const reportedRejections = [];
   const { library } = createStorageFixture({
     uploadResponse: async () => Response.json({ error: {
-      status: 'PERMISSION_DENIED', message: 'private bucket and request details',
+      status: 'PERMISSION_DENIED', message: 'Invalid multipart request for reading-learner-private/reference-recordings/v1/30000000-0000-4000-8000-000000000001.json using fake-storage-access-token',
       errors: [{ reason: 'forbidden', message: 'private object details' }],
     } }, { status: 403 }),
     reportStorageRejection: details => reportedRejections.push(details),
@@ -140,13 +140,14 @@ test('Cloud Storage rejection reports safe status details without exposing its r
     assert.equal(error.name, 'ReferenceLibraryError');
     assert.equal(error.code, 'reference_storage_error');
     assert.equal(error.httpStatus, 502);
-    assert.equal(error.message, 'Cloud Storage rejected the request (HTTP 403, forbidden).');
-    assert.doesNotMatch(error.message, /private bucket|private object/);
+    assert.equal(error.message, 'Cloud Storage rejected the request (HTTP 403, forbidden: Invalid multipart request for [bucket]/[reference object] using [credential]).');
+    assert.doesNotMatch(error.message, /reading-learner-private|30000000|fake-storage-access-token|private object/);
     return true;
   });
   assert.deepEqual(reportedRejections, [{
     event: 'reference_storage_request_rejected', method: 'POST', upstreamStatus: 403,
     reason: 'forbidden', status: 'PERMISSION_DENIED',
+    detail: 'Invalid multipart request for [bucket]/[reference object] using [credential]',
   }]);
 });
 

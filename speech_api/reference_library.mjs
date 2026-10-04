@@ -78,6 +78,21 @@ function validateBucketName(bucketName) {
   return bucketName;
 }
 
+function sanitizedStorageErrorMessage(message, { bucketName, accessToken }) {
+  if (typeof message !== 'string' || !message.trim()) return null;
+  const sanitizedMessage = message
+    .split(bucketName).join('[bucket]')
+    .split(accessToken).join('[credential]')
+    .replace(/reference-recordings\/v1\/[^\s"'<>]+/gi, '[reference object]')
+    .replace(/\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b/gi, '[recording ID]')
+    .replace(/https?:\/\/\S+/gi, '[URL]')
+    .replace(/[A-Za-z0-9+/]{48,}={0,2}/g, '[encoded data]')
+    .replace(/[\r\n\t]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return sanitizedMessage ? sanitizedMessage.slice(0, 200) : null;
+}
+
 function objectMetadata(reference) {
   return {
     referenceId: reference.referenceId,
@@ -169,16 +184,22 @@ export function createGoogleCloudReferenceLibrary({
         typeof error?.reason === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(error.reason))?.reason || null;
       const storageErrorStatus = typeof storageError?.error?.status === 'string' &&
         /^[A-Za-z0-9_.-]{1,64}$/.test(storageError.error.status) ? storageError.error.status : null;
+      const storageErrorMessage = sanitizedStorageErrorMessage(
+        storageError?.error?.message || storageError?.error?.errors?.find(error => typeof error?.message === 'string')?.message,
+        { bucketName: bucket, accessToken },
+      );
       reportStorageRejection({
         event: 'reference_storage_request_rejected',
         method: fetchOptions.method || 'GET',
         upstreamStatus: response.status,
         reason: storageErrorReason,
         status: storageErrorStatus,
+        detail: storageErrorMessage,
       });
       const status = response.status === 429 || response.status >= 500 ? 503 : 502;
       const diagnostic = storageErrorReason || storageErrorStatus;
-      const message = `Cloud Storage rejected the request (HTTP ${response.status}${diagnostic ? `, ${diagnostic}` : ''}).`;
+      const diagnosticDetails = [diagnostic, storageErrorMessage].filter(Boolean).join(': ');
+      const message = `Cloud Storage rejected the request (HTTP ${response.status}${diagnosticDetails ? `, ${diagnosticDetails}` : ''}).`;
       throw new ReferenceLibraryError(status, 'reference_storage_error', message);
     }
     return response;
