@@ -136,7 +136,7 @@ class BrowserEvents {
 class PageElement extends BrowserEvents {
   constructor(tagName, downloadedLinks) {
     super(); this.tagName = tagName.toUpperCase(); this.children = []; this.style = {};
-    this.className = ''; this.disabled = false; this.hidden = false; this.value = '';
+    this.className = ''; this.disabled = false; this.hidden = false; this.checked = false; this.value = '';
     this.downloadedLinks = downloadedLinks; this._textContent = ''; this._innerHTML = ''; this.htmlWrites = [];
   }
   get textContent() { return this._textContent + this.children.map(child => child.textContent).join(''); }
@@ -237,12 +237,13 @@ async function flushBrowserPromises() {
   await new Promise(resolve => setImmediate(resolve));
 }
 
-function createPage({ archive = new RecordingArchive(), manualRecorderDelivery = false, responseFactory, recorderBytes = Buffer.from([0, 255, 17, 128, 1]), audioEncodingDelaysMs = [] } = {}) {
+function createPage({ archive = new RecordingArchive(), storedValues = new Map(), manualRecorderDelivery = false, responseFactory, recorderBytes = Buffer.from([0, 255, 17, 128, 1]), audioEncodingDelaysMs = [] } = {}) {
   const downloadedLinks = [], elements = new Map(), blobUrls = new Map(), recorders = [], fetchRequests = [];
   const remainingAudioEncodingDelaysMs = [...audioEncodingDelaysMs];
   for (const match of pageHtml.matchAll(/<([a-z]+)\b([^>]*\bid="([^"]+)"[^>]*)>/gi)) {
     const element = new PageElement(match[1], downloadedLinks);
     element.id = match[3]; element.disabled = /\bdisabled\b/.test(match[2]); element.hidden = /\bhidden\b/.test(match[2]);
+    element.checked = /\bchecked\b/.test(match[2]);
     elements.set(element.id, element);
   }
   const document = new BrowserEvents();
@@ -296,7 +297,6 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
       }).catch(error => { this.error = error; this.onerror?.(); });
     }
   }
-  const storedValues = new Map();
   let clockMilliseconds = Date.parse('2026-10-03T10:00:00.000Z'), nextTimerId = 0;
   let fastForwardSpeechBatchTimers = false;
   const timers = new Map();
@@ -442,6 +442,24 @@ function currentCompletedRun(model, transcript) {
 }
 
 const browserBehaviorTests = [
+  ['The access code is remembered only when selected and can be restored or removed', async () => {
+    const page = createPage();
+    await page.idle();
+    assert.equal(page.element('remember-gateway-token').checked, false);
+    page.element('remember-gateway-token').checked = true;
+    page.element('remember-gateway-token').dispatch('change');
+    page.element('gateway-token').value = 'tab-only-secret-token';
+    page.element('gateway-token').dispatch('change');
+    assert.equal(page.storedValues.get('asrEval.speechServerAccessCode.v1'), 'tab-only-secret-token');
+
+    const reloadedPage = createPage({ storedValues: page.storedValues });
+    await reloadedPage.idle();
+    assert.equal(reloadedPage.element('gateway-token').value, 'tab-only-secret-token');
+    assert.equal(reloadedPage.element('remember-gateway-token').checked, true);
+    reloadedPage.element('remember-gateway-token').checked = false;
+    reloadedPage.element('remember-gateway-token').dispatch('change');
+    assert.equal(reloadedPage.storedValues.has('asrEval.speechServerAccessCode.v1'), false);
+  }],
   ['The evaluator presents actual prompt words and distinguishes approved references from transcript checks', async () => {
     const serverReferences = [];
     const page = createPage({ responseFactory: async (request, transcription) => {
@@ -886,13 +904,14 @@ const browserBehaviorTests = [
     assert.equal(page.evaluate('recordedAttempts.length'), 0);
     assert.notEqual(page.evaluate('recordingSession.id'), existingSessionId);
   }],
-  ['API request contains the same saved audio and no expected word, while credentials stay out of storage/export', async () => {
-    const page = createPage(); await page.idle(); await page.enableMicrophone(); page.configureTranscription(); await page.record();
+  ['API request contains the saved audio without its expected word, and credentials stay out of recording exports', async () => {
+    const page = createPage(); await page.idle(); await page.enableMicrophone(); page.configureTranscription();
+    page.element('gateway-token').dispatch('change'); await page.record();
     const request = page.fetchRequests[0];
     assert.deepEqual(Object.keys(request.body).sort(), ['audioBase64', 'durationMs', 'mimeType', 'model']);
     assert.deepEqual(Buffer.from(request.body.audioBase64, 'base64'), page.recorderBytes);
     assert.equal(request.options.headers.Authorization, 'Bearer tab-only-secret-token');
-    assert.ok([...page.storedValues.values()].every(value => !value.includes('tab-only-secret-token')));
+    assert.equal(page.storedValues.has('asrEval.speechServerAccessCode.v1'), false, 'an unchecked code is not remembered');
     await page.click('finish'); await page.click('export');
     assert.doesNotMatch(JSON.stringify(page.archive.lastManifest), /tab-only-secret-token/);
     assert.equal(page.latestAttempt().audioSha256, createHash('sha256').update(page.recorderBytes).digest('hex'));

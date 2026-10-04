@@ -23,6 +23,7 @@ const SPEECH_AUDIO_PREPROCESSING_VERSION = 'leading-silence-preroll-300ms-mono16
 const MAX_PREPARED_AUDIO_BASE64_CHARACTERS = 3 * 1024 * 1024;
 const SPEECH_GATEWAY_RATE_LIMIT_RETRY_DELAY_MS = 61_000;
 const MINIMUM_SPEECH_BATCH_REQUEST_GAP_MS = 3200;
+const SPEECH_SERVER_ACCESS_CODE_STORAGE_KEY = 'asrEval.speechServerAccessCode.v1';
 const normText = (text) => text.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
 const $ = (id) => document.getElementById(id);
 let recordingSession = null;
@@ -454,6 +455,26 @@ function readGatewayConnection() {
       return endpoint.href;
     },
   };
+}
+
+function updateRememberedSpeechServerAccessCode() {
+  try {
+    const accessCode = $('gateway-token').value.trim();
+    if ($('remember-gateway-token').checked && accessCode) {
+      localStorage.setItem(SPEECH_SERVER_ACCESS_CODE_STORAGE_KEY, accessCode);
+    } else {
+      localStorage.removeItem(SPEECH_SERVER_ACCESS_CODE_STORAGE_KEY);
+    }
+  } catch {
+    showProblem('This browser could not update its saved access code. Check the browser storage settings.');
+  }
+}
+
+function loadRememberedSpeechServerAccessCode() {
+  const accessCode = localStorage.getItem(SPEECH_SERVER_ACCESS_CODE_STORAGE_KEY);
+  if (!accessCode) return;
+  $('gateway-token').value = accessCode;
+  $('remember-gateway-token').checked = true;
 }
 
 async function requestSpeechServer(path, method, body) {
@@ -960,6 +981,8 @@ $('tts').addEventListener('click', () => {
   speechSynthesis.cancel(); speechSynthesis.speak(utterance);
 });
 $('recognition-mode').addEventListener('change', refreshControls);
+$('gateway-token').addEventListener('change', updateRememberedSpeechServerAccessCode);
+$('remember-gateway-token').addEventListener('change', updateRememberedSpeechServerAccessCode);
 $('connect-references').addEventListener('click', () => runOperation(loadReferenceLibrary));
 $('play-prepared').addEventListener('click', () => runOperation(prepareAndPlayCurrentTake));
 $('approve-reference').addEventListener('click', () => runOperation(approveCurrentTakeAsReference));
@@ -987,6 +1010,7 @@ $('export-legacy').addEventListener('click', () => {
 });
 
 async function initialize() {
+  loadRememberedSpeechServerAccessCode();
   await ASRRecordings.open();
   const sessions = await ASRRecordings.listSessions();
   if (sessions.length) await openSession(sessions[0].id);

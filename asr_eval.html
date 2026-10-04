@@ -92,6 +92,8 @@
   .connection { max-width: 480px; margin: .3rem auto; }
   .section-label { font-size: .8rem; opacity: .65; margin: .3rem auto; }
   .settings label { display: block; margin-top: .7rem; font-size: .9rem; }
+  .settings .remember-access-code { display: flex; align-items: center; gap: .5rem; }
+  .remember-access-code input { width: auto; margin: 0; padding: 0; accent-color: #9a8cff; }
   select, input { width: 100%; font: inherit; color: #fff; background: #252246; border: 1px solid #777; border-radius: .4rem; padding: .6rem; }
   .settings .small { margin-top: .5rem; }
   #problem { white-space: pre-wrap; }
@@ -110,8 +112,9 @@
       <input id="gateway-url" type="url" value="https://reading-learner-speech-775355867708.europe-west1.run.app/transcribe" autocomplete="url">
       <label for="gateway-token">Speech server access code</label>
       <input id="gateway-token" type="password" autocomplete="off">
+      <label class="remember-access-code"><input id="remember-gateway-token" type="checkbox"> Remember access code in this browser</label>
       <button id="connect-references" class="small">Connect and load references</button>
-      <p class="note">The access code stays in this tab. Google Cloud credentials stay on the server.</p>
+      <p class="note">When selected, the code is saved in this browser. Pages on bitbutter.github.io share that saved browser storage. Uncheck to remove it. The code is never included in recording exports; Google Cloud credentials stay on the server.</p>
     </div>
     <p id="archive-status" role="status">Opening saved recordings…</p>
     <p id="problem" class="bad" role="alert" hidden></p>
