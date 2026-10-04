@@ -4,12 +4,25 @@ The evaluator records original audio files independently of browser speech recog
 
 ## Record a test set
 
+### Guided reference check
+
+1. In the evaluator, connect to the speech server and load the approved word references. The page shows how many distinct words are ready.
+2. Choose **Start guided recording**. Allow microphone access when the browser asks.
+3. For each large prompt, hold the microphone button, say the word, and release. The original recording is saved in this browser, then the next word appears automatically. No Google transcription request is made.
+4. After the last word, the evaluator sends each usable take to the private speech server for comparison with the approved examples. The server does not save candidate takes or send them to Google.
+5. Review each recording and its experimental sound ranking. If a comparison request failed, choose **Compare or retry saved takes**; already saved comparisons are skipped.
+6. Download **comparison results JSON** and bring it back here so I can review the word rankings. Include **audio & manifest ZIP** if you want me to listen to the actual takes.
+
+The ranking is not a right-or-wrong score. A target rank of 1 means the take ranked closest to its approved examples among the words in the reference library. The JSON contains no audio bytes or access code. The ZIP contains the original audio files and saved result history. Guided takes remain in this browser until exported; only approved reference audio is kept in the server library.
+
+### Manual evaluator sessions
+
 1. Open `asr_eval.html` and leave **After recording** set to **Save audio only**.
 2. Choose **Enable microphone** and allow microphone access in the browser.
 3. Hold the large microphone button, say the displayed word, then release. Wait for **Audio saved**.
 4. Move between words with the numbers or back/next buttons. Holding the microphone again records another take without deleting the earlier one.
 5. Void accidental or interrupted recordings. Voiding changes whether a take is scored; its audio remains in the archive.
-6. Choose **Finish & see results**, then **Download audio & manifest ZIP**.
+6. Choose **Review this session**, then **Download audio & manifest ZIP**.
 
 Recordings survive reloads in that browser on that device. A new session keeps earlier sessions in the **Saved session** menu. A downloaded ZIP is the portable copy; clearing browser storage removes locally saved sessions. Old evaluator sessions saved only text across reloads, and that earlier text can still be downloaded when present. Their missing audio cannot be recovered.
 

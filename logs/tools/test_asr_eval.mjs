@@ -240,7 +240,7 @@ async function flushBrowserPromises() {
 function createPage({ archive = new RecordingArchive(), storedValues = new Map(), manualRecorderDelivery = false, responseFactory, recorderBytes = Buffer.from([0, 255, 17, 128, 1]), audioEncodingDelaysMs = [] } = {}) {
   const downloadedLinks = [], elements = new Map(), blobUrls = new Map(), recorders = [], fetchRequests = [];
   const remainingAudioEncodingDelaysMs = [...audioEncodingDelaysMs];
-  for (const match of pageHtml.matchAll(/<([a-z]+)\b([^>]*\bid="([^"]+)"[^>]*)>/gi)) {
+  for (const match of pageHtml.matchAll(/<([a-z][a-z0-9]*)\b([^>]*\bid="([^"]+)"[^>]*)>/gi)) {
     const element = new PageElement(match[1], downloadedLinks);
     element.id = match[3]; element.disabled = /\bdisabled\b/.test(match[2]); element.hidden = /\bhidden\b/.test(match[2]);
     element.checked = /\bchecked\b/.test(match[2]);
@@ -263,6 +263,7 @@ function createPage({ archive = new RecordingArchive(), storedValues = new Map()
   class AudioContext {
     state = 'running';
     async resume() { this.state = 'running'; }
+    async close() { this.state = 'closed'; }
     createAnalyser() { return { fftSize: 512, getByteTimeDomainData(buffer) { buffer.fill(132); } }; }
     createMediaStreamSource() { return { connect() {} }; }
   }
@@ -528,6 +529,87 @@ const browserBehaviorTests = [
     await page.record(); await page.click('approve-reference'); await page.record(); await page.click('compare-reference');
     assert.match(page.element('problem').textContent, /does not match this take/);
     assert.equal(page.latestAttempt().referenceMatchRuns?.length || 0, 0);
+  }],
+  ['Guided reference recording saves one take per word, compares after the last word, and exports a compact report', async () => {
+    const serverReferences = [
+      { referenceId: 'reference-mat', attemptId: 'approved-mat', word: 'mat' },
+      { referenceId: 'reference-mad', attemptId: 'approved-mad', word: 'mad' },
+    ];
+    const page = createPage({ responseFactory: async (request, transcription) => {
+      const route = new URL(request.endpoint).pathname;
+      if (route === '/references' && request.options.method === 'GET') return { ok: true, status: 200, async json() { return { references: serverReferences }; } };
+      if (route === '/compare') {
+        const targetWord = request.body.expectedWord;
+        const audioSha256 = createHash('sha256').update(Buffer.from(request.body.audioBase64, 'base64')).digest('hex');
+        const otherWord = targetWord === 'mat' ? 'mad' : 'mat';
+        const result = { matcherVersion: 'mono16k-mfcc12-delta-constrained-dtw-v1', scoringStatus: 'experimental-uncalibrated',
+          attemptId: request.body.attemptId, targetWord, closestWord: targetWord, targetRank: 1,
+          rankedWords: [{ word: targetWord, referenceCount: 1, averageDistance: 0.12, minimumDistance: 0.1 },
+            { word: otherWord, referenceCount: 1, averageDistance: 0.75, minimumDistance: 0.7 }],
+          referenceCountForTarget: 1, audioSha256 };
+        return { ok: true, status: 200, async json() { return result; } };
+      }
+      return { ok: true, status: 200, async json() { return transcription; } };
+    } });
+    await page.idle(); page.configureGateway(); await page.click('connect-references');
+    await page.click('start-guided-reference-test');
+    assert.equal(page.evaluate("document.body.classList.contains('guided-reference-mode')"), true);
+    assert.deepEqual(page.evaluate('recordingSession.order'), ['mad', 'mat']);
+    await page.record();
+    assert.equal(page.evaluate('recordingSession.currentTrialIndex'), 1, 'A saved take advances directly to the next word');
+    assert.equal(page.fetchRequests.filter(request => new URL(request.endpoint).pathname === '/compare').length, 0, 'Comparison waits until recording is complete');
+    await page.click('pause-guided');
+    assert.equal(page.evaluate("document.body.classList.contains('guided-reference-mode')"), false);
+    assert.equal(page.archive.attempts.size, 1, 'Pausing preserves the saved take');
+    await page.click('start-guided-reference-test');
+    assert.equal(page.evaluate('recordingSession.currentTrialIndex'), 1, 'Resume continues at the next word');
+    assert.equal(page.evaluate("document.body.classList.contains('guided-reference-mode')"), true);
+    await page.record();
+    assert.equal(page.evaluate("document.body.classList.contains('guided-reference-mode')"), false);
+    assert.equal(page.element('summary').style.display, 'block');
+    assert.equal(page.fetchRequests.filter(request => new URL(request.endpoint).pathname === '/compare').length, 2);
+    assert.equal(page.fetchRequests.filter(request => new URL(request.endpoint).pathname === '/transcribe').length, 0, 'Guided recording never calls Google transcription');
+    assert.match(page.element('stats').textContent, /2 of 2 comparisons saved/);
+    assert.match(page.element('trials').textContent, /Target rank 1 of 2/);
+    assert.match(page.element('reference-batch-status').textContent, /experimental sound similarities/);
+    assert.equal(page.archive.attempts.size, 2);
+    await page.click('export-reference-results');
+    const report = JSON.parse(await page.downloadBlob().text());
+    assert.equal(report.format, 'reading-learner-reference-comparisons-v1');
+    assert.equal(report.entries.length, 2);
+    assert.equal(report.entries[0].comparison.targetRank, 1);
+    assert.doesNotMatch(JSON.stringify(report), /audioBase64|tab-only-secret-token/);
+    assert.match(page.downloadedLinks.at(-1).download, /reading-word-comparisons-.*\.json/);
+  }],
+  ['A failed guided comparison keeps the recording and lets the parent retry only missing comparisons', async () => {
+    let comparisonRequests = 0;
+    const page = createPage({ responseFactory: async (request, transcription) => {
+      const route = new URL(request.endpoint).pathname;
+      if (route === '/references' && request.options.method === 'GET') return { ok: true, status: 200, async json() { return { references: [
+        { referenceId: 'reference-mat', attemptId: 'approved-mat', word: 'mat' },
+      ] }; } };
+      if (route === '/compare') {
+        comparisonRequests++;
+        if (comparisonRequests === 1) return { ok: false, status: 503, async json() { return { error: { message: 'Comparison service unavailable.' } }; } };
+        const targetWord = request.body.expectedWord;
+        const audioSha256 = createHash('sha256').update(Buffer.from(request.body.audioBase64, 'base64')).digest('hex');
+        return { ok: true, status: 200, async json() { return { matcherVersion: 'mono16k-mfcc12-delta-constrained-dtw-v1',
+          scoringStatus: 'experimental-uncalibrated', attemptId: request.body.attemptId, targetWord, closestWord: targetWord,
+          targetRank: 1, rankedWords: [{ word: targetWord, referenceCount: 1, averageDistance: 0.12, minimumDistance: 0.1 }],
+          referenceCountForTarget: 1, audioSha256 }; } };
+      }
+      return { ok: true, status: 200, async json() { return transcription; } };
+    } });
+    await page.idle(); page.configureGateway(); await page.click('connect-references');
+    await page.click('start-guided-reference-test'); await page.record();
+    assert.equal(page.archive.attempts.size, 1);
+    assert.match(page.element('problem').textContent, /Comparison service unavailable/);
+    assert.equal(page.archive.attempts.values().next().value.referenceMatchRuns?.length || 0, 0);
+    await page.click('compare-session-references');
+    assert.equal(comparisonRequests, 2);
+    assert.equal(page.archive.attempts.size, 1, 'Retry reuses the saved take');
+    assert.equal(page.archive.attempts.values().next().value.referenceMatchRuns.length, 1);
+    assert.match(page.element('reference-batch-status').textContent, /1 of 1 words compared/);
   }],
   ['A failed reference upload clears the pending label and keeps the recorded take available', async () => {
     const page = createPage({ responseFactory: async (request, transcription) => {

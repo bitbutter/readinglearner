@@ -99,13 +99,37 @@
   #problem { white-space: pre-wrap; }
   #trials { overflow-x: auto; }
   #summary td { max-width: 240px; overflow-wrap: anywhere; }
+  #start-guided-reference-test { margin-top: .5rem; font-weight: 700; }
+  #reference-batch-status { min-height: 1.4rem; margin: .5rem 0; }
+  body.guided-reference-mode { justify-content: center; padding: 1rem; background: linear-gradient(145deg, #172554, #3730a3); }
+  body.guided-reference-mode h1 { font-size: 1.2rem; }
+  body.guided-reference-mode .sub,
+  body.guided-reference-mode #parent-tools,
+  body.guided-reference-mode #reference-library,
+  body.guided-reference-mode #google-checks,
+  body.guided-reference-mode > .note { display: none; }
+  body.guided-reference-mode #session { width: min(560px, 96vw); padding: 1.4rem; }
+  body.guided-reference-mode #strip-label,
+  body.guided-reference-mode #strip,
+  body.guided-reference-mode #enable-mic,
+  body.guided-reference-mode #heard,
+  body.guided-reference-mode #alts,
+  body.guided-reference-mode #verdict,
+  body.guided-reference-mode #replay,
+  body.guided-reference-mode #session-navigation,
+  body.guided-reference-mode #session-finish { display: none; }
+  body.guided-reference-mode #counter { font-size: 1.15rem; opacity: .9; }
+  body.guided-reference-mode #prompt { font-size: clamp(5rem, 25vmin, 11rem); }
+  body.guided-reference-mode .mic { width: min(13rem, 52vw); height: min(13rem, 52vw); font-size: 4.5rem; }
+  body.guided-reference-mode #status { min-height: 2.2rem; }
+  body.guided-reference-mode #pause-guided { display: inline-block; }
 </style>
 </head>
 <body>
-  <h1>Word recording evaluator</h1>
-  <p class="sub">Record a word, approve a clear example as a reference, then compare a different take against it.</p>
+  <h1 id="page-title">Word recording evaluator</h1>
+  <p id="page-subtitle" class="sub">Record a word, approve a clear example as a reference, then compare a different take against it.</p>
 
-  <div class="card settings">
+  <div class="card settings" id="parent-tools">
     <h2>Speech server</h2>
     <div class="connection">
       <label for="gateway-url">Server address</label>
@@ -143,6 +167,8 @@
     </div>
     <p id="reference-status" role="status" aria-live="polite">Connect to the speech server to view approved references.</p>
     <div id="reference-list" class="reference-list"></div>
+    <button id="start-guided-reference-test" class="small" disabled>Start guided word check</button>
+    <p id="guided-reference-help" class="reference-help">Your child records each approved word once. The page saves each take and moves to the next word. Comparison results appear after the last word.</p>
     <details id="manage-references" hidden>
       <summary>Manage approved recordings</summary>
       <div id="reference-manage-list" class="reference-list"></div>
@@ -169,6 +195,9 @@
       <button id="mic" class="mic" aria-label="Hold to record" disabled>🎤</button>
     </div>
     <div id="status" role="status">Enable the microphone, then hold the button and say the word</div>
+    <div class="row" id="guided-actions">
+      <button id="pause-guided" class="small" hidden>Pause for parent</button>
+    </div>
     <div id="heard"></div>
     <div class="alts" id="alts"></div>
     <div class="verdict" id="verdict"></div>
@@ -180,22 +209,27 @@
       <p id="prepared-audio-status" role="status" aria-live="polite">Connect to the speech server to enable a preview.</p>
       <div id="prepared-replay" aria-label="Trimmed audio preview"></div>
     </div>
-    <div class="row">
+    <div class="row" id="session-navigation">
       <button id="prev" class="small">◀ back</button>
       <button id="redo" class="small">Record again</button>
       <button id="void" class="small">Exclude this take</button>
       <button id="transcribe" class="small" disabled>Check transcript with Google</button>
       <button id="next" class="small">next ▶</button>
     </div>
-    <div class="row">
+    <div class="row" id="session-finish">
       <button id="finish" class="small">Review this session</button>
     </div>
   </div>
 
   <div id="summary" class="card">
-    <h2>Results</h2>
+    <h2 id="summary-title">Results</h2>
     <div id="stats"></div>
     <div id="pairmatrix"></div>
+    <p id="reference-batch-status" role="status" aria-live="polite"></p>
+    <div class="row">
+      <button id="compare-session-references" class="small" hidden>Compare saved takes with references</button>
+      <button id="export-reference-results" class="small" hidden>Download comparison results JSON</button>
+    </div>
     <div id="trials"></div>
     <div class="row">
       <button id="back2" class="small">◀ back to session</button>

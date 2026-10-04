@@ -63,12 +63,42 @@ function scoreTranscript(transcript, prompt) {
 }
 
 function buildOrder() {
-  const words = [...ALL_WORDS];
+  return shuffleWords(ALL_WORDS);
+}
+
+function shuffleWords(sourceWords) {
+  const words = [...sourceWords];
   for (let i = words.length - 1; i > 0; i--) {
     const otherIndex = Math.floor(Math.random() * (i + 1));
     [words[i], words[otherIndex]] = [words[otherIndex], words[i]];
   }
   return words;
+}
+
+function approvedReferenceWords() {
+  return [...new Set(approvedReferences.map(reference => reference.word))].sort((left, right) => left.localeCompare(right));
+}
+
+function isGuidedReferenceSession() {
+  return recordingSession?.guidedReferenceTest === true;
+}
+
+function guidedReferenceIds() {
+  return approvedReferences.map(reference => reference.referenceId).sort();
+}
+
+function assertGuidedReferenceLibraryMatchesSession() {
+  if (!isGuidedReferenceSession()) return;
+  const savedIds = recordingSession.guidedReferenceIds;
+  const currentIds = guidedReferenceIds();
+  if (!Array.isArray(savedIds) || savedIds.length !== currentIds.length || savedIds.some((id, index) => id !== currentIds[index])) {
+    throw new Error('The approved reference library changed during this run. Start a new guided recording after reconnecting to the intended references.');
+  }
+}
+
+function hasCurrentReferenceComparison(attempt) {
+  return (attempt?.referenceMatchRuns || []).some(run =>
+    run.matcherVersion === 'mono16k-mfcc12-delta-constrained-dtw-v1' && run.attemptId === attempt.id);
 }
 
 function currentAttempt(wordIndex) {
@@ -168,6 +198,28 @@ function showProblem(message) {
   $('problem').hidden = !message;
 }
 
+function refreshGuidedReferenceControls() {
+  const button = $('start-guided-reference-test');
+  const resumable = isGuidedReferenceSession() && recordingSession.guidedReferenceTestComplete !== true;
+  const wordCount = resumable ? recordingSession.order.length - recordingSession.currentTrialIndex : approvedReferenceWords().length;
+  button.textContent = resumable
+    ? `Resume guided recording (${wordCount} word${wordCount === 1 ? '' : 's'} left)`
+    : `Start guided recording (${wordCount} word${wordCount === 1 ? '' : 's'})`;
+  button.disabled = operationPending || !!activeCapture || !!pendingAudioSave || !!pendingReferenceMatchSave ||
+    !archiveReady || !referenceLibraryLoaded || wordCount < 1;
+  $('pause-guided').disabled = operationPending || !!activeCapture;
+  const comparisonButton = $('compare-session-references');
+  const completedGuidedSession = isGuidedReferenceSession() && recordingSession.guidedReferenceTestComplete === true;
+  const hasUncomparedTake = completedGuidedSession && recordingSession.order.some((_, index) => {
+    const attempt = currentAttempt(index);
+    return attempt && !attempt.captureError && !attempt.voided && !hasCurrentReferenceComparison(attempt);
+  });
+  comparisonButton.hidden = !completedGuidedSession;
+  comparisonButton.disabled = operationPending || !!pendingReferenceMatchSave || !referenceLibraryLoaded || !hasUncomparedTake;
+  comparisonButton.textContent = hasUncomparedTake ? 'Compare or retry saved takes' : 'All available comparisons are saved';
+  $('export-reference-results').hidden = !completedGuidedSession;
+}
+
 function refreshControls() {
   const locked = operationPending || !!activeCapture || !!pendingAudioSave || !!pendingModelSave || !!pendingReferenceMatchSave || !archiveReady;
   for (const id of ['prev', 'next', 'redo', 'void', 'finish', 'back2', 'export', 'new-session', 'saved-session', 'recognition-mode', 'gateway-url', 'gateway-token', 'connect-references', 'tts', 'play-prepared']) {
@@ -191,6 +243,7 @@ function refreshControls() {
   $('download-unsaved').hidden = !pendingAudioSave;
   $('download-unsaved').disabled = operationPending;
   $('void').textContent = attempt?.voided ? 'Restore this take' : 'Exclude this take';
+  refreshGuidedReferenceControls();
 }
 
 async function runOperation(action) {
@@ -199,7 +252,10 @@ async function runOperation(action) {
   showProblem('');
   refreshControls();
   try { await action(); }
-  catch (error) { showProblem(error.message || String(error)); }
+  catch (error) {
+    showProblem(error.message || String(error));
+    if (document.body.classList.contains('guided-reference-mode')) $('status').textContent = error.message || String(error);
+  }
   finally { operationPending = false; refreshControls(); }
 }
 
@@ -321,7 +377,9 @@ function renderTrial() {
   const run = lastModelRun(attempt);
   $('prompt').textContent = recordingSession.order[wordIndex];
   const takes = recordedAttempts.filter(recording => recording.wordIndex === wordIndex).length;
-  $('counter').textContent = `word ${wordIndex + 1} / ${recordingSession.order.length}` + (takes ? ` — ${takes} saved take${takes === 1 ? '' : 's'}` : '');
+  $('counter').textContent = isGuidedReferenceSession()
+    ? `Word ${wordIndex + 1} of ${recordingSession.order.length}`
+    : `word ${wordIndex + 1} / ${recordingSession.order.length}` + (takes ? ` — ${takes} saved take${takes === 1 ? '' : 's'}` : '');
   const completedRuns = (attempt?.modelRuns || []).filter(savedRun => savedRun.status === 'complete');
   $('heard').textContent = run?.status === 'complete' ? (run.transcript ? `heard: “${run.transcript}”` : 'heard: (Google returned no transcript)') : '';
   $('alts').textContent = completedRuns.map(savedRun => {
@@ -333,7 +391,9 @@ function renderTrial() {
   $('verdict').textContent = (description.text ? `Google: ${description.text}` : '') + (attempt?.voided ? ' — excluded' : '');
   $('verdict').className = 'verdict ' + description.className;
   $('verdict').setAttribute('aria-label', `Google transcript check: ${description.text || 'not checked'}`);
-  $('status').textContent = microphoneStream ? 'Hold to say the word; release to save' : 'Enable the microphone, then hold the button and say the word';
+  $('status').textContent = isGuidedReferenceSession()
+    ? 'Hold the button, say the word, then release.'
+    : microphoneStream ? 'Hold to say the word; release to save' : 'Enable the microphone, then hold the button and say the word';
   $('original-replay').replaceChildren();
   $('prepared-replay').replaceChildren();
   if (attempt) $('original-replay').appendChild(audioPlayer(attempt.audioBlob));
@@ -362,12 +422,78 @@ async function openSession(sessionId) {
   if (!stored || !stored.session || !stored.session.order?.length) throw new Error('The saved recording session is missing or invalid.');
   for (const word of stored.session.order) if (!ACCEPTED[word]) throw new Error(`Unknown saved prompt: ${word}`);
   const index = stored.session.currentTrialIndex;
-  if (!Number.isInteger(index) || index < 0 || index >= stored.session.order.length) throw new Error('The saved word position is invalid.');
+  const completeGuidedSession = stored.session.guidedReferenceTest === true && stored.session.guidedReferenceTestComplete === true;
+  if (!Number.isInteger(index) || index < 0 || index > stored.session.order.length || (index === stored.session.order.length && !completeGuidedSession)) {
+    throw new Error('The saved word position is invalid.');
+  }
   recordingSession = stored.session;
   recordedAttempts = stored.attempts;
+  setGuidedReferenceMode(false);
+  if (completeGuidedSession) {
+    $('session').style.display = 'none';
+    $('summary').style.display = 'block';
+    renderSummary();
+  } else {
+    $('session').style.display = 'block';
+    $('summary').style.display = 'none';
+    renderTrial();
+  }
+}
+
+function setGuidedReferenceMode(enabled) {
+  document.body.classList.toggle('guided-reference-mode', enabled);
+  $('pause-guided').hidden = !enabled;
+  $('enable-mic').hidden = enabled;
+  $('page-title').textContent = enabled ? 'Say each word' : 'Word recording evaluator';
+}
+
+async function startGuidedReferenceTest() {
+  if (!referenceLibraryLoaded) throw new Error('Connect to the speech server and load the approved references first.');
+  const referenceWords = approvedReferenceWords();
+  if (!referenceWords.length) throw new Error('There are no approved word examples to practise yet.');
+  for (const word of referenceWords) if (!ACCEPTED[word]) throw new Error(`The approved reference “${word}” is not a word in this evaluator.`);
+
+  if (isGuidedReferenceSession() && recordingSession.guidedReferenceTestComplete !== true) {
+    assertGuidedReferenceLibraryMatchesSession();
+  } else {
+    const newSession = {
+      id: crypto.randomUUID(), schemaVersion: 2, startedAt: new Date().toISOString(),
+      device: navigator.userAgent, order: referenceWords, currentTrialIndex: 0,
+      guidedReferenceTest: true, guidedReferenceTestComplete: false, guidedReferenceIds: guidedReferenceIds(),
+    };
+    await ASRRecordings.createSession(newSession);
+    await openSession(newSession.id);
+    await refreshSessionChoices();
+  }
+  if (!microphoneStream) await enableMicrophone();
+  setGuidedReferenceMode(true);
   $('session').style.display = 'block';
   $('summary').style.display = 'none';
   renderTrial();
+  $('status').textContent = 'Hold the button, say the word, then release.';
+}
+
+async function pauseGuidedReferenceTest() {
+  if (activeCapture) throw new Error('Release the recording button before pausing.');
+  await stopMicrophone();
+  setGuidedReferenceMode(false);
+  $('session').style.display = 'block';
+  renderTrial();
+  $('status').textContent = pendingAudioSave ? 'A recording still needs saving. Retry it from the speech server panel.' : 'Guided recording paused. Resume when you are ready.';
+}
+
+async function stopMicrophone() {
+  cancelAnimationFrame(meterAnimation);
+  meterAnimation = null;
+  const stream = microphoneStream;
+  const context = microphoneAudioContext;
+  microphoneStream = null;
+  microphoneAudioContext = null;
+  microphoneAnalyser = null;
+  if (stream) stream.getTracks().forEach(track => track.stop());
+  if (context && context.state !== 'closed') await context.close();
+  $('meterbar').style.width = '0%';
+  $('miclabel').textContent = 'Microphone not enabled';
 }
 
 async function createRecordingSession() {
@@ -538,7 +664,8 @@ async function loadReferenceLibrary() {
   $('reference-status').textContent = 'Loading approved word references…';
   const result = await requestSpeechServer('/references', 'GET');
   if (!Array.isArray(result.references) || result.references.some(reference =>
-    !reference || typeof reference.referenceId !== 'string' || typeof reference.attemptId !== 'string' || typeof reference.word !== 'string')) {
+    !reference || typeof reference.referenceId !== 'string' || typeof reference.attemptId !== 'string' ||
+    typeof reference.word !== 'string' || !Object.hasOwn(ACCEPTED, reference.word))) {
     throw new Error('The speech server returned an invalid reference list.');
   }
   approvedReferences = result.references;
@@ -573,6 +700,7 @@ async function approveCurrentTakeAsReference() {
 }
 
 function validateReferenceComparison(result, attempt) {
+  const expectedReferenceCount = referencesForWord(attempt.prompt).length;
   if (result.scoringStatus !== 'experimental-uncalibrated' || result.matcherVersion !== 'mono16k-mfcc12-delta-constrained-dtw-v1' ||
       result.attemptId !== attempt.id || result.targetWord !== attempt.prompt || !Array.isArray(result.rankedWords) ||
       !result.rankedWords.length || result.rankedWords.some(row => !row || typeof row.word !== 'string' ||
@@ -580,14 +708,18 @@ function validateReferenceComparison(result, attempt) {
         !Number.isFinite(row.minimumDistance)) || !Number.isInteger(result.targetRank) ||
       result.targetRank < 1 || result.targetRank > result.rankedWords.length ||
       result.rankedWords[result.targetRank - 1].word !== attempt.prompt ||
-      result.closestWord !== result.rankedWords[0].word || !Number.isInteger(result.referenceCountForTarget) || result.referenceCountForTarget < 1 ||
+      result.closestWord !== result.rankedWords[0].word || !Number.isInteger(result.referenceCountForTarget) ||
+      result.referenceCountForTarget !== expectedReferenceCount ||
       result.audioSha256 !== attempt.audioSha256) {
     throw new Error('The speech server returned a comparison that does not match this take and reference list.');
   }
 }
 
 async function compareCurrentTakeWithReferences() {
-  const attempt = currentAttempt();
+  return compareAttemptWithReferences(currentAttempt());
+}
+
+async function compareAttemptWithReferences(attempt) {
   if (!attempt || attempt.captureError || attempt.voided) throw new Error('Record a usable take before comparing it.');
   if (attemptIsApprovedReference(attempt)) throw new Error('Choose a different take; a reference cannot be compared with itself.');
   if (!referencesForWord(attempt.prompt).length) throw new Error(`There are no approved “${attempt.prompt}” examples yet.`);
@@ -602,6 +734,54 @@ async function compareCurrentTakeWithReferences() {
     run: { id: crypto.randomUUID(), completedAt: new Date().toISOString(), ...result },
   };
   await savePendingReferenceMatchRun();
+}
+
+async function compareGuidedReferenceTakes() {
+  assertGuidedReferenceLibraryMatchesSession();
+  const eligibleAttempts = recordingSession.order.map((_, index) => currentAttempt(index))
+    .filter(attempt => attempt && !attempt.captureError && !attempt.voided);
+  let compared = 0;
+  for (let index = 0; index < eligibleAttempts.length; index++) {
+    const attempt = eligibleAttempts[index];
+    if (hasCurrentReferenceComparison(attempt)) continue;
+    $('reference-batch-status').textContent = `Comparing saved takes: ${index + 1} of ${eligibleAttempts.length} — “${attempt.prompt}”.`;
+    await compareAttemptWithReferences(attempt);
+    compared++;
+    renderSummary();
+  }
+  const savedCount = eligibleAttempts.filter(hasCurrentReferenceComparison).length;
+  $('reference-batch-status').textContent = `${savedCount} of ${recordingSession.order.length} words compared. Rankings are experimental sound similarities, not right-or-wrong scores.`;
+  renderSummary();
+}
+
+async function advanceGuidedReferenceTest(savedAttempt) {
+  if (savedAttempt.captureError || savedAttempt.voided) {
+    renderTrial();
+    $('status').textContent = 'That take could not be used. Try the word again.';
+    return;
+  }
+  const nextIndex = recordingSession.currentTrialIndex + 1;
+  if (nextIndex < recordingSession.order.length) {
+    const nextSession = { ...recordingSession, currentTrialIndex: nextIndex };
+    await ASRRecordings.saveSession(nextSession);
+    recordingSession = nextSession;
+    renderTrial();
+    $('status').textContent = `Saved. Next word: ${recordingSession.order[nextIndex]}.`;
+    return;
+  }
+  const completedSession = {
+    ...recordingSession, currentTrialIndex: recordingSession.order.length,
+    guidedReferenceTestComplete: true, guidedReferenceTestCompletedAt: new Date().toISOString(),
+  };
+  await ASRRecordings.saveSession(completedSession);
+  recordingSession = completedSession;
+  await stopMicrophone();
+  setGuidedReferenceMode(false);
+  $('session').style.display = 'none';
+  $('summary').style.display = 'block';
+  $('reference-batch-status').textContent = 'All words recorded. Comparing the saved takes…';
+  renderSummary();
+  await compareGuidedReferenceTakes();
 }
 
 function renderReferenceMatchResult(attempt) {
@@ -634,7 +814,7 @@ function beginHold(event) {
   if (event) event.preventDefault();
   if (operationPending || activeCapture || pendingAudioSave || pendingModelSave || pendingReferenceMatchSave || !microphoneStream || !archiveReady) return;
   try {
-    const transcriptionSettings = readTranscriptionSettings();
+    const transcriptionSettings = isGuidedReferenceSession() ? null : readTranscriptionSettings();
     window.speechSynthesis?.cancel();
     const recordingMimeType = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4']
       .find(mimeType => MediaRecorder.isTypeSupported(mimeType));
@@ -713,8 +893,11 @@ async function savePendingAudio() {
     pendingAudioSave = null;
     const stored = await ASRRecordings.getSession(capture.sessionId);
     recordedAttempts = stored.attempts;
-    renderTrial();
-    if (capture.transcriptionSettings && !capture.attempt.captureError) await transcribeAttempt(attempt, capture.transcriptionSettings);
+    if (isGuidedReferenceSession()) await advanceGuidedReferenceTest(attempt);
+    else {
+      renderTrial();
+      if (capture.transcriptionSettings && !capture.attempt.captureError) await transcribeAttempt(attempt, capture.transcriptionSettings);
+    }
   } catch (error) {
     if (pendingAudioSave) throw new Error(`Audio captured, but saving failed: ${error.message}. Keep this tab open and retry saving, or download the unsaved audio.`);
     throw error;
@@ -860,8 +1043,8 @@ async function savePendingReferenceMatchRun() {
     const saved = await ASRRecordings.appendReferenceMatchRun(recordingSession.id, attempt.id, pending.run);
     Object.assign(attempt, saved);
     pendingReferenceMatchSave = null;
-    renderTrial();
     if ($('summary').style.display === 'block') renderSummary();
+    else renderTrial();
   } catch (error) {
     throw new Error(`The comparison finished, but its result could not be saved: ${error.message}. Keep this tab open and retry saving it.`);
   }
@@ -880,6 +1063,11 @@ function download(blob, filename) {
 
 function renderSummary() {
   releaseReplayUrls();
+  if (isGuidedReferenceSession() && recordingSession.guidedReferenceTestComplete === true) {
+    renderGuidedReferenceSummary();
+    return;
+  }
+  $('summary-title').textContent = 'Results';
   const selected = recordingSession.order.map((word, index) => currentAttempt(index)).filter(Boolean);
   const scoreModel = model => {
     const rows = selected.flatMap(attempt => {
@@ -944,6 +1132,80 @@ function renderSummary() {
   $('trials').replaceChildren(table);
 }
 
+function renderGuidedReferenceSummary() {
+  const entries = recordingSession.order.map((word, index) => ({ word, attempt: currentAttempt(index) }));
+  const usableCount = entries.filter(({ attempt }) => attempt && !attempt.captureError && !attempt.voided).length;
+  const comparisonCount = entries.filter(({ attempt }) => hasCurrentReferenceComparison(attempt)).length;
+  $('summary-title').textContent = 'Recording results';
+  $('stats').textContent = `${comparisonCount} of ${entries.length} comparisons saved · ${usableCount} of ${entries.length} usable recordings`;
+  $('pairmatrix').textContent = 'Each result ranks how closely the take sounds to the approved recordings. A rank of 1 means it was the closest match among the words in the library; rankings are experimental clues, not pass-or-fail scores. Use the audio to judge. The JSON has comparison results; the ZIP has the recordings.';
+  const table = document.createElement('table');
+  const header = document.createElement('tr');
+  for (const label of ['Word', 'Recording', 'Sound comparison (experimental)', 'Audio']) {
+    const cell = document.createElement('th'); cell.textContent = label; header.appendChild(cell);
+  }
+  table.appendChild(header);
+  for (const { word, attempt } of entries) {
+    const row = document.createElement('tr');
+    const run = hasCurrentReferenceComparison(attempt) ? lastReferenceMatchRun(attempt) : null;
+    const recordingStatus = !attempt ? 'Not recorded'
+      : attempt.captureError ? 'Recording problem — try again'
+        : attempt.voided ? 'Excluded' : 'Saved';
+    const comparisonStatus = run
+      ? `Target rank ${run.targetRank} of ${run.rankedWords.length}; closest “${run.closestWord}”; target average distance ${run.rankedWords.find(result => result.word === word).averageDistance.toFixed(2)}`
+      : attempt && !attempt.captureError && !attempt.voided ? 'Waiting to compare' : '—';
+    for (const text of [word, recordingStatus, comparisonStatus]) {
+      const cell = document.createElement('td'); cell.textContent = text; row.appendChild(cell);
+    }
+    const audioCell = document.createElement('td');
+    if (attempt?.audioBlob) audioCell.appendChild(audioPlayer(attempt.audioBlob));
+    else audioCell.textContent = '—';
+    row.appendChild(audioCell);
+    table.appendChild(row);
+  }
+  $('trials').replaceChildren(table);
+  $('compare-session-references').hidden = false;
+  $('compare-session-references').disabled = operationPending || !referenceLibraryLoaded || comparisonCount === usableCount;
+  $('compare-session-references').textContent = comparisonCount === usableCount ? 'All usable takes are compared' : 'Compare or retry saved takes';
+  $('export-reference-results').hidden = false;
+}
+
+function exportGuidedReferenceResults() {
+  if (!isGuidedReferenceSession() || recordingSession.guidedReferenceTestComplete !== true) {
+    throw new Error('Finish a guided recording before exporting its comparison results.');
+  }
+  const report = {
+    format: 'reading-learner-reference-comparisons-v1',
+    createdAt: new Date().toISOString(),
+    sessionId: recordingSession.id,
+    startedAt: recordingSession.startedAt,
+    completedAt: recordingSession.guidedReferenceTestCompletedAt,
+    referenceIds: [...recordingSession.guidedReferenceIds],
+    entries: recordingSession.order.map((word, index) => {
+      const attempt = currentAttempt(index);
+      const run = hasCurrentReferenceComparison(attempt) ? lastReferenceMatchRun(attempt) : null;
+      return {
+        word,
+        attemptId: attempt?.id || null,
+        durationMs: attempt?.durationMs ?? null,
+        recordingStatus: !attempt ? 'not-recorded' : attempt.captureError ? 'recording-error' : attempt.voided ? 'excluded' : 'saved',
+        audioSha256: attempt?.audioSha256 || null,
+        comparison: run ? {
+          matcherVersion: run.matcherVersion,
+          scoringStatus: run.scoringStatus,
+          targetRank: run.targetRank,
+          closestWord: run.closestWord,
+          referenceCountForTarget: run.referenceCountForTarget,
+          rankedWords: run.rankedWords,
+          completedAt: run.completedAt,
+        } : null,
+      };
+    }),
+  };
+  const createdDate = recordingSession.startedAt.slice(0, 10);
+  download(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }), `reading-word-comparisons-${createdDate}.json`);
+}
+
 $('enable-mic').addEventListener('click', () => runOperation(enableMicrophone));
 $('mic').addEventListener('pointerdown', beginHold);
 $('mic').addEventListener('pointerup', endHold);
@@ -989,6 +1251,10 @@ $('approve-reference').addEventListener('click', () => runOperation(approveCurre
 $('compare-reference').addEventListener('click', () => runOperation(compareCurrentTakeWithReferences));
 $('transcribe').addEventListener('click', () => runOperation(() => transcribeAttempt(currentAttempt(), readTranscriptionSettings())));
 $('transcribe-all').addEventListener('click', () => runOperation(() => transcribeRemainingCurrentTakes(readTranscriptionSettings())));
+$('start-guided-reference-test').addEventListener('click', () => runOperation(startGuidedReferenceTest));
+$('pause-guided').addEventListener('click', () => runOperation(pauseGuidedReferenceTest));
+$('compare-session-references').addEventListener('click', () => runOperation(compareGuidedReferenceTakes));
+$('export-reference-results').addEventListener('click', exportGuidedReferenceResults);
 $('retry-save').addEventListener('click', () => runOperation(() => pendingAudioSave ? savePendingAudio() : pendingModelSave ? savePendingModelRun() : savePendingReferenceMatchRun()));
 $('download-unsaved').addEventListener('click', () => {
   const capture = pendingAudioSave;
@@ -997,7 +1263,16 @@ $('download-unsaved').addEventListener('click', () => {
 $('saved-session').addEventListener('change', () => runOperation(() => openSession($('saved-session').value)));
 $('new-session').addEventListener('click', () => runOperation(createRecordingSession));
 $('finish').addEventListener('click', () => { $('session').style.display = 'none'; $('summary').style.display = 'block'; renderSummary(); });
-$('back2').addEventListener('click', () => { $('summary').style.display = 'none'; $('session').style.display = 'block'; renderTrial(); });
+$('back2').addEventListener('click', () => runOperation(async () => {
+  if (isGuidedReferenceSession() && recordingSession.guidedReferenceTestComplete === true) {
+    const previousSession = { ...recordingSession, currentTrialIndex: recordingSession.order.length - 1 };
+    await ASRRecordings.saveSession(previousSession);
+    recordingSession = previousSession;
+  }
+  $('summary').style.display = 'none';
+  $('session').style.display = 'block';
+  renderTrial();
+}));
 $('export').addEventListener('click', () => runOperation(async () => {
   $('archive-status').textContent = 'Preparing original audio files and manifest…';
   const archive = await ASRRecordings.exportSession(recordingSession.id);
