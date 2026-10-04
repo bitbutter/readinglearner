@@ -511,6 +511,27 @@ const browserBehaviorTests = [
     assert.match(page.element('problem').textContent, /does not match this take/);
     assert.equal(page.latestAttempt().referenceMatchRuns?.length || 0, 0);
   }],
+  ['A failed reference upload clears the pending label and keeps the recorded take available', async () => {
+    const page = createPage({ responseFactory: async (request, transcription) => {
+      const route = new URL(request.endpoint).pathname;
+      if (route === '/references' && request.options.method === 'GET') return { ok: true, status: 200, async json() { return { references: [] }; } };
+      if (route === '/references' && request.options.method === 'POST') {
+        return { ok: false, status: 502, async json() { return { error: {
+          code: 'reference_storage_error', message: 'Cloud Storage rejected the request (HTTP 403, forbidden).',
+        } }; } };
+      }
+      return { ok: true, status: 200, async json() { return transcription; } };
+    } });
+    await page.idle(); await page.enableMicrophone(); page.configureGateway(); await page.click('connect-references');
+    await page.record();
+    const approvedTakeId = page.latestAttempt().id;
+    await page.click('approve-reference');
+    assert.equal(page.latestAttempt().id, approvedTakeId);
+    assert.match(page.element('reference-status').textContent, /could not be confirmed.*check the approved examples/i);
+    assert.doesNotMatch(page.element('reference-status').textContent, /Uploading/);
+    assert.match(page.element('problem').textContent, /HTTP 403, forbidden/);
+    assert.equal(page.fetchRequests.filter(request => new URL(request.endpoint).pathname === '/references' && request.options.method === 'POST').length, 1);
+  }],
   ['The main app canonical and fresh accepted spellings match Matt as a whole token', async () => {
     const app = createAppWordRestoration();
     assert.deepEqual(app.canonicalMat().accepted, ['mat', 'matt']);

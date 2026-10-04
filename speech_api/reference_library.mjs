@@ -139,6 +139,7 @@ export function createGoogleCloudReferenceLibrary({
   fetchImplementation = fetch, prepareAudio = prepareSpeechAudio,
   extractFeatures = extractIsolatedWordSpeechFeatures,
   rankReferences = rankApprovedWordReferences,
+  reportStorageRejection = details => console.warn(JSON.stringify(details)),
   now = () => new Date().toISOString(),
 }) {
   const bucket = validateBucketName(bucketName);
@@ -163,8 +164,22 @@ export function createGoogleCloudReferenceLibrary({
       if (response.status === 412 && conflictCode) {
         throw new ReferenceLibraryError(409, conflictCode, 'This saved take is already approved as a reference.');
       }
+      const storageError = await response.clone().json().catch(() => null);
+      const storageErrorReason = storageError?.error?.errors?.find(error =>
+        typeof error?.reason === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(error.reason))?.reason || null;
+      const storageErrorStatus = typeof storageError?.error?.status === 'string' &&
+        /^[A-Za-z0-9_.-]{1,64}$/.test(storageError.error.status) ? storageError.error.status : null;
+      reportStorageRejection({
+        event: 'reference_storage_request_rejected',
+        method: fetchOptions.method || 'GET',
+        upstreamStatus: response.status,
+        reason: storageErrorReason,
+        status: storageErrorStatus,
+      });
       const status = response.status === 429 || response.status >= 500 ? 503 : 502;
-      throw new ReferenceLibraryError(status, 'reference_storage_error', 'The reference library request could not be completed.');
+      const diagnostic = storageErrorReason || storageErrorStatus;
+      const message = `Cloud Storage rejected the request (HTTP ${response.status}${diagnostic ? `, ${diagnostic}` : ''}).`;
+      throw new ReferenceLibraryError(status, 'reference_storage_error', message);
     }
     return response;
   }

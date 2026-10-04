@@ -534,10 +534,16 @@ async function approveCurrentTakeAsReference() {
   const approved = window.confirm(`Have you listened to this “${attempt.prompt}” take and confirmed it is a clear example? Approving it uploads the audio to your private reference library.`);
   if (!approved) return;
   $('reference-status').textContent = `Uploading the approved “${attempt.prompt}” example…`;
-  const result = await requestSpeechServer('/references', 'POST', {
-    attemptId: attempt.id, word: attempt.prompt, mimeType: attempt.audioMimeType,
-    durationMs: attempt.durationMs, audioBase64: await blobBase64(attempt.audioBlob),
-  });
+  let result;
+  try {
+    result = await requestSpeechServer('/references', 'POST', {
+      attemptId: attempt.id, word: attempt.prompt, mimeType: attempt.audioMimeType,
+      durationMs: attempt.durationMs, audioBase64: await blobBase64(attempt.audioBlob),
+    });
+  } catch (error) {
+    $('reference-status').textContent = `Approval of “${attempt.prompt}” could not be confirmed. Check the approved examples before retrying.`;
+    throw error;
+  }
   if (!result.reference || result.reference.attemptId !== attempt.id || result.reference.word !== attempt.prompt) {
     throw new Error('The speech server approval response did not match this take.');
   }

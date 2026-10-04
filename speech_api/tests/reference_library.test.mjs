@@ -14,7 +14,7 @@ const preprocessing = { version: SPEECH_AUDIO_PREPROCESSING_VERSION, sampleRateH
   inputDurationMs: 900, trimmedLeadingSilenceMs: 100, outputDurationMs: 800 };
 const featureFrames = [Array.from({ length: 24 }, (_, index) => index / 10), Array.from({ length: 24 }, (_, index) => index / 20)];
 
-function createStorageFixture() {
+function createStorageFixture({ uploadResponse, reportStorageRejection = () => {} } = {}) {
   const objects = new Map();
   const requests = [];
   const auth = { async getClient() { return { async getAccessToken() { return 'fake-storage-access-token'; } }; } };
@@ -24,6 +24,7 @@ function createStorageFixture() {
     assert.equal(options.headers.Authorization, 'Bearer fake-storage-access-token');
     assert.equal(url.hostname, 'storage.googleapis.com');
     if (url.pathname.includes('/upload/storage/v1/')) {
+      if (uploadResponse) return uploadResponse(url, options);
       assert.equal(url.searchParams.get('ifGenerationMatch'), '0');
       const boundary = options.headers['Content-Type'].match(/boundary=([^;]+)/)[1];
       const content = options.body.toString('utf8');
@@ -58,7 +59,7 @@ function createStorageFixture() {
     throw new Error(`Unexpected fake Cloud Storage request: ${options.method || 'GET'} ${url}`);
   };
   const library = createGoogleCloudReferenceLibrary({
-    bucketName: 'reading-learner-private', auth, fetchImplementation,
+    bucketName: 'reading-learner-private', auth, fetchImplementation, reportStorageRejection,
     prepareAudio: async ({ audioBytes, mimeType, durationMs }) => {
       assert.ok(audioBytes.length > 0); assert.equal(mimeType, 'audio/wav'); assert.equal(durationMs, 900);
       return { audioBytes: preparedWav, mimeType: 'audio/wav', preprocessing };
@@ -124,6 +125,29 @@ test('reference approval is unique per take and requires one expected-word label
   await assert.rejects(library.approveReference({ ...recording(secondAttemptId, { word: 'mat' }), childId: 'unexpected' }), {
     name: 'ReferenceLibraryError', code: 'unexpected_reference_fields', httpStatus: 400,
   });
+});
+
+test('Cloud Storage rejection reports safe status details without exposing its raw message', async () => {
+  const reportedRejections = [];
+  const { library } = createStorageFixture({
+    uploadResponse: async () => Response.json({ error: {
+      status: 'PERMISSION_DENIED', message: 'private bucket and request details',
+      errors: [{ reason: 'forbidden', message: 'private object details' }],
+    } }, { status: 403 }),
+    reportStorageRejection: details => reportedRejections.push(details),
+  });
+  await assert.rejects(library.approveReference(recording(firstAttemptId, { word: 'do' })), error => {
+    assert.equal(error.name, 'ReferenceLibraryError');
+    assert.equal(error.code, 'reference_storage_error');
+    assert.equal(error.httpStatus, 502);
+    assert.equal(error.message, 'Cloud Storage rejected the request (HTTP 403, forbidden).');
+    assert.doesNotMatch(error.message, /private bucket|private object/);
+    return true;
+  });
+  assert.deepEqual(reportedRejections, [{
+    event: 'reference_storage_request_rejected', method: 'POST', upstreamStatus: 403,
+    reason: 'forbidden', status: 'PERMISSION_DENIED',
+  }]);
 });
 
 test('a confirmed reference can be removed and a missing one reports a clear error', async () => {
