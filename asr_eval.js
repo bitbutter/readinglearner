@@ -15,11 +15,11 @@ const ACCEPTED = {
 const ALL_WORDS = Object.keys(ACCEPTED);
 const MODEL_LABELS = Object.freeze({ chirp_3: 'Chirp 3 (V2)', short: 'short (V2)', latest_short: 'latest_short (V1)' });
 const MODEL_CONFIGURATION_VERSIONS = Object.freeze({
-  chirp_3: 'recorded-word-en-GB-chirp3-v1',
-  short: 'recorded-word-en-GB-short-v1',
-  latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2',
+  chirp_3: 'recorded-word-en-GB-chirp3-leading-silence-preroll-300ms-v2',
+  short: 'recorded-word-en-GB-short-leading-silence-preroll-300ms-v2',
+  latest_short: 'recorded-word-en-GB-v1-latest-short-leading-silence-preroll-300ms-v3',
 });
-const V1_OPUS_SAMPLE_RATES_HERTZ = new Set([8000, 12000, 16000, 24000, 48000]);
+const SPEECH_AUDIO_PREPROCESSING_VERSION = 'leading-silence-preroll-300ms-mono16k-v1';
 const SPEECH_GATEWAY_RATE_LIMIT_RETRY_DELAY_MS = 61_000;
 const MINIMUM_SPEECH_BATCH_REQUEST_GAP_MS = 3200;
 const normText = (text) => text.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
@@ -75,8 +75,27 @@ function lastModelRun(attempt) {
   return attempt?.modelRuns?.at(-1) || null;
 }
 
-function latestModelRun(attempt, model) {
+function isCurrentModelRun(run, model) {
+  return run.model === model && run.configurationVersion === modelConfigurationVersion(model) &&
+    run.preprocessing?.version === SPEECH_AUDIO_PREPROCESSING_VERSION;
+}
+
+function latestHistoricalModelRun(attempt, model) {
   return [...(attempt?.modelRuns || [])].reverse().find(run => run.model === model && run.status === 'complete') || null;
+}
+
+function latestHistoricalModelError(attempt, model) {
+  return [...(attempt?.modelRuns || [])].reverse().find(run =>
+    (run.model === model || run.requestedModel === model) && run.status === 'error') || null;
+}
+
+function latestPreviousModelRun(attempt, model) {
+  return [...(attempt?.modelRuns || [])].reverse().find(run =>
+    run.model === model && run.status === 'complete' && !isCurrentModelRun(run, model)) || null;
+}
+
+function latestModelRun(attempt, model) {
+  return [...(attempt?.modelRuns || [])].reverse().find(run => run.status === 'complete' && isCurrentModelRun(run, model)) || null;
 }
 
 function remainingCurrentAttemptsForModel(model) {
@@ -86,7 +105,9 @@ function remainingCurrentAttemptsForModel(model) {
 }
 
 function latestModelError(attempt, model) {
-  return [...(attempt?.modelRuns || [])].reverse().find(run => (run.model === model || run.requestedModel === model) && run.status === 'error') || null;
+  return [...(attempt?.modelRuns || [])].reverse().find(run =>
+    (run.model === model || run.requestedModel === model) && run.status === 'error' &&
+    run.configurationVersion === modelConfigurationVersion(model)) || null;
 }
 
 function latestSpeechRateLimitErrorStartedAt() {
@@ -177,7 +198,16 @@ function attemptDescription(attempt) {
   if (attempt.captureError) return { text: `Recording interrupted: ${attempt.captureError}. Audio saved; not scored.`, className: 'bad' };
   const run = lastModelRun(attempt);
   if (!run) return { text: 'Audio saved — not transcribed yet', className: '' };
-  if (run.status === 'error') return { text: `Audio saved. Transcription failed: ${modelRunErrorText(run)}. Not scored.`, className: 'bad' };
+  const runModel = run.model || run.requestedModel;
+  if (run.status === 'error') {
+    if (run.configurationVersion !== modelConfigurationVersion(runModel)) {
+      return { text: `Previous ${modelLabel(runModel)} request error: ${modelRunErrorText(run)}. Not included in current scores.`, className: '' };
+    }
+    return { text: `Audio saved. Transcription failed: ${modelRunErrorText(run)}. Not scored.`, className: 'bad' };
+  }
+  if (!isCurrentModelRun(run, runModel)) {
+    return { text: `Previous ${modelLabel(runModel)} result “${run.transcript || '(no transcript)'}”. Not included in current scores; rerun to test trimmed audio.`, className: '' };
+  }
   const score = scoreTranscript(run.transcript, attempt.prompt);
   if (score.verdict === 'hit') return { text: '✓ matches the displayed word', className: 'ok' };
   if (score.verdict === 'pair-confusion') return { text: `⚠ pair confusion — “${score.confusedWith}”`, className: 'conf' };
@@ -438,7 +468,10 @@ async function blobBase64(blob) {
 
 async function transcribeAttempt(attempt, settings, beforeSpeechGatewayRequest = null) {
   $('status').textContent = 'Audio saved — asking Google to transcribe it…';
-  const run = { id: crypto.randomUUID(), startedAt: new Date().toISOString(), requestedModel: settings.model, status: 'error' };
+  const run = {
+    id: crypto.randomUUID(), startedAt: new Date().toISOString(), requestedModel: settings.model,
+    configurationVersion: modelConfigurationVersion(settings.model), status: 'error',
+  };
   const startedAtMs = Date.now();
   try {
     const requestBody = {
@@ -447,13 +480,6 @@ async function transcribeAttempt(attempt, settings, beforeSpeechGatewayRequest =
       durationMs: attempt.durationMs,
       audioBase64: await blobBase64(attempt.audioBlob),
     };
-    if (settings.model === 'latest_short') {
-      const sampleRateHertz = attempt.microphoneSettings?.sampleRate;
-      if (!Number.isInteger(sampleRateHertz) || !V1_OPUS_SAMPLE_RATES_HERTZ.has(sampleRateHertz)) {
-        throw new Error('Google latest_short (V1) needs this recording’s saved microphone sample rate of 8000, 12000, 16000, 24000 or 48000 Hz.');
-      }
-      requestBody.sampleRateHertz = sampleRateHertz;
-    }
     const requestOptions = {
       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${settings.token}` },
       body: JSON.stringify(requestBody),
@@ -467,8 +493,24 @@ async function transcribeAttempt(attempt, settings, beforeSpeechGatewayRequest =
       run.serverError = transcription.error;
       throw new Error(transcription.error?.message || transcription.error || `Speech server returned HTTP ${response.status}`);
     }
-    if (typeof transcription.transcript !== 'string' || transcription.provider !== 'google-cloud-stt' || transcription.model !== settings.model || transcription.languageCode !== 'en-GB' || transcription.configurationVersion !== modelConfigurationVersion(settings.model) || transcription.audioSha256 !== attempt.audioSha256) {
+    const preprocessing = transcription.preprocessing;
+    if (typeof transcription.transcript !== 'string' || transcription.provider !== 'google-cloud-stt' ||
+        transcription.model !== settings.model || transcription.languageCode !== 'en-GB' ||
+        transcription.configurationVersion !== modelConfigurationVersion(settings.model) ||
+        transcription.audioSha256 !== attempt.audioSha256 ||
+        preprocessing?.version !== SPEECH_AUDIO_PREPROCESSING_VERSION ||
+        preprocessing.sampleRateHertz !== 16000 || preprocessing.audioChannelCount !== 1 ||
+        !Number.isInteger(preprocessing.inputDurationMs) || preprocessing.inputDurationMs <= 0 ||
+        !Number.isInteger(preprocessing.outputDurationMs) || preprocessing.outputDurationMs <= 0 ||
+        !Number.isInteger(preprocessing.trimmedLeadingSilenceMs) || preprocessing.trimmedLeadingSilenceMs < 0 ||
+        preprocessing.trimmedLeadingSilenceMs + preprocessing.outputDurationMs > preprocessing.inputDurationMs + 2 ||
+        !/^[a-f0-9]{64}$/.test(preprocessing.preparedAudioSha256 || '')) {
       throw new Error('The speech server response does not match this recording and model.');
+    }
+    const samePreparationRuns = (attempt.modelRuns || []).filter(previousRun =>
+      previousRun.status === 'complete' && previousRun.preprocessing?.version === SPEECH_AUDIO_PREPROCESSING_VERSION);
+    if (samePreparationRuns.some(previousRun => previousRun.preprocessing.preparedAudioSha256 !== preprocessing.preparedAudioSha256)) {
+      throw new Error('The speech server prepared this recording differently from an earlier model comparison.');
     }
     Object.assign(run, transcription, { status: 'complete', scoringVersion: 'prompt-homophones-v2', ...scoreTranscript(transcription.transcript, attempt.prompt) });
   } catch (error) {
@@ -581,9 +623,26 @@ function renderSummary() {
   for (const attempt of selected) {
     const row = document.createElement('tr');
     const formatRun = (model, modelRun) => {
-      if (modelRun) return `${modelRun.transcript || 'No transcript returned'} — ${scoreTranscript(modelRun.transcript, attempt.prompt).verdict}`;
+      if (modelRun) {
+        const trimDetail = modelRun.preprocessing.trimmedLeadingSilenceMs > 0
+          ? `leading silence trimmed ${(modelRun.preprocessing.trimmedLeadingSilenceMs / 1000).toFixed(2)}s`
+          : 'no leading silence removed';
+        const currentResult = `${modelRun.transcript || 'No transcript returned'} — ${scoreTranscript(modelRun.transcript, attempt.prompt).verdict} · ${trimDetail}`;
+        const previousRun = latestPreviousModelRun(attempt, model);
+        if (!previousRun) return currentResult;
+        const oldPreparation = previousRun.preprocessing?.version ? 'previous configuration' : 'before silence trimming';
+        return `${currentResult} · Previous: ${previousRun.transcript || 'No transcript returned'} — ${scoreTranscript(previousRun.transcript, attempt.prompt).verdict} (${oldPreparation}; not in current scores)`;
+      }
       const errorRun = latestModelError(attempt, model);
-      return errorRun ? `request error — ${modelRunErrorText(errorRun)}` : '—';
+      if (errorRun) return `request error — ${modelRunErrorText(errorRun)}`;
+      const historicalRun = latestHistoricalModelRun(attempt, model);
+      if (historicalRun) {
+        const oldPreparation = historicalRun.preprocessing?.version ? 'previous configuration' : 'before silence trimming';
+        return `Previous: ${historicalRun.transcript || 'No transcript returned'} — ${scoreTranscript(historicalRun.transcript, attempt.prompt).verdict} (${oldPreparation}; not in current scores)`;
+      }
+      const historicalError = latestHistoricalModelError(attempt, model);
+      if (historicalError) return `Previous request error (${modelRunErrorText(historicalError)}; not in current scores)`;
+      return '—';
     };
     const modelTranscripts = Object.keys(MODEL_LABELS).map(model => formatRun(model, latestModelRun(attempt, model)));
     for (const text of [attempt.prompt, ...modelTranscripts]) {

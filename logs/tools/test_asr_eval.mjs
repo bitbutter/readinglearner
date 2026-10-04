@@ -8,6 +8,18 @@ import { createHash, randomUUID, webcrypto } from 'node:crypto';
 const pageHtml = readFileSync(new URL('../../asr_eval.html', import.meta.url), 'utf8');
 const pageScript = readFileSync(new URL('../../asr_eval.js', import.meta.url), 'utf8');
 const minimumSpeechBatchRequestGapMs = 3200;
+const testPreprocessingVersion = 'leading-silence-preroll-300ms-mono16k-v1';
+const testModelConfigurationVersions = Object.freeze({
+  chirp_3: 'recorded-word-en-GB-chirp3-leading-silence-preroll-300ms-v2',
+  short: 'recorded-word-en-GB-short-leading-silence-preroll-300ms-v2',
+  latest_short: 'recorded-word-en-GB-v1-latest-short-leading-silence-preroll-300ms-v3',
+});
+const testPreparedAudioBytes = Buffer.from('prepared mono WAV bytes');
+const testPreprocessing = Object.freeze({
+  version: testPreprocessingVersion, sampleRateHertz: 16000, audioChannelCount: 1,
+  inputDurationMs: 1200, trimmedLeadingSilenceMs: 350, outputDurationMs: 850,
+  preparedAudioSha256: createHash('sha256').update(testPreparedAudioBytes).digest('hex'),
+});
 assert.match(pageHtml, /src="asr_eval\.js"/, 'HTML must load the tested evaluator script');
 const appScript = readFileSync(new URL('../../app.js', import.meta.url), 'utf8');
 
@@ -303,7 +315,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
     requestAnimationFrame() { return 1; }, cancelAnimationFrame() {},
     setTimeout(callback, delay = 0) {
       const id = ++nextTimerId;
-      if (fastForwardSpeechBatchTimers && (delay === minimumSpeechBatchRequestGapMs || (delay > 10_000 && delay < 60_000))) {
+      if (fastForwardSpeechBatchTimers && ((delay > 0 && delay <= minimumSpeechBatchRequestGapMs) || (delay > 10_000 && delay < 60_000))) {
         clockMilliseconds += delay;
         queueMicrotask(callback);
       } else timers.set(id, { callback, due: clockMilliseconds + delay });
@@ -314,7 +326,7 @@ function createPage({ archive = new RecordingArchive(), manualRecorderDelivery =
       const request = { endpoint, options, body: JSON.parse(options.body), submittedAt: clockMilliseconds }; fetchRequests.push(request);
       const originalBytes = Buffer.from(request.body.audioBase64, 'base64');
       const transcription = { transcript: 'Matt', provider: 'google-cloud-stt', model: request.body.model,
-        languageCode: 'en-GB', configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2' })[request.body.model], latencyMs: 123,
+        languageCode: 'en-GB', configurationVersion: testModelConfigurationVersions[request.body.model], preprocessing: testPreprocessing, latencyMs: 123,
         audioSha256: createHash('sha256').update(originalBytes).digest('hex') };
       return responseFactory ? responseFactory(request, transcription) : { ok: true, status: 200, async json() { return transcription; } };
     },
@@ -379,6 +391,10 @@ function savedCompletedRun(model, transcript) {
     provider: 'google-cloud-stt', languageCode: 'en-GB',
     configurationVersion: ({ chirp_3: 'recorded-word-en-GB-chirp3-v1', short: 'recorded-word-en-GB-short-v1', latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2' })[model],
   };
+}
+
+function currentCompletedRun(model, transcript) {
+  return { ...savedCompletedRun(model, transcript), configurationVersion: testModelConfigurationVersions[model], preprocessing: testPreprocessing };
 }
 
 const browserBehaviorTests = [
@@ -471,7 +487,7 @@ const browserBehaviorTests = [
     await page.click('finish'); expectScore(page, 1, 1); await page.click('export');
     assert.equal(page.archive.lastManifest.attempts[0].modelRuns[0].transcript, 'Matt');
   }],
-  ['Chirp 3, V2 short and V1 latest_short compare the same saved bytes and saved sample rate', async () => {
+  ['Chirp 3, V2 short and V1 latest_short compare the same saved take and trimmed copy', async () => {
     const page = createPage({ responseFactory: async (request, response) => ({
       ok: true, status: 200, async json() {
         return { ...response, transcript: request.body.model === 'chirp_3' ? 'math' : 'mat' };
@@ -484,11 +500,16 @@ const browserBehaviorTests = [
     page.element('recognition-mode').value = 'latest_short'; page.element('recognition-mode').dispatch('change');
     await page.click('transcribe');
     assert.deepEqual(page.fetchRequests.map(request => request.body.model), ['chirp_3', 'short', 'latest_short']);
-    for (const request of page.fetchRequests) assert.deepEqual(Buffer.from(request.body.audioBase64, 'base64'), original);
-    assert.equal(page.fetchRequests[2].body.sampleRateHertz, 48000);
+    for (const request of page.fetchRequests) {
+      assert.deepEqual(Buffer.from(request.body.audioBase64, 'base64'), original);
+      assert.equal(Object.hasOwn(request.body, 'sampleRateHertz'), false);
+    }
     const savedRuns = page.latestAttempt().modelRuns;
     assert.deepEqual(savedRuns.map(run => run.model), ['chirp_3', 'short', 'latest_short']);
     assert.deepEqual(savedRuns.map(run => run.transcript), ['math', 'mat', 'mat']);
+    assert.deepEqual(savedRuns.map(run => run.preprocessing.preparedAudioSha256), [
+      testPreprocessing.preparedAudioSha256, testPreprocessing.preparedAudioSha256, testPreprocessing.preparedAudioSha256,
+    ]);
     assert.equal(page.element('alts').textContent.includes('Chirp 3 (V2): “math” — miss'), true);
     assert.equal(page.element('alts').textContent.includes('short (V2): “mat” — hit'), true);
     assert.equal(page.element('alts').textContent.includes('latest_short (V1): “mat” — hit'), true);
@@ -498,40 +519,67 @@ const browserBehaviorTests = [
     assert.match(page.element('stats').textContent, /latest_short \(V1\): 1\/1 matches/);
     assert.match(page.element('trials').textContent, /math — miss/);
     assert.match(page.element('trials').textContent, /mat — hit/);
+    assert.match(page.element('trials').textContent, /leading silence trimmed 0\.35s/);
     await page.click('export');
     assert.deepEqual(page.archive.lastManifest.attempts[0].modelRuns.map(run => run.transcript), ['math', 'mat', 'mat']);
   }],
-  ['V1 latest_short refuses a saved recording without a supported sample rate before sending audio', async () => {
+  ['Model comparisons reject a prepared-audio hash that differs from an earlier model run', async () => {
+    const page = createPage({ responseFactory: async (request, response) => ({
+      ok: true, status: 200, async json() {
+        return request.body.model === 'short'
+          ? { ...response, preprocessing: { ...response.preprocessing, preparedAudioSha256: 'f'.repeat(64) } }
+          : response;
+      },
+    }) });
+    await page.idle(); await page.enableMicrophone(); page.configureTranscription('chirp_3'); await page.record();
+    page.element('recognition-mode').value = 'short'; page.element('recognition-mode').dispatch('change');
+    await page.click('transcribe');
+    const comparisonRun = page.latestAttempt().modelRuns.at(-1);
+    assert.equal(comparisonRun.status, 'error');
+    assert.match(comparisonRun.error, /prepared this recording differently/i);
+    await page.click('finish');
+    assert.match(page.element('stats').textContent, /short \(V2\): 0\/0 matches, 1 errors/);
+  }],
+  ['V1 latest_short transcribes saved audio without relying on saved microphone settings', async () => {
     const archive = new RecordingArchive();
     const { attempt } = await seedSavedTake(archive, 0);
     archive.attempts.set(attempt.id, { ...archive.attempts.get(attempt.id), microphoneSettings: {} });
     const page = createPage({ archive }); await page.idle(); page.configureTranscription('latest_short');
     await page.click('transcribe');
-    assert.equal(page.fetchRequests.length, 0);
-    assert.match(page.latestAttempt().modelRuns[0].error, /saved microphone sample rate/);
+    assert.equal(page.fetchRequests.length, 1);
+    assert.equal(Object.hasOwn(page.fetchRequests[0].body, 'sampleRateHertz'), false);
+    assert.equal(page.latestAttempt().modelRuns[0].status, 'complete');
   }],
-  ['The selected model batch sends each eligible current take once and skips completed, voided, and interrupted takes', async () => {
+  ['The selected model batch retries older configurations and skips current, voided, and interrupted takes', async () => {
     const archive = new RecordingArchive();
+    const savedSession = archive.sessions.get(existingSessionId);
+    archive.sessions.set(existingSessionId, { ...savedSession, order: [...savedSession.order, 'so'] });
     const first = await seedSavedTake(archive, 0, { modelRuns: [savedCompletedRun('chirp_3', 'math')] });
     const second = await seedSavedTake(archive, 1, { modelRuns: [savedCompletedRun('short', 'mad')] });
     await seedSavedTake(archive, 2, { captureError: 'microphone disconnected' });
     await seedSavedTake(archive, 3, { voided: true });
+    const current = await seedSavedTake(archive, 4, { modelRuns: [currentCompletedRun('short', 'mad')] });
     const page = createPage({ archive }); await page.idle(); page.configureTranscription('short');
+    page.fastForwardSpeechBatchTimers = true;
     assert.equal(page.element('transcribe-all').disabled, false);
-    assert.match(page.element('strip').children[0].className, /\bmiss\b/);
+    assert.match(page.element('strip').children[0].className, /\brecorded\b/);
+    assert.match(page.element('strip').children[0].title, /not included in current scores/i);
     await page.click('transcribe-all');
-    assert.equal(page.fetchRequests.length, 1);
-    assert.equal(page.fetchRequests[0].body.model, 'short');
+    assert.equal(page.fetchRequests.length, 2);
+    assert.deepEqual(page.fetchRequests.map(request => request.body.model), ['short', 'short']);
     assert.deepEqual(Buffer.from(page.fetchRequests[0].body.audioBase64, 'base64'), first.audioBytes);
+    assert.deepEqual(Buffer.from(page.fetchRequests[1].body.audioBase64, 'base64'), second.audioBytes);
     assert.equal(page.archive.attempts.get(first.attempt.id).modelRuns.length, 2);
-    assert.deepEqual(page.archive.attempts.get(second.attempt.id).modelRuns.map(run => run.transcript), ['mad']);
+    assert.deepEqual(page.archive.attempts.get(second.attempt.id).modelRuns.map(run => run.transcript), ['mad', 'Matt']);
+    assert.deepEqual(page.archive.attempts.get(current.attempt.id).modelRuns.map(run => run.transcript), ['mad']);
     assert.match(page.element('strip').children[0].className, /\bhit\b/);
     assert.match(page.element('strip').children[0].title, /short \(V2\)/);
-    assert.match(page.element('batch-status').textContent, /1\/1 remaining takes transcribed and saved/);
+    assert.match(page.element('batch-status').textContent, /2\/2 remaining takes transcribed and saved/);
     assert.equal(page.element('transcribe-all').disabled, true);
     await page.click('finish');
-    assert.match(page.element('stats').textContent, /Chirp 3 \(V2\): 0\/1 matches/);
-    assert.match(page.element('stats').textContent, /short \(V2\): 2\/2 matches/);
+    assert.match(page.element('stats').textContent, /Chirp 3 \(V2\): 0\/0 matches/);
+    assert.match(page.element('stats').textContent, /short \(V2\): 1\/3 matches/);
+    assert.match(page.element('trials').textContent, /Previous: mad — hit \(before silence trimming; not in current scores\)/);
   }],
   ['A failed batch stops before later takes and a retry skips successes already saved', async () => {
     const archive = new RecordingArchive();

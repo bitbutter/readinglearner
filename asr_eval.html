@@ -101,7 +101,7 @@
       <option value="short">Transcribe with Google short (V2)</option>
       <option value="latest_short">Transcribe with Google latest_short (V1)</option>
     </select>
-    <p class="note">To compare models, select one and choose <b>Transcribe remaining saved takes</b>. Every transcript stays attached to the same original take. latest_short (V1) uses the microphone sample rate saved with each recording.</p>
+    <p class="note">To compare models, select one and choose <b>Transcribe remaining saved takes</b>. Every model receives the same speech-prepared copy of a take; the original audio stays unchanged. After silence-trimming changes, earlier model runs remain in history and the selected model can be run again.</p>
     <button id="transcribe-all" class="small">Transcribe remaining saved takes with selected model</button>
     <p class="note">The batch sends each prompt's current valid take to the selected model, one at a time. Successful results are skipped on later runs. A failed request stops the batch; retrying a failed request may make another billable request.</p>
     <p id="batch-status" role="status" aria-live="polite"></p>
@@ -166,7 +166,7 @@
     </div>
   </div>
 
-  <p class="note">Audio recording works independently of browser speech recognition, including in Brave. Recordings stay in this browser across reloads; download the ZIP for a portable copy. Clearing browser storage deletes local recordings. Google Chirp 3 (V2), short (V2) and latest_short (V1) require the configured speech server and send saved audio to Google. The expected word is never sent to the recognizer. Scores compare each transcript with the displayed prompt, not a human-verified account of what was spoken.</p>
+  <p class="note">Audio recording works independently of browser speech recognition, including in Brave. Recordings stay in this browser across reloads; download the ZIP for a portable copy. Clearing browser storage deletes local recordings. For Google Chirp 3 (V2), short (V2) and latest_short (V1), the speech server trims detected leading silence from a separate copy and keeps 300 ms before speech; saved recordings remain unchanged. The expected word is never sent to the recognizer. Scores compare each transcript with the displayed prompt, not a human-verified account of what was spoken.</p>
 
 <script src="asr_recordings.js"></script>
 <script src="asr_eval.js"></script>

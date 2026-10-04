@@ -3,6 +3,7 @@ import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { setTimeout as pause } from 'node:timers/promises';
+import { SPEECH_AUDIO_PREPROCESSING_VERSION } from './audio_preprocessing.mjs';
 import { MAX_AUDIO_BYTES, SPEECH_CONFIGURATION_VERSION, SPEECH_MODEL, validateRecordingRequest } from './providers.mjs';
 
 function assertInsideDataset(datasetDirectory, audioPath) {
@@ -95,8 +96,16 @@ export async function rerunDataset({ manifestPath, outputPath, gatewayUrl, gatew
         await saveEvidence();
         continue;
       }
-      if (gatewayResponse.audioSha256 !== audioSha256 || gatewayResponse.model !== SPEECH_MODEL || typeof gatewayResponse.transcript !== 'string') {
-        throw new Error('The speech API response does not identify the recording and requested model correctly.');
+      const preprocessing = gatewayResponse.preprocessing;
+      if (gatewayResponse.audioSha256 !== audioSha256 || gatewayResponse.model !== SPEECH_MODEL ||
+          gatewayResponse.configurationVersion !== SPEECH_CONFIGURATION_VERSION || typeof gatewayResponse.transcript !== 'string' ||
+          preprocessing?.version !== SPEECH_AUDIO_PREPROCESSING_VERSION || preprocessing.sampleRateHertz !== 16000 ||
+          preprocessing.audioChannelCount !== 1 || !Number.isInteger(preprocessing.inputDurationMs) || preprocessing.inputDurationMs <= 0 ||
+          !Number.isInteger(preprocessing.outputDurationMs) || preprocessing.outputDurationMs <= 0 ||
+          !Number.isInteger(preprocessing.trimmedLeadingSilenceMs) || preprocessing.trimmedLeadingSilenceMs < 0 ||
+          preprocessing.trimmedLeadingSilenceMs + preprocessing.outputDurationMs > preprocessing.inputDurationMs + 2 ||
+          !/^[a-f0-9]{64}$/.test(preprocessing.preparedAudioSha256 || '')) {
+        throw new Error('The speech API response does not identify the recording, model and prepared audio correctly.');
       }
       evaluation.modelRuns.push({ ...gatewayResponse, attemptId: attempt.id, evaluatedAt, status: 'completed' });
     } catch (error) {

@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { SPEECH_AUDIO_PREPROCESSING_VERSION } from '../audio_preprocessing.mjs';
+import { SPEECH_CONFIGURATION_VERSION } from '../providers.mjs';
 import { rerunDataset } from '../rerun_dataset.mjs';
 
 test('dataset reruns preserve every usable attempt and send no labels', async () => {
@@ -19,11 +21,14 @@ test('dataset reruns preserve every usable attempt and send no labels', async ()
     const originalManifest = JSON.stringify(manifest);
     await writeFile(manifestPath, originalManifest);
     let calls = 0;
+    const preparedAudioSha256 = '1'.repeat(64);
+    const validTranscription = { model: 'chirp_3', configurationVersion: SPEECH_CONFIGURATION_VERSION, audioSha256, transcript: 'Matt',
+      preprocessing: { version: SPEECH_AUDIO_PREPROCESSING_VERSION, sampleRateHertz: 16000, audioChannelCount: 1, inputDurationMs: 2000, trimmedLeadingSilenceMs: 300, outputDurationMs: 1700, preparedAudioSha256 } };
     const fetchImplementation = async (_url, options) => {
       calls++;
       assert.deepEqual(Object.keys(JSON.parse(options.body)).sort(), ['audioBase64', 'durationMs', 'mimeType', 'model']);
       assert.ok(!options.body.includes('mat'));
-      return calls === 1 ? Response.json({ model: 'chirp_3', audioSha256, transcript: 'Matt' }) : Response.json({ error: { code: 'speech_provider_error', message: 'Google rejected it' } }, { status: 502 });
+      return calls === 1 ? Response.json(validTranscription) : Response.json({ error: { code: 'speech_provider_error', message: 'Google rejected it' } }, { status: 502 });
     };
     const outputPath = join(datasetDirectory, 'chirp-results.json');
     const submissionGaps = [];

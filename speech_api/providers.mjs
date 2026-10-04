@@ -1,20 +1,18 @@
 import { createHash } from 'node:crypto';
+import { prepareSpeechAudio, SPEECH_AUDIO_PREPROCESSING_VERSION } from './audio_preprocessing.mjs';
 
-export const SPEECH_CONFIGURATION_VERSION = 'recorded-word-en-GB-chirp3-v1';
+export const SPEECH_CONFIGURATION_VERSION = 'recorded-word-en-GB-chirp3-leading-silence-preroll-300ms-v2';
 export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 export const MAX_REQUEST_BYTES = Math.ceil(MAX_AUDIO_BYTES / 3) * 4 + 4096;
 export const SPEECH_LANGUAGE_CODE = 'en-GB';
 export const SPEECH_MODEL = 'chirp_3';
 export const SPEECH_MODEL_CONFIGURATION_VERSIONS = Object.freeze({
   chirp_3: SPEECH_CONFIGURATION_VERSION,
-  short: 'recorded-word-en-GB-short-v1',
-  latest_short: 'recorded-word-en-GB-v1-latest-short-opus-header-channel-count-v2',
+  short: 'recorded-word-en-GB-short-leading-silence-preroll-300ms-v2',
+  latest_short: 'recorded-word-en-GB-v1-latest-short-leading-silence-preroll-300ms-v3',
 });
 const RECORDING_MIME_TYPES = new Set(['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/wav']);
-const V1_OPUS_SAMPLE_RATES_HERTZ = new Set([8000, 12000, 16000, 24000, 48000]);
-const MAX_OPUS_HEAD_SEARCH_BYTES = 64 * 1024;
-const OPUS_HEAD_SIGNATURE = Buffer.from('OpusHead', 'ascii');
-const REQUEST_FIELDS = new Set(['model', 'audioBase64', 'mimeType', 'durationMs', 'sampleRateHertz']);
+const REQUEST_FIELDS = new Set(['model', 'audioBase64', 'mimeType', 'durationMs']);
 
 export class SpeechGatewayError extends Error {
   constructor(httpStatus, code, message, details = {}) {
@@ -31,24 +29,6 @@ function configurationVersionForSpeechModel(model) {
     throw new SpeechGatewayError(400, 'unsupported_model', 'Select the chirp_3, short or latest_short transcription model.');
   }
   return SPEECH_MODEL_CONFIGURATION_VERSIONS[model];
-}
-
-function opusChannelCountFromAudioHeader(audioBytes) {
-  const opusAudioHeaderBytes = audioBytes.subarray(0, MAX_OPUS_HEAD_SEARCH_BYTES);
-  const opusHeadOffset = opusAudioHeaderBytes.indexOf(OPUS_HEAD_SIGNATURE);
-  if (opusHeadOffset < 0 || opusHeadOffset + 19 > opusAudioHeaderBytes.length) {
-    throw new SpeechGatewayError(400, 'opus_channel_count_unavailable', 'Google latest_short (V1) needs a valid OpusHead channel count in the original recording.');
-  }
-
-  const opusHeadVersion = opusAudioHeaderBytes[opusHeadOffset + 8];
-  const audioChannelCount = opusAudioHeaderBytes[opusHeadOffset + 9];
-  const channelMappingFamily = opusAudioHeaderBytes[opusHeadOffset + 18];
-  const requiredOpusHeadLength = channelMappingFamily === 0 ? 19 : 21 + audioChannelCount;
-  if (opusHeadVersion > 15 || audioChannelCount < 1 || audioChannelCount > 8 ||
-      (channelMappingFamily === 0 && audioChannelCount > 2) || opusHeadOffset + requiredOpusHeadLength > opusAudioHeaderBytes.length) {
-    throw new SpeechGatewayError(400, 'opus_channel_count_unavailable', 'Google latest_short (V1) needs a valid OpusHead channel count in the original recording.');
-  }
-  return audioChannelCount;
 }
 
 export function validateRecordingRequest(request) {
@@ -69,19 +49,6 @@ export function validateRecordingRequest(request) {
   if (!RECORDING_MIME_TYPES.has(audioMimeType)) {
     throw new SpeechGatewayError(400, 'unsupported_audio_format', 'Use WebM, Ogg, MP4 or WAV audio.');
   }
-  let sampleRateHertz;
-  let audioChannelCount;
-  if (request.model === 'latest_short') {
-    if (!['audio/webm', 'audio/ogg'].includes(audioMimeType)) {
-      throw new SpeechGatewayError(400, 'unsupported_audio_format_for_model', 'Google latest_short (V1) accepts WebM/Opus or Ogg/Opus recordings.');
-    }
-    sampleRateHertz = request.sampleRateHertz;
-    if (!Number.isInteger(sampleRateHertz) || !V1_OPUS_SAMPLE_RATES_HERTZ.has(sampleRateHertz)) {
-      throw new SpeechGatewayError(400, 'invalid_audio_sample_rate', 'Google latest_short (V1) needs the saved microphone sample rate: 8000, 12000, 16000, 24000 or 48000 Hz.');
-    }
-  } else if (Object.hasOwn(request, 'sampleRateHertz')) {
-    throw new SpeechGatewayError(400, 'unexpected_recording_fields', 'sampleRateHertz is accepted only for the latest_short model.');
-  }
   const audioBase64 = request.audioBase64;
   if (typeof audioBase64 !== 'string' || audioBase64.length === 0) {
     throw new SpeechGatewayError(400, 'empty_recording', 'The recording contains no audio bytes.');
@@ -99,23 +66,14 @@ export function validateRecordingRequest(request) {
   if (audioBytes.length > MAX_AUDIO_BYTES) {
     throw new SpeechGatewayError(413, 'recording_too_large', 'Recordings may contain at most 10 MiB of audio.');
   }
-  if (request.model === 'latest_short') audioChannelCount = opusChannelCountFromAudioHeader(audioBytes);
   return {
     model: request.model,
     audioBase64,
+    audioBytes,
     mimeType: request.mimeType,
     durationMs: request.durationMs,
-    ...(sampleRateHertz === undefined ? {} : { sampleRateHertz }),
-    ...(audioChannelCount === undefined ? {} : { audioChannelCount }),
     audioSha256: createHash('sha256').update(audioBytes).digest('hex'),
   };
-}
-
-function speechV1EncodingForRecording(recording) {
-  const audioMimeType = recording.mimeType.split(';', 1)[0].trim().toLowerCase();
-  if (audioMimeType === 'audio/webm') return 'WEBM_OPUS';
-  if (audioMimeType === 'audio/ogg') return 'OGG_OPUS';
-  throw new SpeechGatewayError(400, 'unsupported_audio_format_for_model', 'Google latest_short (V1) accepts WebM/Opus or Ogg/Opus recordings.');
 }
 
 function redactCredential(value, accessToken) {
@@ -146,7 +104,7 @@ export function extractSpeechTranscript(providerResponse) {
   }).join(' ');
 }
 
-export function createGoogleSpeechTranscriber({ projectId, fetchImplementation = fetch, getAccessToken, timeoutMs = 15_000, now = () => performance.now() }) {
+export function createGoogleSpeechTranscriber({ projectId, fetchImplementation = fetch, getAccessToken, prepareAudio = prepareSpeechAudio, timeoutMs = 15_000, now = () => performance.now() }) {
   let googleAuth;
   const obtainAccessToken = getAccessToken || (async () => {
     const { GoogleAuth } = await import('google-auth-library');
@@ -161,6 +119,25 @@ export function createGoogleSpeechTranscriber({ projectId, fetchImplementation =
     }
     const startedAt = now();
     const requestSignal = AbortSignal.any([AbortSignal.timeout(timeoutMs), ...(signal ? [signal] : [])]);
+    let preparedAudio;
+    try {
+      preparedAudio = await prepareAudio(recording, { signal: requestSignal });
+    } catch (error) {
+      if (error?.httpStatus && typeof error.code === 'string') {
+        throw new SpeechGatewayError(error.httpStatus, error.code, error.message);
+      }
+      if (requestSignal.aborted) {
+        throw new SpeechGatewayError(504, 'speech_request_timeout', 'Preparing this recording exceeded the speech server time limit.');
+      }
+      throw new SpeechGatewayError(500, 'speech_audio_preparation_failed', 'The speech server could not prepare the saved recording.');
+    }
+    if (!preparedAudio || !Buffer.isBuffer(preparedAudio.audioBytes) || preparedAudio.mimeType !== 'audio/wav' ||
+        preparedAudio.preprocessing?.version !== SPEECH_AUDIO_PREPROCESSING_VERSION ||
+        !/^[a-f0-9]{64}$/.test(preparedAudio.preprocessing?.preparedAudioSha256 || '') ||
+        createHash('sha256').update(preparedAudio.audioBytes).digest('hex') !== preparedAudio.preprocessing.preparedAudioSha256) {
+      throw new SpeechGatewayError(500, 'speech_audio_preparation_failed', 'The speech server produced invalid prepared audio.');
+    }
+    const preparedAudioBase64 = preparedAudio.audioBytes.toString('base64');
     let accessToken;
     try {
       accessToken = await new Promise((resolve, reject) => {
@@ -185,18 +162,12 @@ export function createGoogleSpeechTranscriber({ projectId, fetchImplementation =
         : `https://eu-speech.googleapis.com/v2/projects/${projectId}/locations/eu/recognizers/_:recognize`;
       const googleSpeechRequest = model === 'latest_short'
         ? {
-            config: {
-              encoding: speechV1EncodingForRecording(recording),
-              sampleRateHertz: recording.sampleRateHertz,
-              audioChannelCount: recording.audioChannelCount,
-              languageCode: SPEECH_LANGUAGE_CODE,
-              model,
-            },
-            audio: { content: recording.audioBase64 },
+            config: { languageCode: SPEECH_LANGUAGE_CODE, model },
+            audio: { content: preparedAudioBase64 },
           }
         : {
             config: { autoDecodingConfig: {}, languageCodes: [SPEECH_LANGUAGE_CODE], model },
-            content: recording.audioBase64,
+            content: preparedAudioBase64,
           };
       response = await fetchImplementation(googleSpeechUrl, {
         method: 'POST',
@@ -225,6 +196,7 @@ export function createGoogleSpeechTranscriber({ projectId, fetchImplementation =
       languageCode: SPEECH_LANGUAGE_CODE,
       configurationVersion,
       audioSha256: recording.audioSha256,
+      preprocessing: preparedAudio.preprocessing,
       transcript,
       // Google returns segment hypotheses. They are preserved in providerResponse;
       // they are not invented into competing whole-recording transcripts.
