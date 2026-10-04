@@ -51,7 +51,7 @@ Rate and daily counters live only in this local process and reset when it restar
 
 ## Cloud Run setup
 
-The currently deployed revision is `reading-learner-speech-00005-vl7`, which supports the three Google models but does not yet support the private reference library. This source update adds the reference routes; deploy it with the bucket configuration below before using the evaluator's reference buttons. The child reading app remains unchanged. Keep the access code private; the endpoint URL alone does not authorize requests.
+The deployed revision is `reading-learner-speech-00006-7sq`. It serves the private reference library from `reading-learner-speech-references-775355867708` with public access prevention and a bucket-scoped runtime permission. The child reading app remains unchanged. Keep the access code private; the endpoint URL alone does not authorize requests.
 
 The silence-trim revision is ready and serves 100% of traffic. Live checks on this revision verified the allowed GitHub Pages browser preflight (`204`), missing-token rejection (`401`), and unapproved-origin rejection (`403`). These checks submitted no saved speech audio and made no recognition request. An earlier revision transcribed one 1.812-second public Google sample as “How old is the Brooklyn Bridge?” with the expected model, language and original-audio SHA-256; V1 `latest_short` has not yet transcribed a saved take. Both the service-wide and revision instance maximums are set to one. No child's recording was used for these checks.
 
