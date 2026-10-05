@@ -443,6 +443,40 @@ function currentCompletedRun(model, transcript) {
 }
 
 const browserBehaviorTests = [
+  ['Switching from a guided check to older manual recordings downloads that selected session without a server connection', async () => {
+    const archive = new RecordingArchive();
+    const olderTake = await seedSavedTake(archive, 0);
+    const guidedSession = {
+      id: randomUUID(), schemaVersion: 2, startedAt: '2026-10-05T14:00:00.000Z',
+      order: ['mad'], currentTrialIndex: 1, guidedReferenceTest: true, guidedReferenceTestComplete: true,
+      guidedReferenceIds: ['approved-mad'], guidedReferenceTestCompletedAt: '2026-10-05T14:01:00.000Z',
+    };
+    await archive.createSession(guidedSession);
+    await archive.saveAttempt(guidedSession.id, {
+      id: randomUUID(), prompt: 'mad', wordIndex: 0, durationMs: 820,
+      audioSha256: createHash('sha256').update('newer guided take').digest('hex'), modelRuns: [],
+    }, new Blob(['newer guided take'], { type: 'audio/webm;codecs=opus' }));
+    const page = createPage({ archive }); await page.idle();
+    assert.match(page.element('session-download-description').textContent, /Guided word check.*1 saved take/);
+    assert.equal(page.element('summary').style.display, 'block');
+    await page.click('export');
+    assert.equal(archive.lastManifest.session.id, guidedSession.id);
+    page.element('saved-session').value = existingSessionId;
+    await Promise.all(page.element('saved-session').dispatch('change'));
+    await page.idle();
+    assert.equal(page.element('summary').style.display, 'none');
+    assert.equal(page.element('export').disabled, false);
+    assert.match(page.element('session-download-description').textContent, /Manual recordings.*1 saved take/);
+    assert.ok(page.element('saved-session').children.some(option => /^Guided word check/.test(option.textContent)));
+    assert.ok(page.element('saved-session').children.some(option => /^Manual recordings/.test(option.textContent)));
+    assert.match(pageHtml, /id="session-tools"[\s\S]*?id="export"[\s\S]*?<\/div>\s*<div[^>]*id="reference-library"/,
+      'Session downloads must remain outside the results panel that closes when switching sessions');
+    await page.click('export');
+    assert.equal(archive.lastManifest.session.id, existingSessionId);
+    assert.deepEqual(archive.lastManifest.attempts.map(attempt => attempt.id), [olderTake.attempt.id]);
+    assert.equal(page.fetchRequests.length, 0);
+    assert.equal(page.counts().microphoneRequests, 0);
+  }],
   ['The access code is remembered only when selected and can be restored or removed', async () => {
     const page = createPage();
     await page.idle();

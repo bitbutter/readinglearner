@@ -105,6 +105,7 @@
   body.guided-reference-mode h1 { font-size: 1.2rem; }
   body.guided-reference-mode .sub,
   body.guided-reference-mode #parent-tools,
+  body.guided-reference-mode #session-tools,
   body.guided-reference-mode #reference-library,
   body.guided-reference-mode #google-checks,
   body.guided-reference-mode > .note { display: none; }
@@ -144,18 +145,21 @@
     <p id="problem" class="bad" role="alert" hidden></p>
     <button id="retry-save" class="small" hidden>Retry saving this recording</button>
     <button id="download-unsaved" class="small" hidden>Download unsaved audio</button>
-    <details id="session-tools">
-      <summary>Recording sessions</summary>
-      <label for="saved-session">Choose a saved session</label>
-      <select id="saved-session" disabled></select>
-      <button id="new-session" class="small" disabled>Start a new session</button>
-      <p class="note">Each session has its own word order. Saved audio stays in this browser unless you approve it below as a reference.</p>
-    </details>
     <details id="legacy-session" hidden>
       <summary>Earlier text-only results</summary>
       <p class="note">This is a record from an older version of the evaluator. It contains no audio.</p>
       <button id="export-legacy" class="small">Download earlier text record</button>
     </details>
+  </div>
+
+  <div class="card settings" id="session-tools">
+    <h2>Saved recording sessions</h2>
+    <label for="saved-session">Session to view or download</label>
+    <select id="saved-session" disabled></select>
+    <p id="session-download-description" class="reference-help" role="status" aria-live="polite"></p>
+    <button id="export" class="small" disabled>Download this session’s audio ZIP</button>
+    <p class="note">The ZIP contains every original take and saved result from the selected session. A download does not need a speech-server connection.</p>
+    <button id="new-session" class="small" disabled>Start a new manual session</button>
   </div>
 
   <div class="card settings" id="reference-library">
@@ -233,7 +237,6 @@
     <div id="trials"></div>
     <div class="row">
       <button id="back2" class="small">◀ back to session</button>
-      <button id="export" class="small">⬇ Download audio &amp; manifest ZIP</button>
     </div>
   </div>
 

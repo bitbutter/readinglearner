@@ -225,6 +225,10 @@ function refreshControls() {
   for (const id of ['prev', 'next', 'redo', 'void', 'finish', 'back2', 'export', 'new-session', 'saved-session', 'recognition-mode', 'gateway-url', 'gateway-token', 'connect-references', 'tts', 'play-prepared']) {
     $(id).disabled = locked;
   }
+  $('export').disabled = locked || recordedAttempts.length === 0;
+  $('session-download-description').textContent = recordingSession
+    ? `${recordingSessionLabel(recordingSession)} · ${recordedAttempts.length} saved take${recordedAttempts.length === 1 ? '' : 's'}`
+    : 'Opening saved recordings…';
   $('enable-mic').disabled = locked || !!microphoneStream;
   $('void').disabled = locked || !currentAttempt();
   $('tts').disabled = locked || !window.speechSynthesis || !window.SpeechSynthesisUtterance;
@@ -405,13 +409,18 @@ function renderTrial() {
   refreshControls();
 }
 
+function recordingSessionLabel(session) {
+  const kind = session.guidedReferenceTest === true ? 'Guided word check' : 'Manual recordings';
+  return `${kind} — ${new Date(session.startedAt).toLocaleString()}`;
+}
+
 async function refreshSessionChoices() {
   const sessions = await ASRRecordings.listSessions();
   $('saved-session').replaceChildren();
   for (const session of sessions) {
     const option = document.createElement('option');
     option.value = session.id;
-    option.textContent = new Date(session.startedAt).toLocaleString();
+    option.textContent = recordingSessionLabel(session);
     $('saved-session').appendChild(option);
   }
   if (recordingSession) $('saved-session').value = recordingSession.id;
@@ -1274,10 +1283,12 @@ $('back2').addEventListener('click', () => runOperation(async () => {
   renderTrial();
 }));
 $('export').addEventListener('click', () => runOperation(async () => {
-  $('archive-status').textContent = 'Preparing original audio files and manifest…';
+  if (!recordingSession || recordedAttempts.length === 0) throw new Error('This session has no saved recordings to download.');
+  const selectedSessionLabel = recordingSessionLabel(recordingSession);
+  $('archive-status').textContent = `Preparing audio ZIP: ${selectedSessionLabel}…`;
   const archive = await ASRRecordings.exportSession(recordingSession.id);
   download(archive.blob, archive.filename);
-  $('archive-status').textContent = `ZIP ready: ${recordedAttempts.length} original audio files and their manifest.`;
+  $('archive-status').textContent = `ZIP ready: ${selectedSessionLabel} · ${recordedAttempts.length} original audio files and their manifest.`;
 }));
 $('export-legacy').addEventListener('click', () => {
   const text = localStorage.getItem('asrEval.v1');
