@@ -20,7 +20,7 @@ const testPreprocessing = Object.freeze({
   inputDurationMs: 1200, trimmedLeadingSilenceMs: 350, outputDurationMs: 850,
   preparedAudioSha256: createHash('sha256').update(testPreparedAudioBytes).digest('hex'),
 });
-assert.match(pageHtml, /src="asr_eval\.js"/, 'HTML must load the tested evaluator script');
+assert.match(pageHtml, /src="asr_eval\.js(?:\?[^\"]+)?"/, 'HTML must load the tested evaluator script');
 const appScript = readFileSync(new URL('../../app.js', import.meta.url), 'utf8');
 
 function extractAppSection(startMarker, endMarker) {
