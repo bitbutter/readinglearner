@@ -1,11 +1,5 @@
 'use strict';
 
-// ── Feature flags ─────────────────────────────────────────────────────────────
-// Set VOSK_ENABLED = true to restore offline Vosk recognition and the
-// audition/tuning screen.
-const VOSK_ENABLED = false;
-// ─────────────────────────────────────────────────────────────────────────────
-
 // ============================================================
 // DEBUG
 // ============================================================
@@ -814,7 +808,7 @@ const WORDS_CONTENT = [
 // To add to this: on your dev machine, audition terms in Settings → "Audition &
 // edit all terms", then run rlExportAccepted() in the console (or tap Export on
 // that screen) and paste the `acceptedAdditions` entries below.
-// Genuine homophones and confirmed WSR mishearings for specific words.
+// Genuine homophones and previously confirmed recognizer spellings.
 // Applied on every load so existing users benefit even after the one-time
 // acceptedPruned migration has already run.
 const ACCEPTED_OVERRIDES = {
@@ -1136,169 +1130,20 @@ let micStream       = null;
 let audioCtx        = null;
 let scriptProc      = null;
 let voskReady       = false;
-let micOpening      = false;
+let microphoneOpeningPromise = null;
+let microphoneStreamGeneration = 0;
+let spokenAttemptGeneration = 0;
 
 let heardTranscripts  = [];
 let listenEvaluated   = false;
 let micHoldStart      = 0;   // set when startListening fires; read in no-result path
-
-// ── Web Speech API (primary recognizer) ──────────────────────────────────────
-// wsrResult: null = not yet arrived, '' = arrived but empty, else transcript
-// wsrPending: true = evaluateVosk is waiting on a WSR result
-const WSR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-let wsrRecognizer    = null;
-let wsrPending       = false;
-let wsrResult        = null;
-let wsrInterim       = null;  // last interim transcript; fallback when onend has no final
-let wsrInterimTimer  = null;  // short deadline to use interim when Chrome won't finalise
-let wsrGeneration    = 0;     // closed over in handlers to discard stale events
-let wsrAudioLive     = false; // true once WSR's audio capture has actually begun
-
-// Warm-up: Chrome's SpeechRecognition drops the first ~200-300ms after start.
-// We hold a visible "getting ready" state until audio is live AND a minimum
-// time has passed, so the child only speaks once capture is reliably running.
-const WARM_MIN_MS = 500;
-const WARM_MAX_MS = 850;  // hard ceiling if onaudiostart never fires
-let warmupTimer   = null;
-
-function initWSR() {
-  DBG('wsr', WSR ? 'SpeechRecognition available (per-session)' : 'not available');
-}
-
-function startWSR() {
-  if (!WSR) return;
-  wsrGeneration++;
-  const myGen = wsrGeneration;
-  wsrResult    = null;
-  wsrAudioLive = false;
-
-  const r = new WSR();
-  r.lang            = 'en-GB';
-  r.continuous      = false;
-  r.interimResults  = true;
-  r.maxAlternatives = 1;
-  wsrRecognizer = r;
-  wsrInterim    = null;
-
-  r.onaudiostart = () => { if (myGen === wsrGeneration) { wsrAudioLive = true; DBG('wsr', 'audio live'); } };
-  r.onstart      = () => { if (myGen === wsrGeneration) wsrAudioLive = true; };
-
-  r.onresult = (e) => {
-    if (myGen !== wsrGeneration) return;
-    const result = e.results[e.results.length - 1];
-    const text = (result[0].transcript || '').toLowerCase().trim();
-    if (!result.isFinal) {
-      wsrInterim = text || null;
-      DBG('wsr.interim', text);
-      // When already waiting for a final, arm a short deadline so we don't
-      // block for the full 6s safety timeout if Chrome never finalises.
-      if (wsrPending && wsrInterim && !wsrInterimTimer) {
-        wsrInterimTimer = setTimeout(() => {
-          wsrInterimTimer = null;
-          if (!wsrPending || !wsrInterim) return;
-          DBG('wsr', 'interim deadline — using: ' + wsrInterim);
-          if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
-          wsrPending = false;
-          setMicState('waiting');
-          onRecognitionResult([wsrInterim]);
-        }, 600);
-      }
-      return;
-    }
-    clearTimeout(wsrInterimTimer); wsrInterimTimer = null;
-    DBG('wsr.result', { text, wsrPending });
-    wsrResult = text || '';
-    if (wsrPending) {
-      wsrPending = false;
-      setMicState('waiting');
-      onRecognitionResult(text ? [text] : []);
-    }
-  };
-
-  r.onerror = (e) => {
-    if (myGen !== wsrGeneration) return;
-    DBG('wsr.error', e.error);
-    if (e.error === 'not-allowed') { sessionMicBlocked = true; onMicDenied(); return; }
-    wsrResult = '';
-    if (wsrPending) {
-      wsrPending = false;
-      handleNoTranscript();
-    }
-  };
-
-  r.onend = () => {
-    if (myGen !== wsrGeneration) return;
-    // If no final result arrived, fall back to the last interim transcript.
-    // Chrome sometimes skips the final event for short function words like "the".
-    if (wsrResult === null) {
-      wsrResult = wsrInterim || '';
-      if (wsrInterim) DBG('wsr.end', { wsrPending, usedInterim: wsrInterim });
-      else             DBG('wsr.end', { wsrPending });
-    } else {
-      DBG('wsr.end', { wsrPending });
-    }
-    if (wsrPending) {
-      wsrPending = false;
-      if (wsrResult) {
-        setMicState('waiting');
-        onRecognitionResult([wsrResult]);
-      } else {
-        handleNoTranscript();
-      }
-    }
-  };
-
-  try { r.start(); DBG('wsr', 'started (gen ' + myGen + ')'); }
-  catch (e) { DBG('wsr', 'start failed: ' + e.message); wsrResult = ''; }
-}
-
-// Poll until WSR audio is live and the minimum warm-up has elapsed, then flip
-// to 'listening' with a rising "go" chime. Hard ceiling at WARM_MAX_MS so a
-// missing onaudiostart can never hang the warm-up.
-function scheduleWarmupReady(warmStart) {
-  clearTimeout(warmupTimer);
-  const tick = () => {
-    if (micState !== 'warming') return;   // aborted / moved on
-    const elapsed = Date.now() - warmStart;
-    const ready = (wsrAudioLive && elapsed >= WARM_MIN_MS) || elapsed >= WARM_MAX_MS;
-    if (ready) {
-      DBG('warmup', { ready: true, elapsed, audioLive: wsrAudioLive });
-      setMicState('listening');
-      playReadyChime();
-      maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
-      return;
-    }
-    warmupTimer = setTimeout(tick, 40);
-  };
-  warmupTimer = setTimeout(tick, 40);
-}
-
-// Short rising blip — the "speak now" cue. Deliberately distinct from the
-// success pling (a chord). Kept brief so it barely overlaps live capture.
-function playReadyChime() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const t = ctx.currentTime;
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.setValueAtTime(660, t);
-    o.frequency.exponentialRampToValueAtTime(990, t + 0.1);
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
-    o.connect(g); g.connect(ctx.destination);
-    o.start(t); o.stop(t + 0.18);
-    o.onended = () => { try { ctx.close(); } catch (_) {} };
-  } catch (_) {}
-}
 
 let settleTimer       = null;
 let maxListenTimer    = null;
 let unblockTimer      = null;
 let sessionMicBlocked = false;
 
-// 'waiting' | 'ready' | 'listening' | 'evaluating'
+// 'waiting' | 'ready' | 'warming' | 'listening' | 'evaluating'
 let micState = 'waiting';
 
 // ── Audition (grown-up tuning screen) — open-vocabulary recognizer ──
@@ -1310,10 +1155,10 @@ let auditionConfScores = [];   // mean Vosk conf per result event this session
 let auditionEvaluated  = false;
 let auditionMaxTimer   = null;
 let auditionSettleTimer = null;
+let auditionAttemptGeneration = 0;
 
 async function initVosk() {
-  if (!VOSK_ENABLED) { DBG('vosk', 'disabled (VOSK_ENABLED=false)'); return; }
-  if (!window.Vosk)  { DBG('vosk', 'Vosk not loaded'); return; }
+  if (!window.Vosk) throw new Error('The bundled speech engine did not load.');
   try {
     DBG('vosk', 'loading model…');
     const modelUrl = new URL('./model.tar.gz', window.location.href).href;
@@ -1322,7 +1167,8 @@ async function initVosk() {
     voskReady = true;
     DBG('vosk', 'model ready');
   } catch (e) {
-    DBG('vosk', 'load FAILED: ' + e.message);
+    DBG('vosk', 'load FAILED: ' + String(e));
+    throw e;
   }
 }
 
@@ -1341,25 +1187,35 @@ function buildGrammar(set) {
 }
 
 function createRoundRecognizer(set) {
-  if (!VOSK_ENABLED) return;
   if (voskRecognizer) { try { voskRecognizer.remove(); } catch (_) {} voskRecognizer = null; }
   if (!voskReady) return;
 
   const grammar = buildGrammar(set);
   DBG('vosk', 'grammar tokens: ' + JSON.parse(grammar).length);
   voskRecognizer = new voskModel.KaldiRecognizer(16000, grammar);
+  const roundRecognizer = voskRecognizer;
 
-  voskRecognizer.on('result', (msg) => {
+  const collectTranscript = (msg) => {
+    if (roundRecognizer !== voskRecognizer) return;
     const text = (msg.result.text || '').trim();
     DBG('vosk.result', { text, micState });
     if (micState !== 'listening' && micState !== 'evaluating') return;
     if (text && text !== '[unk]' && !heardTranscripts.includes(text)) {
       heardTranscripts.push(text);
     }
-    if (micState === 'evaluating') evaluateVosk();
+  };
+  voskRecognizer.on('result', collectTranscript);
+  voskRecognizer.on('finalresult', msg => {
+    if (roundRecognizer !== voskRecognizer || micState !== 'evaluating' || listenEvaluated) return;
+    collectTranscript(msg);
+    evaluateVosk();
+  });
+  voskRecognizer.on('error', msg => {
+    if (roundRecognizer === voskRecognizer) onSpeechEngineError(msg.error);
   });
 
   voskRecognizer.on('partialresult', (msg) => {
+    if (roundRecognizer !== voskRecognizer) return;
     DBG('vosk.partial', (msg.result.partial || ''));
   });
 }
@@ -1371,8 +1227,10 @@ function createAuditionRecognizer() {
   if (auditionRecognizer) { try { auditionRecognizer.remove(); } catch (_) {} auditionRecognizer = null; }
   if (!voskReady) return;
   auditionRecognizer = new voskModel.KaldiRecognizer(16000);
+  const tuningRecognizer = auditionRecognizer;
 
-  auditionRecognizer.on('result', (msg) => {
+  const collectTranscript = (msg) => {
+    if (tuningRecognizer !== auditionRecognizer) return;
     const text = (msg.result.text || '').trim();
     DBG('audition.result', { text, auditionState });
     if (auditionState !== 'listening' && auditionState !== 'evaluating') return;
@@ -1381,89 +1239,126 @@ function createAuditionRecognizer() {
     if (words.length) {
       auditionConfScores.push(words.reduce((s, w) => s + w.conf, 0) / words.length);
     }
-    if (auditionState === 'evaluating') finishAudition();
+  };
+  auditionRecognizer.on('result', collectTranscript);
+  auditionRecognizer.on('finalresult', msg => {
+    if (tuningRecognizer !== auditionRecognizer || auditionState !== 'evaluating' || auditionEvaluated) return;
+    collectTranscript(msg);
+    finishAudition();
+  });
+  auditionRecognizer.on('error', msg => {
+    if (tuningRecognizer === auditionRecognizer) onSpeechEngineError(msg.error);
   });
 }
 
-async function openMicStream() {
-  if (micStream || micOpening) return;
-  micOpening = true;
-  try {
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
-      video: false,
-    });
-    // Capture at the recognizer's rate (16 kHz) so the declared and actual
-    // sample rates can never disagree; Chrome resamples the mic natively.
-    try { audioCtx = new AudioContext({ sampleRate: 16000 }); }
-    catch (_) { audioCtx = new AudioContext(); }
-    const src  = audioCtx.createMediaStreamSource(micStream);
-    scriptProc = audioCtx.createScriptProcessor(4096, 1, 1);
-    scriptProc.onaudioprocess = (e) => {
-      if (auditionState === 'listening' && auditionRecognizer) {
-        try { auditionRecognizer.acceptWaveform(e.inputBuffer); } catch (_) {}
-        return;
+function openMicStream() {
+  if (micStream) return Promise.resolve(true);
+  if (microphoneOpeningPromise) return microphoneOpeningPromise;
+  const openingGeneration = microphoneStreamGeneration;
+  const openingPromise = (async () => {
+    let openedStream = null;
+    let openedContext = null;
+    try {
+      openedStream = await navigator.mediaDevices.getUserMedia({
+        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+        video: false,
+      });
+      if (openingGeneration !== microphoneStreamGeneration) {
+        openedStream.getTracks().forEach(track => track.stop());
+        return false;
       }
-      if (micState !== 'listening' || !voskRecognizer) return;
-      try { voskRecognizer.acceptWaveform(e.inputBuffer); } catch (_) {}
-    };
-    src.connect(scriptProc);
-    scriptProc.connect(audioCtx.destination);
-    DBG('mic', 'open sampleRate=' + audioCtx.sampleRate);
-  } catch (e) {
-    DBG('mic', 'getUserMedia failed: ' + e.name);
-    micStream = null;
-    if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-      sessionMicBlocked = true;
-      onMicDenied();
+      openedContext = new AudioContext({ sampleRate: 16000 });
+      if (openedContext.sampleRate !== 16000) {
+        throw new Error('The microphone must run at the speech engine\'s 16 kHz sample rate.');
+      }
+      const source = openedContext.createMediaStreamSource(openedStream);
+      const processor = openedContext.createScriptProcessor(4096, 1, 1);
+      processor.onaudioprocess = event => {
+        if (openingGeneration !== microphoneStreamGeneration) return;
+        try {
+          if (auditionState === 'listening' && auditionRecognizer) {
+            auditionRecognizer.acceptWaveform(event.inputBuffer);
+          } else if (micState === 'listening' && voskRecognizer) {
+            voskRecognizer.acceptWaveform(event.inputBuffer);
+          }
+        } catch (error) {
+          onSpeechEngineError(error.message);
+        }
+      };
+      source.connect(processor);
+      processor.connect(openedContext.destination);
+      micStream = openedStream;
+      audioCtx = openedContext;
+      scriptProc = processor;
+      DBG('mic', 'open sampleRate=' + audioCtx.sampleRate);
+      return true;
+    } catch (error) {
+      if (openedStream) openedStream.getTracks().forEach(track => track.stop());
+      if (openedContext) await openedContext.close();
+      if (openingGeneration !== microphoneStreamGeneration) return false;
+      DBG('mic', 'capture setup failed: ' + error.message);
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') onMicDenied();
+      else onMicUnavailable();
+      return false;
     }
-  } finally {
-    micOpening = false;
-  }
-}
-
-function abortWSR() {
-  wsrGeneration++;         // invalidate any in-flight handlers for this session
-  wsrPending = false;
-  clearTimeout(wsrInterimTimer); wsrInterimTimer = null;
-  if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
+  })().finally(() => {
+    if (microphoneOpeningPromise === openingPromise) microphoneOpeningPromise = null;
+  });
+  microphoneOpeningPromise = openingPromise;
+  return openingPromise;
 }
 
 function closeMicStream() {
-  abortWSR();
+  microphoneStreamGeneration++;
+  spokenAttemptGeneration++;
+  auditionAttemptGeneration++;
+  microphoneOpeningPromise = null;
+  clearTimeout(settleTimer);
+  clearTimeout(maxListenTimer);
+  clearTimeout(auditionMaxTimer);
+  clearTimeout(auditionSettleTimer);
+  cancelUnblock();
+  listenEvaluated = true;
   if (scriptProc) { try { scriptProc.disconnect(); } catch (_) {} scriptProc = null; }
   if (audioCtx)   { try { audioCtx.close(); } catch (_) {} audioCtx = null; }
   if (micStream)  { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
   if (voskRecognizer) { try { voskRecognizer.remove(); } catch (_) {} voskRecognizer = null; }
+  if (auditionRecognizer) { try { auditionRecognizer.remove(); } catch (_) {} auditionRecognizer = null; }
   DBG('mic', 'closed');
 }
 
-function startListening() {
-  DBG('startListening', { sessionMicBlocked, voskReady, wsrAvailable: !!WSR });
+async function startListening() {
+  DBG('startListening', { sessionMicBlocked, voskReady });
   if (sessionMicBlocked) { onMicDenied(); return; }
+  if (!voskReady) { onMicUnavailable(); return; }
+  const attemptGeneration = ++spokenAttemptGeneration;
+  setMicState('warming');
+  if (!await openMicStream()) return;
+  if (attemptGeneration !== spokenAttemptGeneration) return;
+  try {
+    await audioCtx.resume();
+  } catch (error) {
+    if (attemptGeneration !== spokenAttemptGeneration) return;
+    DBG('mic', 'audio capture could not resume: ' + error.message);
+    onMicUnavailable();
+    return;
+  }
+  if (attemptGeneration !== spokenAttemptGeneration) return;
+  // A fresh recognizer prevents a late result from the previous word from
+  // being counted as the new word. The loaded model is reused.
+  try {
+    createRoundRecognizer(gs.currentSet);
+  } catch (error) {
+    onSpeechEngineError(error.message);
+    return;
+  }
   micHoldStart     = Date.now();
   heardTranscripts = [];
   listenEvaluated  = false;
-  wsrPending       = false;
-  wsrResult        = null;
-  wsrInterim       = null;
-  clearTimeout(wsrInterimTimer); wsrInterimTimer = null;
-
-  if (WSR) {
-    // WSR-primary: cloud recognizer holds its own mic — no AudioContext needed.
-    // Enter 'warming' first; scheduleWarmupReady flips to 'listening' (with a
-    // "go" chime) once audio capture is live, so the child speaks after warm-up.
-    setMicState('warming');
-    startWSR();
-    scheduleWarmupReady(Date.now());
-    return;
-  }
-
-  // Vosk-only fallback (browser has no SpeechRecognition API).
-  if (!voskReady || !voskRecognizer) { onRecognitionFallback(); return; }
-  if (!micStream)                    { onRecognitionFallback(); return; }
   setMicState('listening');
-  maxListenTimer = setTimeout(() => { DBG('maxListen', 'FIRED'); requestStopAndEvaluate(); }, 10000);
+  maxListenTimer = setTimeout(() => {
+    if (attemptGeneration === spokenAttemptGeneration) requestStopAndEvaluate();
+  }, 10000);
 }
 
 function requestStopAndEvaluate() {
@@ -1471,82 +1366,27 @@ function requestStopAndEvaluate() {
   if (micState !== 'listening') return;
   clearTimeout(maxListenTimer);
   setMicState('evaluating');
-  if (WSR) {
-    // Do NOT call wsrRecognizer.stop() here — Chrome aborts cloud processing
-    // if stop() arrives before the audio has been sent and acknowledged.
-    // With continuous:false, WSR finalises naturally after end-of-speech.
-    // Short settle to catch cases where onresult already fired.
-    settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 200);
-  } else {
-    // Vosk-only: flush the recognizer buffer and wait for the final result.
-    if (voskRecognizer) voskRecognizer.retrieveFinalResult();
-    settleTimer = setTimeout(() => { DBG('settleTimer', 'FIRED'); evaluateVosk(); }, 2000);
-  }
+  const attemptGeneration = spokenAttemptGeneration;
+  settleTimer = setTimeout(() => {
+    if (attemptGeneration === spokenAttemptGeneration) onSpeechEngineError('The spoken answer did not finish processing.');
+  }, 10000);
+  try { voskRecognizer.retrieveFinalResult(); }
+  catch (error) { onSpeechEngineError(error.message); }
 }
 
 function evaluateVosk() {
-  DBG('evaluateVosk', { listenEvaluated, heard: heardTranscripts.slice(), wsrResult });
+  DBG('evaluateVosk', { listenEvaluated, heard: heardTranscripts.slice() });
   if (listenEvaluated) return;
   if (micState !== 'evaluating' && micState !== 'listening') return;
   listenEvaluated = true;
   clearTimeout(settleTimer);
   clearTimeout(maxListenTimer);
 
-  const item = gs.currentItem;
-
-  if (!WSR) {
-    // ── Vosk-only fallback ───────────────────────────────────────────────────
-    if (heardTranscripts.length) {
-      setMicState('waiting');
-      onRecognitionResult([...heardTranscripts]);
-    } else {
-      handleNoTranscript();
-    }
-    return;
-  }
-
-  // ── WSR-primary path ─────────────────────────────────────────────────────
-  if (wsrResult !== null) {
-    // onresult or onend already fired before evaluateVosk ran.
-    if (wsrResult) {
-      setMicState('waiting');
-      onRecognitionResult([wsrResult]);
-    } else {
-      handleNoTranscript();
-    }
+  if (heardTranscripts.length) {
+    setMicState('waiting');
+    onRecognitionResult([...heardTranscripts]);
   } else {
-    // WSR still running — waiting for onresult / onend (natural end-of-speech).
-    wsrPending = true;
-    // If an interim already arrived before wsrPending was set (common for short
-    // words: interim fires during listening, button release happens immediately
-    // after), arm the 600ms deadline now so we don't wait the full 6s.
-    if (wsrInterim && !wsrInterimTimer) {
-      wsrInterimTimer = setTimeout(() => {
-        wsrInterimTimer = null;
-        if (!wsrPending || !wsrInterim) return;
-        DBG('wsr', 'interim (pre-pending) deadline — using: ' + wsrInterim);
-        if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
-        wsrPending = false;
-        setMicState('waiting');
-        onRecognitionResult([wsrInterim]);
-      }, 600);
-    }
-    // After 6s force-abort; use interim transcript if Chrome never finalised.
-    setTimeout(() => {
-      if (!wsrPending) return;
-      DBG('wsr', 'safety timeout — aborting');
-      if (wsrRecognizer) { try { wsrRecognizer.abort(); } catch (_) {} wsrRecognizer = null; }
-      wsrPending = false;
-      const fallback = wsrInterim;
-      if (fallback) {
-        DBG('wsr', 'safety timeout used interim: ' + fallback);
-        setMicState('waiting');
-        onRecognitionResult([fallback]);
-      } else {
-        handleNoTranscript();
-      }
-    }, 6000);
-    DBG('wsr', 'waiting for natural end-of-speech…');
+    handleNoTranscript();
   }
 }
 
@@ -1613,29 +1453,70 @@ function addAcceptedTerm(item, rawTerm) {
 // AUDITION (grown-up tuning)
 // ============================================================
 
-function armAudition(itemId) {
+async function armAudition(itemId) {
   DBG('armAudition', { itemId, auditionState });
   if (auditionState !== 'idle') return;
   if (sessionMicBlocked) { setRowResult(itemId, 'miss', 'microphone blocked'); return; }
-  if (!voskReady || !auditionRecognizer || !micStream) {
-    setRowResult(itemId, 'miss', 'no microphone');
+  if (!voskReady) {
+    setRowResult(itemId, 'miss', 'speech engine unavailable');
     return;
   }
+  const attemptGeneration = ++auditionAttemptGeneration;
   auditionRowId      = itemId;
+  auditionState = 'warming';
+  setRowListening(itemId, true);
+  if (!await openMicStream()) {
+    if (attemptGeneration !== auditionAttemptGeneration) return;
+    auditionState = 'idle';
+    auditionRowId = null;
+    setRowListening(itemId, false);
+    setRowResult(itemId, 'miss', 'microphone unavailable');
+    return;
+  }
+  if (attemptGeneration !== auditionAttemptGeneration) return;
+  try {
+    await audioCtx.resume();
+  } catch (error) {
+    if (attemptGeneration !== auditionAttemptGeneration) return;
+    auditionState = 'idle';
+    auditionRowId = null;
+    setRowListening(itemId, false);
+    setRowResult(itemId, 'miss', 'microphone could not start');
+    return;
+  }
+  if (attemptGeneration !== auditionAttemptGeneration) return;
+  try {
+    createAuditionRecognizer();
+  } catch (error) {
+    onSpeechEngineError(error.message);
+    return;
+  }
   auditionHeard      = [];
   auditionConfScores = [];
   auditionEvaluated  = false;
   auditionState     = 'listening';
-  setRowListening(itemId, true);
-  auditionMaxTimer  = setTimeout(stopAudition, 6000);
+  auditionMaxTimer  = setTimeout(() => {
+    if (attemptGeneration === auditionAttemptGeneration) stopAudition();
+  }, 6000);
 }
 
 function stopAudition() {
+  if (auditionState === 'warming') {
+    auditionAttemptGeneration++;
+    auditionState = 'idle';
+    setRowListening(auditionRowId, false);
+    auditionRowId = null;
+    return;
+  }
   if (auditionState !== 'listening') return;
   clearTimeout(auditionMaxTimer);
   auditionState = 'evaluating';
-  if (auditionRecognizer) auditionRecognizer.retrieveFinalResult();
-  auditionSettleTimer = setTimeout(finishAudition, 2500);
+  const attemptGeneration = auditionAttemptGeneration;
+  auditionSettleTimer = setTimeout(() => {
+    if (attemptGeneration === auditionAttemptGeneration) onSpeechEngineError('The tuning recording did not finish processing.');
+  }, 10000);
+  try { auditionRecognizer.retrieveFinalResult(); }
+  catch (error) { onSpeechEngineError(error.message); }
 }
 
 function finishAudition() {
@@ -1842,8 +1723,7 @@ function startRound(set, level) {
 
   setLevelBackground(level, set);
   showScreen('practice');
-  createRoundRecognizer(set);
-  if (!WSR) openMicStream();  // WSR-primary: WSR manages its own mic; Vosk needs this
+  openMicStream();
 
   // Announce the level at the start of the session
   speak(`Level ${level}!`, 1.1, () => nextItem());
@@ -2098,29 +1978,40 @@ function onRecognitionResult(transcripts) {
   const item = gs.currentItem;
   const best = transcripts.find(t => t && t !== '[unk]') || '';
 
-  // If the hear button was pressed (app already spoke the word) or the app has
-  // already spoken the correct word during a retry, the child is repeating what
-  // they heard — auto-add any transcription so WSR mishearings don't block them.
-  if (best && item.id !== gs.recapId && (gs.hearPressed || gs.retryCount > 0)) {
-    addAcceptedTerm(item, best);
-  }
-
   const matched = matchAnswer(transcripts, item);
   DBG('judge', { expected: item?.display, heard: transcripts, matched, hearPressed: gs.hearPressed, retryCount: gs.retryCount });
   setHeardDisplay(best);
   handleAnswer(matched);
 }
 
-function onRecognitionFallback() {
-  DBG('onRecognitionFallback', { awaitingResult: gs.awaitingResult });
-  if (gs.awaitingResult) return;
-  setMicState('ready');
-}
-
 function onMicDenied() {
   sessionMicBlocked = true;
   setMicState('ready');
   speak("Microphone not available. Please allow microphone access and try again.", 0.9);
+}
+
+function onMicUnavailable() {
+  setMicState('ready');
+  const message = 'Microphone could not start. Reload the app and try again.';
+  document.getElementById('mic-status').textContent = message;
+  speak(message, 0.9);
+}
+
+function onSpeechEngineError(error) {
+  DBG('speech engine could not check recording', error);
+  const tuningRowId = auditionState !== 'idle' ? auditionRowId : null;
+  closeMicStream();
+  auditionState = 'idle';
+  auditionRowId = null;
+  if (tuningRowId) {
+    setRowListening(tuningRowId, false);
+    setRowResult(tuningRowId, 'miss', 'speech engine could not check recording');
+    return;
+  }
+  setMicState('ready');
+  const message = 'I could not check that recording. Please try again.';
+  document.getElementById('mic-status').textContent = message;
+  speak(message, 0.9);
 }
 
 // ============================================================
@@ -2136,9 +2027,14 @@ function showScreen(name) {
 // ── Global unblock: absolute ceiling on how long the button can stay disabled ──
 function armUnblock(ms) {
   clearTimeout(unblockTimer);
+  const attemptGeneration = spokenAttemptGeneration;
   unblockTimer = setTimeout(() => {
+    if (attemptGeneration !== spokenAttemptGeneration) return;
     DBG('unblock', `forced recovery after ${ms}ms`);
-    wsrPending        = false;
+    spokenAttemptGeneration++;
+    clearTimeout(settleTimer);
+    clearTimeout(maxListenTimer);
+    listenEvaluated = true;
     gs.awaitingResult = false;
     if (micState !== 'ready') setMicState('ready');
   }, ms);
@@ -2150,7 +2046,7 @@ function setMicState(state) {
   micState = state;
   // Arm a hard deadline whenever we enter a non-interactive state.
   if (state === 'warming' || state === 'evaluating') armUnblock(14000);
-  if (state === 'ready') { cancelUnblock(); clearTimeout(warmupTimer); }
+  if (state !== 'warming' && state !== 'evaluating') cancelUnblock();
   const btn     = document.getElementById('mic-button');
   const lbl     = document.getElementById('mic-status');
   const hearBtn = document.getElementById('hear-button');
@@ -2538,14 +2434,16 @@ function openTuning() {
   const search = document.getElementById('tune-search');
   if (search) search.value = '';
   renderTuneList();
-  createAuditionRecognizer();
   openMicStream();
 }
 
 function closeTuning() {
-  if (auditionState === 'listening') stopAudition();
+  auditionAttemptGeneration++;
+  clearTimeout(auditionMaxTimer);
+  clearTimeout(auditionSettleTimer);
   if (auditionRecognizer) { try { auditionRecognizer.remove(); } catch (_) {} auditionRecognizer = null; }
   auditionState = 'idle';
+  auditionRowId = null;
   closeMicStream();
   openGrownUp();
 }
@@ -3015,6 +2913,11 @@ function setupEvents() {
   micBtn.addEventListener('pointerup', () => {
     const held = Date.now() - holdStart;
     DBG('pointerup', { micState, heldMs: held });
+    if (micState === 'warming') {
+      spokenAttemptGeneration++;
+      setMicState('ready');
+      return;
+    }
     if (micState !== 'listening') return;
     if (held >= 250) requestStopAndEvaluate();
     // quick tap stays green: child speaks, taps again to submit
@@ -3022,6 +2925,11 @@ function setupEvents() {
 
   micBtn.addEventListener('pointercancel', () => {
     DBG('pointercancel', { micState });
+    if (micState === 'warming') {
+      spokenAttemptGeneration++;
+      setMicState('ready');
+      return;
+    }
     if (micState === 'listening') requestStopAndEvaluate();
   });
 
@@ -3097,7 +3005,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v40 — magic-e: vowel tap plays the long team sound, final e is silent (flash only); here/there/where/shore/store get silent-e treatment. Deep links: #words-N / #numbers-N start a round at that level. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v41 — on-device Vosk answers; current sound rules, lessons and saved progress retained. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed
@@ -3128,13 +3036,14 @@ async function init() {
 
   showScreen('loading');
 
-  if (!VOSK_ENABLED) {
-    document.getElementById('btn-open-tuning')?.remove();
-    document.getElementById('btn-open-soundpreview')?.remove();
+  try {
+    await Promise.all([initVosk(), loadImageManifest()]);
+  } catch (error) {
+    document.querySelector('#screen-loading .loading-spinner').classList.add('hidden');
+    document.getElementById('loading-sub').textContent = 'Speech engine could not load. Check your connection and reload the app.';
+    DBG('speech engine startup failed', String(error));
+    return;
   }
-
-  initWSR();
-  await Promise.all([initVosk(), loadImageManifest()]);
 
   renderPicker();
   showScreen('picker');

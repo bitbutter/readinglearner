@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- Restored on-device Vosk recognition in the reading app, retaining current lessons, phonics, artwork and saved progress. Browser cloud recognition is no longer used for practice answers.
+- Hearing the example or retrying no longer adds arbitrary recognized words to the accepted answers. Practice checks the configured accepted forms; an empty result still asks for another try.
 - Empty speech recognition no longer earns correct answers from button-hold duration.
 - Spoken "Matt" is accepted for "mat" in practice and the ASR evaluation; existing saved practice items receive the same correction.
 - ASR evaluation records independently of browser speech recognition, including in Brave. Service errors leave saved audio intact and remain unscored.

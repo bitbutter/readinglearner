@@ -7,7 +7,7 @@ Status: Draft plan
 
 Create a single-page, speech-powered web app that helps a young child who is **not yet a competent reader** practice saying small words and numbers out loud. The app shows one large word or number at a time, speaks it aloud, and asks the child to repeat it by pushing and holding a big button while they talk. All feedback is **spoken** so the child does not need to read anything to use the app.
 
-The app runs entirely in the browser, is served from **GitHub Pages** (static files, no backend, no account, no API key), uses the **free browser speech engine** for both listening and talking, and stores progress in `localStorage`.
+The app runs entirely in the browser, is served from **GitHub Pages** (static files, no backend, no account, no API key), uses **on-device Vosk recognition** for listening and browser speech synthesis for talking, and stores progress in `localStorage`.
 
 ## Assumptions
 
@@ -21,12 +21,12 @@ The app runs entirely in the browser, is served from **GitHub Pages** (static fi
 
 ## Speech Engine
 
-The app uses the browser **Web Speech API** for both directions:
+The app runs from a static GitHub Pages site with two speech components:
 
 - **Speech synthesis** (`speechSynthesis`) to speak words, numbers, praise, and gentle correction.
-- **Speech recognition** (`SpeechRecognition` / `webkitSpeechRecognition`) to listen to the child repeat the word/number.
+- **On-device speech recognition** (the bundled Vosk engine) to listen to the child repeat the word/number. Microphone audio is processed locally against the practice vocabulary.
 
-This is free, needs no API key, and works from a static GitHub Pages site. It is well supported in Chrome and Edge, reasonably in Safari, and weak/absent for recognition in Firefox.
+Recognition needs no API key or speech server. The approximately 40 MB Vosk model downloads on first use and is cached for later visits. The browser must support microphone capture, Web Audio and WebAssembly. Google transcription and reference matching remain separate evaluation tools.
 
 **Grown-up fallback (required).** Recognition is unreliable for young voices and some browsers. The app must never depend on it alone:
 
@@ -301,7 +301,7 @@ Phase 1: Static single-page app
 
 Phase 2: Speech
 - Wire `speechSynthesis` for speaking words/numbers, praise, and correction.
-- Wire `SpeechRecognition` with the push-and-hold mic button (hold-to-listen, release-to-evaluate, tap-to-toggle accommodation, safety timeout).
+- Wire the bundled Vosk recognizer with local microphone capture and the push-and-hold mic button (hold-to-listen, release-to-evaluate, tap-to-toggle accommodation, safety timeout).
 - Implement forgiving answer matching with per-item accepted answers.
 - Implement the grown-up fallback check and "Grown-up decides" mode.
 
