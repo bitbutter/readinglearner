@@ -44,7 +44,7 @@
       "id": "short-a",
       "phase": "Short vowels",
       "focus": "Short a, as in cat",
-      "spokenRule": "The letter A makes the middle sound in cat. Listen.",
+      "spokenRule": "Letter A. In cat, this letter makes the middle sound. Listen.",
       "focusWords": [
         "cat",
         "map",
@@ -64,7 +64,13 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letter A makes the middle sound in cat. Listen."
+          "text": "Letter A.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In cat, this letter makes the middle sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -81,7 +87,7 @@
       "id": "short-e",
       "phase": "Short vowels",
       "focus": "Short e, as in bed",
-      "spokenRule": "The letter E makes the middle sound in bed. Listen.",
+      "spokenRule": "Letter E. In bed, this letter makes the middle sound. Listen.",
       "focusWords": [
         "bed",
         "red",
@@ -101,7 +107,13 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letter E makes the middle sound in bed. Listen."
+          "text": "Letter E.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In bed, this letter makes the middle sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -118,7 +130,7 @@
       "id": "short-i",
       "phase": "Short vowels",
       "focus": "Short i, as in pig",
-      "spokenRule": "The letter I makes the middle sound in pig. Listen.",
+      "spokenRule": "Letter I. In pig, this letter makes the middle sound. Listen.",
       "focusWords": [
         "pig",
         "sit",
@@ -141,7 +153,13 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letter I makes the middle sound in pig. Listen."
+          "text": "Letter I.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In pig, this letter makes the middle sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -158,7 +176,7 @@
       "id": "short-o",
       "phase": "Short vowels",
       "focus": "Short o, as in dog",
-      "spokenRule": "The letter O makes the middle sound in dog. Listen.",
+      "spokenRule": "Letter O. In dog, this letter makes the middle sound. Listen.",
       "focusWords": [
         "dog",
         "log",
@@ -181,7 +199,13 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letter O makes the middle sound in dog. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In dog, this letter makes the middle sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -198,7 +222,7 @@
       "id": "short-u",
       "phase": "Short vowels",
       "focus": "Short u, as in sun",
-      "spokenRule": "The letter U makes the middle sound in sun. Listen.",
+      "spokenRule": "Letter U. In sun, this letter makes the middle sound. Listen.",
       "focusWords": [
         "sun",
         "cup",
@@ -223,7 +247,13 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letter U makes the middle sound in sun. Listen."
+          "text": "Letter U.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In sun, this letter makes the middle sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -343,7 +373,7 @@
       "id": "ck",
       "phase": "Blending and doubled letters",
       "focus": "ck says k",
-      "spokenRule": "The letters C and K work together to make one sound. Listen.",
+      "spokenRule": "Letter C. Letter K. Together they make one sound. Listen.",
       "focusWords": [
         "back",
         "neck",
@@ -372,7 +402,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letters C and K work together to make one sound. Listen."
+          "text": "Letter C.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter K.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make one sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -389,7 +431,7 @@
       "id": "ff",
       "phase": "Blending and doubled letters",
       "focus": "ff says f",
-      "spokenRule": "Two F letters make one sound. Listen.",
+      "spokenRule": "Letter F. Letter F. Together they make one sound. Listen.",
       "focusWords": [
         "off",
         "puff",
@@ -419,7 +461,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "Two F letters make one sound. Listen."
+          "text": "Letter F.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter F.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make one sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -436,7 +490,7 @@
       "id": "ll",
       "phase": "Blending and doubled letters",
       "focus": "ll says l",
-      "spokenRule": "Two L letters make one sound. Listen.",
+      "spokenRule": "Letter L. Letter L. Together they make one sound. Listen.",
       "focusWords": [
         "bell",
         "hill",
@@ -463,7 +517,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "Two L letters make one sound. Listen."
+          "text": "Letter L.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter L.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make one sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -480,7 +546,7 @@
       "id": "ss",
       "phase": "Blending and doubled letters",
       "focus": "ss says s",
-      "spokenRule": "Two S letters make one sound. Listen.",
+      "spokenRule": "Letter S. Letter S. Together they make one sound. Listen.",
       "focusWords": [
         "miss",
         "kiss",
@@ -508,7 +574,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "Two S letters make one sound. Listen."
+          "text": "Letter S.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter S.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make one sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -525,7 +603,7 @@
       "id": "zz",
       "phase": "Blending and doubled letters",
       "focus": "zz says z",
-      "spokenRule": "Two Z letters make one sound. Listen.",
+      "spokenRule": "Letter Z. Letter Z. Together they make one sound. Listen.",
       "focusWords": [
         "buzz",
         "fuzz",
@@ -552,7 +630,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "Two Z letters make one sound. Listen."
+          "text": "Letter Z.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter Z.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make one sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -569,7 +659,7 @@
       "id": "sh",
       "phase": "Consonant teams",
       "focus": "sh, as in ship",
-      "spokenRule": "The letters S and H work together to make one sound. Listen.",
+      "spokenRule": "Letter S. Letter H. Together they make one sound. Listen.",
       "focusWords": [
         "ship",
         "shop",
@@ -597,7 +687,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letters S and H work together to make one sound. Listen."
+          "text": "Letter S.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter H.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make one sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -614,7 +716,7 @@
       "id": "ch",
       "phase": "Consonant teams",
       "focus": "ch, as in chip",
-      "spokenRule": "The letters C and H work together to make one sound. Listen.",
+      "spokenRule": "Letter C. Letter H. Together they make one sound. Listen.",
       "focusWords": [
         "chip",
         "chop",
@@ -642,7 +744,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letters C and H work together to make one sound. Listen."
+          "text": "Letter C.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter H.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make one sound. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -659,7 +773,7 @@
       "id": "unvoiced-th",
       "phase": "Consonant teams",
       "focus": "Quiet th, as in thin",
-      "spokenRule": "The letters T and H make the quiet sound at the start of thin. Listen.",
+      "spokenRule": "Letter T. Letter H. Together they make the quiet sound at the start of thin. Listen.",
       "focusWords": [
         "thin",
         "thick",
@@ -691,7 +805,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letters T and H make the quiet sound at the start of thin. Listen."
+          "text": "Letter T.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter H.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make the quiet sound at the start of thin. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -708,7 +834,7 @@
       "id": "voiced-th",
       "phase": "Consonant teams",
       "focus": "Buzzy th, as in this",
-      "spokenRule": "The letters T and H make the buzzy sound at the start of this. Listen.",
+      "spokenRule": "Letter T. Letter H. Together they make the buzzy sound at the start of this. Listen.",
       "focusWords": [
         "this",
         "that",
@@ -737,7 +863,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letters T and H make the buzzy sound at the start of this. Listen."
+          "text": "Letter T.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter H.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make the buzzy sound at the start of this. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -754,7 +892,7 @@
       "id": "ng",
       "phase": "Consonant teams",
       "focus": "ng, as in ring",
-      "spokenRule": "The letters N and G work together to make the sound at the end of ring. Listen.",
+      "spokenRule": "Letter N. Letter G. Together they make the sound at the end of ring. Listen.",
       "focusWords": [
         "bang",
         "hang",
@@ -780,7 +918,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letters N and G work together to make the sound at the end of ring. Listen."
+          "text": "Letter N.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter G.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make the sound at the end of ring. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -797,7 +947,7 @@
       "id": "qu",
       "phase": "Consonant teams",
       "focus": "qu says kw",
-      "spokenRule": "The letters Q and U work together to make the sound at the start of quit. Listen.",
+      "spokenRule": "Letter Q. Letter U. Together they make the sounds at the start of quit. Listen.",
       "focusWords": [
         "quit",
         "quiz",
@@ -830,7 +980,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "The letters Q and U work together to make the sound at the start of quit. Listen."
+          "text": "Letter Q.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter U.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Together they make the sounds at the start of quit. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -847,7 +1009,7 @@
       "id": "a-e",
       "phase": "Silent final e",
       "focus": "a-e, as in cake",
-      "spokenRule": "In these words, A says its name and the final E is silent. Listen.",
+      "spokenRule": "Letter A. In these words, this vowel says its name. Letter E. The letter at the end is silent. Listen to the vowel sound.",
       "focusWords": [
         "cake",
         "name",
@@ -870,7 +1032,23 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, A says its name and the final E is silent. Listen."
+          "text": "Letter A.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, this vowel says its name."
+        },
+        {
+          "kind": "speech",
+          "text": "Letter E.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "The letter at the end is silent. Listen to the vowel sound."
         },
         {
           "kind": "recorded-sound",
@@ -887,7 +1065,7 @@
       "id": "i-e",
       "phase": "Silent final e",
       "focus": "i-e, as in bike",
-      "spokenRule": "In these words, I says its name and the final E is silent. Listen.",
+      "spokenRule": "Letter I. In these words, this vowel says its name. Letter E. The letter at the end is silent. Listen to the vowel sound.",
       "focusWords": [
         "bike",
         "kite",
@@ -910,7 +1088,23 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, I says its name and the final E is silent. Listen."
+          "text": "Letter I.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, this vowel says its name."
+        },
+        {
+          "kind": "speech",
+          "text": "Letter E.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "The letter at the end is silent. Listen to the vowel sound."
         },
         {
           "kind": "recorded-sound",
@@ -927,7 +1121,7 @@
       "id": "o-e",
       "phase": "Silent final e",
       "focus": "o-e, as in home",
-      "spokenRule": "In these words, O says its name and the final E is silent. Listen.",
+      "spokenRule": "Letter O. In these words, this vowel says its name. Letter E. The letter at the end is silent. Listen to the vowel sound.",
       "focusWords": [
         "home",
         "hope",
@@ -950,7 +1144,23 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, O says its name and the final E is silent. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, this vowel says its name."
+        },
+        {
+          "kind": "speech",
+          "text": "Letter E.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "The letter at the end is silent. Listen to the vowel sound."
         },
         {
           "kind": "recorded-sound",
@@ -967,7 +1177,7 @@
       "id": "u-e-yoo",
       "phase": "Silent final e",
       "focus": "u-e says yoo",
-      "spokenRule": "In these words, U says its name and the final E is silent. Its name sounds like the word you.",
+      "spokenRule": "Letter U. In these words, this vowel says its name. Letter E. The letter at the end is silent. Listen to the vowel sound. Its name sounds like the word you.",
       "focusWords": [
         "cube",
         "cute",
@@ -992,7 +1202,27 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, U says its name and the final E is silent. Its name sounds like the word you."
+          "text": "Letter U.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, this vowel says its name."
+        },
+        {
+          "kind": "speech",
+          "text": "Letter E.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "The letter at the end is silent. Listen to the vowel sound."
+        },
+        {
+          "kind": "speech",
+          "text": "Its name sounds like the word you."
         },
         {
           "kind": "speech",
@@ -1009,7 +1239,7 @@
       "id": "ee",
       "phase": "Vowel teams",
       "focus": "ee, as in feet",
-      "spokenRule": "In these words, the letters E and E make one sound. Listen.",
+      "spokenRule": "Letter E. Letter E. In these words, these letters work together. Listen.",
       "focusWords": [
         "bee",
         "see",
@@ -1037,7 +1267,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters E and E make one sound. Listen."
+          "text": "Letter E.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter E.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1054,7 +1296,7 @@
       "id": "ai",
       "phase": "Vowel teams",
       "focus": "ai, as in rain",
-      "spokenRule": "In these words, the letters A and I make one sound. Listen.",
+      "spokenRule": "Letter A. Letter I. In these words, these letters work together. Listen.",
       "focusWords": [
         "rain",
         "pain",
@@ -1079,7 +1321,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters A and I make one sound. Listen."
+          "text": "Letter A.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter I.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1096,7 +1350,7 @@
       "id": "ay",
       "phase": "Vowel teams",
       "focus": "ay, as in day",
-      "spokenRule": "In these words, the letters A and Y make one sound. Listen.",
+      "spokenRule": "Letter A. Letter Y. In these words, these letters work together. Listen.",
       "focusWords": [
         "day",
         "pay",
@@ -1121,7 +1375,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters A and Y make one sound. Listen."
+          "text": "Letter A.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter Y.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1138,7 +1404,7 @@
       "id": "oa",
       "phase": "Vowel teams",
       "focus": "oa, as in boat",
-      "spokenRule": "In these words, the letters O and A make one sound. Listen.",
+      "spokenRule": "Letter O. Letter A. In these words, these letters work together. Listen.",
       "focusWords": [
         "boat",
         "coat",
@@ -1161,7 +1427,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and A make one sound. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter A.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1178,7 +1456,7 @@
       "id": "long-oo",
       "phase": "Vowel teams",
       "focus": "oo, as in moon",
-      "spokenRule": "In these words, the letters O and O make the sound in moon. Listen.",
+      "spokenRule": "Letter O. Letter O. In these words, these letters make the vowel sound in moon. Listen.",
       "focusWords": [
         "moon",
         "food",
@@ -1203,7 +1481,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and O make the sound in moon. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters make the vowel sound in moon. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1220,7 +1510,7 @@
       "id": "short-oo",
       "phase": "Vowel teams",
       "focus": "oo, as in book",
-      "spokenRule": "In these words, the letters O and O make the sound in book. Listen.",
+      "spokenRule": "Letter O. Letter O. In these words, these letters make the vowel sound in book. Listen.",
       "focusWords": [
         "book",
         "cook",
@@ -1248,7 +1538,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and O make the sound in book. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters make the vowel sound in book. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1265,7 +1567,7 @@
       "id": "igh",
       "phase": "Vowel teams",
       "focus": "igh, as in night",
-      "spokenRule": "In these words, the letters I, G and H work together to make one sound. Listen.",
+      "spokenRule": "Letter I. Letter G. Letter H. In these words, these letters work together. Listen.",
       "focusWords": [
         "high",
         "sigh",
@@ -1288,7 +1590,25 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters I, G and H work together to make one sound. Listen."
+          "text": "Letter I.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter G.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter H.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1305,7 +1625,7 @@
       "id": "ow-cow",
       "phase": "More vowel teams",
       "focus": "ow, as in cow",
-      "spokenRule": "In these words, the letters O and W make the sound in cow. Listen.",
+      "spokenRule": "Letter O. Letter W. In these words, these letters make the vowel sound in cow. Listen.",
       "focusWords": [
         "cow",
         "how",
@@ -1332,7 +1652,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and W make the sound in cow. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter W.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters make the vowel sound in cow. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1349,7 +1681,7 @@
       "id": "ou",
       "phase": "More vowel teams",
       "focus": "ou, as in out",
-      "spokenRule": "In these words, the letters O and U make the sound in out. Listen.",
+      "spokenRule": "Letter O. Letter U. In these words, these letters make the vowel sound in out. Listen.",
       "focusWords": [
         "out",
         "shout",
@@ -1376,7 +1708,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and U make the sound in out. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter U.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters make the vowel sound in out. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1393,7 +1737,7 @@
       "id": "ow-snow",
       "phase": "More vowel teams",
       "focus": "ow, as in snow",
-      "spokenRule": "In these words, the letters O and W make the sound in snow. Listen.",
+      "spokenRule": "Letter O. Letter W. In these words, these letters make the vowel sound in snow. Listen.",
       "focusWords": [
         "low",
         "slow",
@@ -1421,7 +1765,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and W make the sound in snow. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter W.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters make the vowel sound in snow. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1438,7 +1794,7 @@
       "id": "oi",
       "phase": "More vowel teams",
       "focus": "oi, as in coin",
-      "spokenRule": "In these words, the letters O and I make one sound. Listen.",
+      "spokenRule": "Letter O. Letter I. In these words, these letters work together. Listen.",
       "focusWords": [
         "oil",
         "boil",
@@ -1463,7 +1819,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and I make one sound. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter I.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1480,7 +1848,7 @@
       "id": "oy",
       "phase": "More vowel teams",
       "focus": "oy, as in toy",
-      "spokenRule": "In these words, the letters O and Y make one sound. Listen.",
+      "spokenRule": "Letter O. Letter Y. In these words, these letters work together. Listen.",
       "focusWords": [
         "boy",
         "toy",
@@ -1503,7 +1871,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and Y make one sound. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter Y.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1520,7 +1900,7 @@
       "id": "ar",
       "phase": "Vowels with r",
       "focus": "ar, as in car",
-      "spokenRule": "In these words, the letters A and R work together. Listen.",
+      "spokenRule": "Letter A. Letter R. In these words, these letters work together. Listen.",
       "focusWords": [
         "car",
         "far",
@@ -1548,7 +1928,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters A and R work together. Listen."
+          "text": "Letter A.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter R.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1565,7 +1957,7 @@
       "id": "or",
       "phase": "Vowels with r",
       "focus": "or, as in fork",
-      "spokenRule": "In these words, the letters O and R work together. Listen.",
+      "spokenRule": "Letter O. Letter R. In these words, these letters work together. Listen.",
       "focusWords": [
         "fork",
         "corn",
@@ -1594,7 +1986,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters O and R work together. Listen."
+          "text": "Letter O.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter R.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1611,7 +2015,7 @@
       "id": "ur",
       "phase": "Vowels with r",
       "focus": "ur, as in turn",
-      "spokenRule": "In these words, the letters U and R work together. Listen.",
+      "spokenRule": "Letter U. Letter R. In these words, these letters work together. Listen.",
       "focusWords": [
         "fur",
         "burn",
@@ -1638,7 +2042,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters U and R work together. Listen."
+          "text": "Letter U.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter R.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1655,7 +2071,7 @@
       "id": "er",
       "phase": "Vowels with r",
       "focus": "er, as in fern",
-      "spokenRule": "In these words, the letters E and R work together. Listen.",
+      "spokenRule": "Letter E. Letter R. In these words, these letters work together. Listen.",
       "focusWords": [
         "fern",
         "herd",
@@ -1684,7 +2100,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters E and R work together. Listen."
+          "text": "Letter E.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter R.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1701,7 +2129,7 @@
       "id": "ir",
       "phase": "Vowels with r",
       "focus": "ir, as in bird",
-      "spokenRule": "In these words, the letters I and R work together. Listen.",
+      "spokenRule": "Letter I. Letter R. In these words, these letters work together. Listen.",
       "focusWords": [
         "bird",
         "girl",
@@ -1731,7 +2159,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters I and R work together. Listen."
+          "text": "Letter I.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter R.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1748,7 +2188,7 @@
       "id": "aw",
       "phase": "aw spellings",
       "focus": "aw, as in saw",
-      "spokenRule": "In these words, the letters A and W make one sound. Listen.",
+      "spokenRule": "Letter A. Letter W. In these words, these letters work together. Listen.",
       "focusWords": [
         "saw",
         "paw",
@@ -1775,7 +2215,19 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letters A and W make one sound. Listen."
+          "text": "Letter A.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter W.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, these letters work together. Listen."
         },
         {
           "kind": "recorded-sound",
@@ -1792,7 +2244,7 @@
       "id": "a-before-ll",
       "phase": "aw spellings",
       "focus": "a before ll, as in ball",
-      "spokenRule": "In these words, the letter A before two L letters makes the sound in ball. Listen.",
+      "spokenRule": "Letter A. In these words, this vowel comes before two of the next letter. Letter L. Letter L. Listen to the vowel sound in ball.",
       "focusWords": [
         "all",
         "ball",
@@ -1820,7 +2272,29 @@
       "rulePlaybackSteps": [
         {
           "kind": "speech",
-          "text": "In these words, the letter A before two L letters makes the sound in ball. Listen."
+          "text": "Letter A.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "In these words, this vowel comes before two of the next letter."
+        },
+        {
+          "kind": "speech",
+          "text": "Letter L.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Letter L.",
+          "rate": 0.72,
+          "pauseAfterMs": 220
+        },
+        {
+          "kind": "speech",
+          "text": "Listen to the vowel sound in ball."
         },
         {
           "kind": "recorded-sound",
@@ -1927,6 +2401,6 @@
     "The focus labels describe these word cohorts, not universal rules for every English word.",
     "Review the starting assumptions and the first five banks before adopting the proposed course. No extra reference-audio recordings are required."
   ],
-  "rulePlaybackNote": "Rule playback uses an ordinary spoken explanation, the existing recorded phonics sound, then whole-word examples. The U-name demonstration intentionally speaks the real word you; it does not attempt a made-up phonetic spelling. Blending lessons play the separate consonant sounds before the whole word.",
+  "rulePlaybackNote": "Each letter name is spoken slowly on its own, with a short pause. The lesson then demonstrates the recorded phonics sound and whole-word examples. The U-name demonstration uses the real word you. Blending lessons play the separate consonant sounds before the whole word.",
   "artworkNote": "Every planned word level has its own picture: ten existing space-knight pictures at milestones, with 31 real tank photographs between them. Photo credits are listed below. These pictures are ready for the proposed 41-level course; the app currently uses its ten-level course."
 }

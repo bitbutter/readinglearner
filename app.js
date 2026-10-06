@@ -1871,7 +1871,7 @@ function ruleLessonFor(fam, display) {
   const letters = meta.letters || fe.unit;
   return [
     { kind:'speech', text:meta.explanation },
-    ...[...letters].map(letter => ({ kind:'speech', text:`Letter ${letter.toUpperCase()}.` })),
+    ...[...letters].map(letter => ({ kind:'speech', text:`Letter ${letter.toUpperCase()}.`, rate:0.72, pauseAfterMs:220 })),
     // The U-name demonstration is the real word “you”; there is no ue clip.
     sound === 'you' ? { kind:'speech', text:'you' } : { kind:'recorded-sound', clipKey:sound },
     { kind:'speech', text:`As in ${display}.` },
@@ -1887,6 +1887,7 @@ function cancelRuleLessonPlayback(reason, releaseMicrophone = true) {
   activeRuleLessonPlayback = null;
   ruleLessonPlaybackSequence++;
   clearTimeout(playback.soundDeadlineTimer);
+  clearTimeout(playback.speechPauseTimer);
   if (playback.audio) {
     playback.audio.onended = null;
     playback.audio.onerror = null;
@@ -1905,7 +1906,7 @@ function startRuleLessonPlayback(family, item) {
   const steps = ruleLessonFor(family, item.display);
   const playback = {
     sequence:++ruleLessonPlaybackSequence, encounter, family,
-    stepIndex:0, audio:null, soundDeadlineTimer:null,
+    stepIndex:0, audio:null, soundDeadlineTimer:null, speechPauseTimer:null,
   };
   activeRuleLessonPlayback = playback;
   setMicState('waiting');
@@ -1922,6 +1923,8 @@ function startRuleLessonPlayback(family, item) {
     if (!ownsLesson()) return;
     clearTimeout(playback.soundDeadlineTimer);
     playback.soundDeadlineTimer = null;
+    clearTimeout(playback.speechPauseTimer);
+    playback.speechPauseTimer = null;
     if (playback.audio) {
       playback.audio.onended = null;
       playback.audio.onerror = null;
@@ -1938,10 +1941,20 @@ function startRuleLessonPlayback(family, item) {
     const step = steps[stepIndex];
     const ownsStep = () => ownsLesson() && playback.stepIndex === stepIndex + 1;
     if (step.kind === 'speech') {
-      speak(step.text, 0.9, how => {
+      const speakingRate = step.rate === undefined ? 0.9 : step.rate;
+      const pauseAfterSpeechMs = step.pauseAfterMs === undefined ? 0 : step.pauseAfterMs;
+      if (!Number.isFinite(speakingRate) || speakingRate <= 0 ||
+          !Number.isFinite(pauseAfterSpeechMs) || pauseAfterSpeechMs < 0) {
+        failLesson('The rule has invalid speech pacing.');
+        return;
+      }
+      speak(step.text, speakingRate, how => {
         if (!ownsStep()) return;
-        if (how === 'onend') playNextStep();
-        else failLesson('The spoken rule could not play.');
+        if (how !== 'onend') { failLesson('The spoken rule could not play.'); return; }
+        if (pauseAfterSpeechMs === 0) { playNextStep(); return; }
+        playback.speechPauseTimer = setTimeout(() => {
+          if (ownsStep()) playNextStep();
+        }, pauseAfterSpeechMs);
       }, { ruleLessonPlayback:playback });
       return;
     }
@@ -3242,7 +3255,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v46 — recorded rule sounds; child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v47 — paced letter names and recorded rule sounds; child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed

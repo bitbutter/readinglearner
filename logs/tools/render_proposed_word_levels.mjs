@@ -111,7 +111,11 @@ function validateProposal(proposal) {
     requireTextList(level.notes, 'notes', true);
     requireCondition(Array.isArray(level.rulePlaybackSteps) && level.rulePlaybackSteps.length > 0, `level ${level.level} needs rule playback steps.`);
     for (const step of level.rulePlaybackSteps) {
-      if (step.kind === 'speech') requireText(step.text, 'rule speech');
+      if (step.kind === 'speech') {
+        requireText(step.text, 'rule speech');
+        if (Object.hasOwn(step, 'rate')) requireCondition(Number.isFinite(step.rate) && step.rate > 0, 'rule speech rate must be positive.');
+        if (Object.hasOwn(step, 'pauseAfterMs')) requireCondition(Number.isInteger(step.pauseAfterMs) && step.pauseAfterMs >= 0, 'rule speech pause must be a nonnegative millisecond duration.');
+      }
       else {
         requireCondition(step.kind === 'recorded-sound', 'unknown rule playback step.');
         requireCondition(/^[a-z]+$/.test(step.clipKey), 'invalid recorded sound key.');
@@ -197,7 +201,7 @@ ${proposal.sources.map(source => `<p><a href="${e(source.url)}">${e(source.title
 <details><summary>Artwork assignments</summary><p>${e(proposal.artworkNote)}</p>${list(proposal.levels.map(level => `Level ${level.level}: ${level.artwork}`))}</details></details>
 <footer>Course map ${e(proposal.courseId)} · Generated from the reviewed word-list file. Structural validation checks counts, unique words and earlier prerequisites; it does not validate pronunciation.</footer>
 </main><script type="application/json" id="rule-preview-steps">${JSON.stringify(Object.fromEntries(proposal.levels.map(level => [level.id, level.rulePlaybackSteps]))).replaceAll('<', '\\u003c')}</script>
-<script src="word-rule-preview.js?v=1" defer></script><script>
+<script src="word-rule-preview.js?v=2" defer></script><script>
 const wordSearch = document.getElementById('word-search');
 const phaseFilter = document.getElementById('phase-filter');
 const levelCards = [...document.querySelectorAll('.level')];

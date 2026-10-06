@@ -82,7 +82,17 @@ function harness(options = {}) {
       if (how === 'onend') utterance.onend?.();
       else utterance.onerror?.({ error:how });
     },
-    reachSound() { this.finishSpeech(); this.finishSpeech(); this.finishSpeech(); },
+    finishSpeechPause() {
+      const pendingPause = [...timers.entries()].find(([, timer]) => timer.milliseconds === 220);
+      assert.ok(pendingPause, 'The letter name must own a 220 ms pause.');
+      timers.delete(pendingPause[0]);
+      pendingPause[1].callback();
+    },
+    reachSound() {
+      this.finishSpeech();
+      this.finishSpeech(); this.finishSpeechPause();
+      this.finishSpeech(); this.finishSpeechPause();
+    },
   };
 }
 
@@ -98,6 +108,7 @@ test('Guidance, separate letter names, recorded sound, example, then heard', () 
   assert.deepEqual(app.utterances.map(utterance => utterance.text), [
     'These two letters work together to make this sound.', 'Letter E.', 'Letter A.',
   ]);
+  assert.deepEqual(app.utterances.map(utterance => utterance.rate), [0.9, 0.72, 0.72]);
   assert.match(app.recordings[0].url, /\/ee\.mp3\?v=4$/);
   assert.equal(app.run('stored.rulesHeard["ea-team"]'), undefined);
   assert.equal(app.saved, 0);
@@ -108,6 +119,69 @@ test('Guidance, separate letter names, recorded sound, example, then heard', () 
   assert.equal(app.run('stored.rulesHeard["ea-team"]'), true);
   assert.equal(app.saved, 1);
   assert.equal(app.run('micState'), 'ready');
+});
+
+test('A completed letter name waits for its pause before continuing', () => {
+  const app = harness(); app.begin(); app.start(); app.finishSpeech();
+  assert.equal(app.utterances.at(-1).text, 'Letter E.');
+  app.finishSpeech();
+  assert.equal(app.utterances.length, 2);
+  assert.equal(app.recordings.length, 0);
+  assert.equal(app.saved, 0);
+  assert.equal(app.run('micState'), 'waiting');
+  app.finishSpeechPause();
+  assert.equal(app.utterances.at(-1).text, 'Letter A.');
+});
+
+test('New word cancels a letter pause and rejects a queued stale timer', () => {
+  const app = harness(); app.begin(); app.start(); app.finishSpeech(); app.finishSpeech();
+  const oldPause = [...app.timers.values()].find(timer => timer.milliseconds === 220).callback;
+  app.begin('turn');
+  assert.equal([...app.timers.values()].some(timer => timer.milliseconds === 220), false);
+  oldPause();
+  assert.equal(app.utterances.length, 2);
+  assert.equal(app.saved, 0);
+  assert.equal(app.practice.currentItem.display, 'turn');
+});
+
+test('Replay during a letter pause cannot continue the superseded lesson', () => {
+  const app = harness(); app.begin(); app.start(); app.finishSpeech(); app.finishSpeech();
+  const oldPause = [...app.timers.values()].find(timer => timer.milliseconds === 220).callback;
+  app.start();
+  oldPause();
+  assert.equal(app.utterances.length, 3);
+  assert.equal(app.utterances.at(-1).text, 'These two letters work together to make this sound.');
+  assert.equal(app.saved, 0);
+});
+
+test('A final declared pause must finish before the rule is marked heard', () => {
+  const app = harness(); app.begin();
+  app.run('const unpacedRuleLessonFor = ruleLessonFor; ruleLessonFor = (family, word) => { const steps = unpacedRuleLessonFor(family, word); steps[steps.length - 1].pauseAfterMs = 220; return steps; };');
+  app.start(); app.reachSound(); app.recordings[0].onended(); app.finishSpeech();
+  assert.equal(app.saved, 0);
+  assert.equal(app.run('stored.rulesHeard["ea-team"]'), undefined);
+  app.finishSpeechPause();
+  assert.equal(app.saved, 1);
+});
+
+test('A failed letter utterance does not wait or continue as successful speech', () => {
+  const app = harness(); app.begin(); app.start(); app.finishSpeech(); app.finishSpeech('synthesis-failed');
+  assert.equal([...app.timers.values()].some(timer => timer.milliseconds === 220), false);
+  assert.equal(app.recordings.length, 0);
+  assert.equal(app.saved, 0);
+  assert.match(app.element('mic-status').textContent, /spoken rule could not play/);
+});
+
+test('Invalid declared speech pacing fails explicitly', () => {
+  for (const pacing of [{rate:0},{rate:null},{pauseAfterMs:-1},{pauseAfterMs:null}]) {
+    const app = harness(); app.begin();
+    app.context.invalidSpeechPacing = pacing;
+    app.run('ruleLessonFor = () => [{kind:"speech", text:"Letter A.", ...invalidSpeechPacing}];');
+    app.start();
+    assert.equal(app.utterances.length, 0);
+    assert.equal(app.saved, 0);
+    assert.match(app.element('mic-status').textContent, /invalid speech pacing/);
+  }
 });
 
 test('Missing recorded sound reports error without invented speech or heard mark', () => {

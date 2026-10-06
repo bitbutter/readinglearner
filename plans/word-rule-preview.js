@@ -34,11 +34,26 @@ function playRulePreviewStep(preview, step) {
     deadline = setTimeout(() => finish(new Error('Rule playback did not finish. Tap Listen to try again.')),
       step.kind === 'speech' ? Math.max(6000, step.text.length * 120 + 4000) : 10000);
     if (step.kind === 'speech') {
+      const speakingRate = step.rate === undefined ? 0.9 : step.rate;
+      const pauseAfterSpeechMs = step.pauseAfterMs === undefined ? 0 : step.pauseAfterMs;
+      if (!Number.isFinite(speakingRate) || speakingRate <= 0 ||
+          !Number.isFinite(pauseAfterSpeechMs) || pauseAfterSpeechMs < 0) {
+        finish(new Error('This rule has invalid speech pacing.'));
+        return;
+      }
       if (!window.speechSynthesis) { finish(new Error('Speech playback is unavailable in this browser.')); return; }
       const utterance = new SpeechSynthesisUtterance(step.text);
       utterance.lang = 'en-GB';
-      utterance.rate = 0.9;
-      utterance.onend = () => finish();
+      utterance.rate = speakingRate;
+      let speechCompleted = false;
+      utterance.onend = () => {
+        if (finished || speechCompleted) return;
+        speechCompleted = true;
+        clearTimeout(deadline);
+        cleanup();
+        if (pauseAfterSpeechMs === 0) { finish(); return; }
+        deadline = setTimeout(() => finish(), pauseAfterSpeechMs);
+      };
       utterance.onerror = event => finish(new Error('Speech playback failed: ' + event.error));
       preview.utterance = utterance;
       cleanup = () => {
