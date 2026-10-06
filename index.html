@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#110f21">
   <title>Reading Learner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎤</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=27">
+  <link rel="stylesheet" href="styles.css?v=28">
 </head>
 <body>
 
@@ -73,9 +73,14 @@
         <section class="settings-group">
           <h3>Practice</h3>
           <label class="setting-row">
-            <span>Items per round</span>
+            <span>Numbers per round</span>
             <input type="number" id="s-round-size" min="4" max="20">
           </label>
+          <p class="settings-blurb">Word rounds have three familiar words, four focus words, then three familiar words.</p>
+          <h3>Familiar starter words</h3>
+          <p class="settings-blurb">Select a word only if he already reads it independently. This adds it to familiar practice without awarding a trophy.</p>
+          <div id="s-known-starter-words" class="known-starter-words"></div>
+          <p id="s-familiar-word-status" class="settings-blurb" role="status"></p>
         </section>
 
         <section class="settings-group">
@@ -104,6 +109,7 @@
 
         <section class="settings-group">
           <h3>Progress</h3>
+          <p class="settings-blurb"><a href="plans/word-levels-proposed.html" target="_blank" rel="noopener">Word levels and rules</a> · <a href="plans/word-level-artwork.html" target="_blank" rel="noopener">Level picture credits</a></p>
           <div id="progress-grid" class="progress-grid"></div>
           <p id="progress-summary" class="progress-summary"></p>
         </section>
@@ -166,8 +172,11 @@
   </div>
 
   <!-- Flash overlay (appended by JS) -->
+  <a id="level-picture-credit" class="level-picture-credit hidden" target="_blank" rel="noopener"></a>
 
   <script src="vosk/vosk.js?v=2"></script>
-  <script src="app.js?v=47"></script>
+  <script src="word-course.js?v=1"></script>
+  <script src="word-practice.js?v=1"></script>
+  <script src="app.js?v=48"></script>
 </body>
 </html>

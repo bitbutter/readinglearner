@@ -1,143 +1,100 @@
-// Verifies the SOUND_FIXES wiring in app.js end-to-end, without a browser:
-// extracts the pure table section from app.js, evals it with a minimal DOM
-// shim, then walks every vocabulary word and checks that segmentation,
-// clips, silents, tappable flags, chips and rule lessons all resolve.
-//   node logs/tools/test_sound_fixes.mjs
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+// Check the real sound renderer against the complete authored word course.
+// Use --authored-table only when reviewing an unpublished sound-table edit.
+import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { AUDIT } from './sound_audit_data.mjs';
+import { WORD_COURSE_SOUND_AUDIT, RECORDED_SOUND_PHONEMES, SPOKEN_SOUND_PHONEMES } from './word_course_sound_data.mjs';
+import { APP_SOURCE, ACTIVE_WORD_COURSE, readWordCatalog, readWordSoundApi,
+  renderedWordSounds, generatedSoundTables } from './reading_word_sound_api.mjs';
 
-const src = readFileSync(new URL('../../app.js', import.meta.url), 'utf8');
-const start = src.indexOf('// Isolated phonetic letter sounds');
-const end = src.indexOf('function triggerSoundSpan');
-if (start < 0 || end < 0) throw new Error('extraction markers not found');
-const section = src.slice(start, end);
-const ruleLessonDefinition = src.slice(src.indexOf('function ruleLessonFor(fam, display)'), src.indexOf('let ruleLessonPlaybackSequence'));
+const options = new Set(process.argv.slice(2));
+for (const option of options) assert.ok(['--authored-table'].includes(option), 'Unknown sound test option: ' + option);
+const api = readWordSoundApi({ useAuthoredTable:options.has('--authored-table') });
+const catalog = readWordCatalog();
+const catalogByDisplay = new Map(catalog.map(word => [word.display, word]));
+const focusWords = new Set(ACTIVE_WORD_COURSE.levels.flatMap(level => level.focusWords));
+assert.equal(focusWords.size, 240);
+assert.deepEqual(new Set(Object.keys(WORD_COURSE_SOUND_AUDIT)), focusWords);
 
-// Minimal DOM shim for buildSoundUnitSpans.
-function el(tag) {
-  const classes = new Set();
-  return {
-    tagName: tag, children: [], dataset: {}, className: '', textContent: '',
-    style: { setProperty() {} },
-    set classList(v) {}, get classList() {
-      return { add: c => classes.add(c), remove: c => classes.delete(c),
-               toggle: (c, f) => f ? classes.add(c) : classes.delete(c),
-               contains: c => classes.has(c), _set: classes };
-    },
-    appendChild(c) { this.children.push(c); return c; },
-    append(...cs) { this.children.push(...cs); },
-    setAttribute() {}, addEventListener() {},
-  };
+if (!options.has('--authored-table')) {
+  const generated = generatedSoundTables();
+  for (const name of ['SOUND_FIXES','EXCLUDED_WORDS']) {
+    const definition = new RegExp(`^const ${name} = .*;$`, 'm');
+    assert.equal(APP_SOURCE.match(definition)?.[0], generated.match(definition)?.[0], `${name}: live table differs from the canonical generator.`);
+  }
 }
-const documentShim = {
-  createElement: t => el(t),
-  createDocumentFragment: () => el('fragment'),
-};
 
-const api = new Function('document', section + ruleLessonDefinition + `
-  return { LETTER_SOUNDS, DIGRAPH_TTS, TTS_EXTENDED, EXCLUDED_WORDS, SOUND_FIXES,
-           PATTERN_META, FAM_COLOUR, CLIP_NAME, SEGMENT_OVERRIDES, DIGIT_NAMES,
-           MAGIC_E_CLIP, NOT_MAGIC_E, segmentDisplay, soundFallback,
-           isCVCEShape, buildSoundUnitSpans, ruleLessonFor };`)(documentShim);
-
-const words = JSON.parse(readFileSync(new URL('./word_segments.json', import.meta.url), 'utf8'));
-const clips = new Set(readdirSync(new URL('../../audio/letters/', import.meta.url)).map(f => f.replace('.mp3', '')));
-
-const errs = [];
-let fixWordsChecked = 0, spansTotal = 0, clipPlays = 0, silentSpans = 0;
-
-for (const w of words) {
-  const lower = w.word.toLowerCase();
-  const excluded = api.EXCLUDED_WORDS.has(lower);
-  const fix = api.SOUND_FIXES[lower];
-  if (excluded && fix) errs.push(`${lower}: excluded but still in SOUND_FIXES`);
-  if (excluded) continue;
-  const frag = api.buildSoundUnitSpans(w.word);
-  const spans = frag.children;
-  spansTotal += spans.length;
-
-  // every span must be tappable (tap plays a sound) or silent
-  for (const s of spans) {
-    if (!s.classList.contains('tappable') && !s.dataset.silent)
-      errs.push(`${lower}: unit "${s.textContent}" neither tappable nor silent`);
-  }
-  if (!fix) { fixWordsChecked++; continue; }
-
-  // positional resolution of over/silent keys must hit exactly the right spans
-  const counts = {};
-  for (const s of spans) {
-    const k = s.textContent.toLowerCase();
-    counts[k] = (counts[k] || 0) + 1;
-    if (s.dataset.clip) clipPlays++;
-    if (s.dataset.silent) silentSpans++;
-  }
-  // positional resolution mirrors the app: occurrence counting over the
-  // segmented slices (fix keys must equal the lowercased slice text)
-  const segsNow = api.segmentDisplay(w.word).map(s => s.toLowerCase());
-  const totals = {};
-  segsNow.forEach(u => totals[u] = (totals[u] || 0) + 1);
-  const occ = {};
-  const idxOf = {};   // "unit" or "unit#n" -> seg index
-  segsNow.forEach((u, i) => {
-    occ[u] = (occ[u] || 0) + 1;
-    idxOf[totals[u] > 1 ? u + '#' + occ[u] : u] = i;
-  });
-  for (const [key, clip] of Object.entries(fix.over || {})) {
-    const i = idxOf[key];
-    if (i === undefined) { errs.push(`${lower}: over key "${key}" matches no segment (segs: ${segsNow})`); continue; }
-    const hit = spans[i];
-    if (!hit || hit.dataset.clip !== clip) errs.push(`${lower}: over "${key}"→"${clip}" not applied (got clip=${hit && hit.dataset.clip})`);
-    if (!clips.has(clip) && clip !== 'ue')
-      errs.push(`${lower}: clip "${clip}" has no audio file (and isn't the ue TTS exception)`);
-  }
-  for (const key of fix.silent || []) {
-    const i = idxOf[key];
-    if (i === undefined) { errs.push(`${lower}: silent key "${key}" matches no segment`); continue; }
-    if (!spans[i].dataset.silent) errs.push(`${lower}: silent "${key}" not applied`);
-  }
-  for (const fe of fix.fams || []) {
-    if (!api.PATTERN_META[fe.fam]) errs.push(`${lower}: fam "${fe.fam}" has no PATTERN_META`);
-    if (!api.FAM_COLOUR[fe.fam]) errs.push(`${lower}: fam "${fe.fam}" has no FAM_COLOUR`);
-    const meta = api.PATTERN_META[fe.fam];
-    if (meta) {
-      const lesson = api.ruleLessonFor(fe.fam, lower);
-      if (!lesson[0]?.text) errs.push(`${lower}: empty rule explanation for ${fe.fam}`);
-      for (const step of lesson) {
-        if (step.kind === 'recorded-sound' && !clips.has(step.clipKey))
-          errs.push(`${lower}: rule lesson clip "${step.clipKey}" has no audio file`);
-        if (step.kind === 'speech' && !step.text) errs.push(`${lower}: empty spoken lesson step`);
+let courseSoundCount = 0, recordedSoundCount = 0, spokenSoundCount = 0, silentGroupCount = 0;
+for (const word of focusWords) {
+  assert.ok(catalogByDisplay.has(word), `${word}: missing course word record.`);
+  assert.ok(!api.EXCLUDED_WORDS.has(word), `${word}: a taught course word is still excluded.`);
+  const expected = WORD_COURSE_SOUND_AUDIT[word];
+  const rendered = renderedWordSounds(api, word);
+  assert.deepEqual(rendered.map(sound => sound.unit), expected.seg, `${word}: displayed sound groups differ from authoring.`);
+  assert.equal(expected.seg.join(''), word, `${word}: authored sound groups do not spell the word.`);
+  assert.equal(rendered.length, expected.phonemes.length, `${word}: missing authored phoneme.`);
+  for (const [index, sound] of rendered.entries()) {
+    const phoneme = expected.phonemes[index];
+    if (phoneme === null) {
+      assert.equal(sound.kind, 'silent', `${word}.${sound.unit}: final E must be silent.`);
+      silentGroupCount++;
+    } else {
+      assert.equal(sound.tappable, true, `${word}.${sound.unit}: the sound is not tappable.`);
+      assert.notEqual(sound.kind, 'silent', `${word}.${sound.unit}: a spoken sound became silent.`);
+      if (sound.kind === 'speech') {
+        assert.equal(sound.clipKey, undefined, `${word}.${sound.unit}: intentional speech must clear an unused clip.`);
+        assert.equal(SPOKEN_SOUND_PHONEMES[sound.text], phoneme, `${word}.${sound.unit}: spoken demonstration contradicts the authored phoneme.`);
+        spokenSoundCount++;
+      } else {
+        assert.equal(RECORDED_SOUND_PHONEMES[sound.clipKey], phoneme, `${word}.${sound.unit}: rendered clip contradicts the authored phoneme.`);
+        assert.ok(existsSync(new URL(`../../audio/letters/${sound.clipKey}.mp3`, import.meta.url)), `${word}.${sound.unit}: recorded sound is missing.`);
+        recordedSoundCount++;
       }
-      const demonstration = lesson.find(step => step.kind === 'recorded-sound' || step.text === 'you');
-      const expectedClip = fix.over?.[fe.unit];
-      if (expectedClip && (demonstration.clipKey || (demonstration.text === 'you' ? 'ue' : null)) !== expectedClip)
-        errs.push(`${lower}: rule sound contradicts its unit clip for ${fe.fam}`);
     }
-    if (meta && !meta.praise) errs.push(`${lower}: missing praise for ${fe.fam}`);
+    courseSoundCount++;
   }
 }
 
-// The app's generated table must remain identical to the canonical audit.
-const generatedTables = execFileSync(process.execPath, [fileURLToPath(new URL('./gen_sound_fixes.mjs', import.meta.url))], { encoding:'utf8' });
-for (const tableName of ['SOUND_FIXES', 'EXCLUDED_WORDS']) {
-  const definition = new RegExp(`^const ${tableName} = .*;$`, 'm');
-  if (src.match(definition)?.[0] !== generatedTables.match(definition)?.[0])
-    errs.push(`${tableName}: app table differs from the canonical sound audit generator`);
+// Preserve the old parked annotations while validating redirects and silents
+// with the app's actual position resolution. Parked words are not added to
+// the new course or subjected to its active-only acoustic requirements.
+let retainedAnnotationCount = 0;
+for (const [word, annotation] of Object.entries(AUDIT)) {
+  if (word.startsWith('_') || focusWords.has(word) || api.EXCLUDED_WORDS.has(word)) continue;
+  const rendered = renderedWordSounds(api, word);
+  const positionsByUnit = new Map();
+  rendered.forEach((sound, position) => {
+    if (!positionsByUnit.has(sound.unit)) positionsByUnit.set(sound.unit, []);
+    positionsByUnit.get(sound.unit).push(position);
+  });
+  function soundForKey(key) {
+    const [,unit,occurrence] = /^(.*?)(?:#(\d+))?$/.exec(key);
+    const position = positionsByUnit.get(unit)?.[occurrence ? Number(occurrence) - 1 : 0];
+    assert.notEqual(position, undefined, `${word}: missing retained unit ${key}.`);
+    return rendered[position];
+  }
+  for (const [key, [,clip]] of Object.entries(annotation.over || {})) {
+    const sound = soundForKey(key);
+    assert.equal(sound.kind, 'recorded-sound', `${word}.${key}: retained redirect changed action.`);
+    assert.equal(sound.clipKey, clip.replace(/!$/, ''), `${word}.${key}: retained clip changed.`);
+  }
+  for (const key of annotation.silent || []) assert.equal(soundForKey(key).kind, 'silent', `${word}.${key}: retained silence changed.`);
+  retainedAnnotationCount++;
 }
 
-// Rule-block sanity: every level's eligible pool and its families.
-const perLevel = {};
-for (const w of words) {
-  if (api.EXCLUDED_WORDS.has(w.word.toLowerCase())) continue;
-  const fams = (api.SOUND_FIXES[w.word.toLowerCase()]?.fams || []).map(f => f.fam);
-  (perLevel[w.level] = perLevel[w.level] || { n: 0, fams: new Map() });
-  perLevel[w.level].n++;
-  for (const f of fams) perLevel[w.level].fams.set(f, (perLevel[w.level].fams.get(f) || 0) + 1);
+// The extractor must use the same renderer and retain apostrophe spellings
+// and their original identities. The old regex silently omitted don't.
+const extractionArgs = [...options];
+const extracted = JSON.parse(execFileSync(process.execPath,
+  [fileURLToPath(new URL('./extract_words.mjs', import.meta.url)), ...extractionArgs],
+  { encoding:'utf8', stdio:['ignore','pipe','pipe'] }));
+assert.equal(extracted.length, catalog.length, 'The sound extractor lost catalog records.');
+assert.equal(extracted.find(word => word.word === "don't")?.wordId, 'word:dont', 'Apostrophe words must retain their stable identity.');
+for (const word of focusWords) {
+  const exported = extracted.find(record => record.word === word);
+  assert.deepEqual(exported.segs, WORD_COURSE_SOUND_AUDIT[word].seg, `${word}: exported grouping differs from the live renderer.`);
 }
-console.log('level | eligible words | families present');
-for (const [lvl, d] of Object.entries(perLevel))
-  console.log(String(lvl).padStart(3), '  |', String(d.n).padStart(6), '         |', [...d.fams.entries()].map(([f, n]) => f + '×' + n).join(', ') || '(simple)');
-
-console.log(`\nspans built: ${spansTotal}, clip-redirected: ${clipPlays}, silent: ${silentSpans}`);
-if (errs.length) { console.error(`\nERRORS (${errs.length}):`); errs.forEach(e => console.error('  ' + e)); process.exit(1); }
-console.log('ALL CHECKS CLEAN');
+console.log(`All ${focusWords.size} course words: ${courseSoundCount} sound groups (${recordedSoundCount} recorded, ${spokenSoundCount} intentional speech, ${silentGroupCount} silent).`);
+console.log(`${retainedAnnotationCount} retained annotations verified; extractor preserves ${catalog.length} word records including apostrophes.`);

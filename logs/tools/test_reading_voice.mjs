@@ -5,6 +5,8 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const readingAppSource = readFileSync(new URL('../../app.js', import.meta.url), 'utf8');
+const wordCourseSource = readFileSync(new URL('../../word-course.js', import.meta.url), 'utf8');
+const wordPracticeSource = readFileSync(new URL('../../word-practice.js', import.meta.url), 'utf8');
 
 function readingAppSection(startMarker, endMarker) {
   const sectionStart = readingAppSource.indexOf(startMarker);
@@ -15,11 +17,14 @@ function readingAppSection(startMarker, endMarker) {
 }
 
 const testedReadingAppSource = [
+  wordCourseSource,
+  wordPracticeSource,
+  readingAppSection('const NUMBER_LEVEL_COUNT =', 'function makeItem(c, kind)'),
   readingAppSection('function numberToWords(n)', '// Isolated phonetic letter sounds'),
   readingAppSection('// MICROPHONE CAPTURE AND TUNING RECOGNITION', '// AUDITION (grown-up tuning)'),
   readingAppSection('async function armAudition(itemId)', '// ROUND BUILDING'),
   readingAppSection('async function openTuning()', 'function setTuneTab(tab)'),
-  readingAppSection('function presentItem(item)', 'function ruleLessonFor(fam, display)'),
+  readingAppSection('function presentItem(item)', 'function beginWordEncounter(item)'),
   readingAppSection('function beginWordEncounter(item)', 'function endRound()'),
   readingAppSection('function checkLevelComplete()', '// UI'),
   readingAppSection('function showScreen(name)', 'function playPling()'),
@@ -28,6 +33,19 @@ const testedReadingAppSource = [
   readingAppSection('  // Hear button',
     "  document.getElementById('tomorrow-text').addEventListener"),
 ].join('\n');
+
+const wordCatalogDeclaration = readingAppSource.match(/const WORDS_CONTENT\s*=\s*(\[[\s\S]*?^\]);/m);
+assert.ok(wordCatalogDeclaration, 'The actual word catalog must be present.');
+const wordItemFixtureSource = [
+  wordCourseSource,
+  'const WORDS_CONTENT = ' + wordCatalogDeclaration[1] + ';',
+  readingAppSection('function makeItem(c, kind)', 'function freshState()'),
+  "Object.fromEntries([...WORDS_CONTENT, ...WORD_COURSE.additionalWords].map(word => [word.id, makeItem(word, 'word')]))",
+].join('\n');
+
+function createWordItemFixtures() {
+  return JSON.parse(JSON.stringify(vm.runInNewContext(wordItemFixtureSource, {}, { timeout: 1000 })));
+}
 
 function deferredPermission() {
   let resolve, reject;
@@ -38,14 +56,12 @@ function deferredPermission() {
 function createReadingVoiceHarness(options = {}) {
   const timerCallbacks = new Map();
   let nextTimerId = 1;
-  const word = {
-    id: 'word:mat', display: 'mat', kind: 'word', accepted: ['mat'],
-    totalAttempts: 0, totalCorrect: 0, successStreak: 0, unaidedStreak: 0,
-    silentCorrect: 0, masteryConfirmationCount: 0, flawlessConfirmationCount: 0,
-    level: 1, decoded: false, mastered: false, flawless: false, auditionConfs: [],
-  };
+  const wordItems = createWordItemFixtures();
+  const word = Object.values(wordItems).find(item => item.display === (options.wordDisplay || 'mat'));
+  assert.ok(word, 'The test word must belong to the real catalog.');
   const practice = {
     currentSet: 'words', currentLevel: 1, currentItem: word, awaitingResult: false,
+    currentEncounterRole: options.encounterRole || 'familiar', ruleFocusId: 'short-a',
     spokenWordEncounter: null,
     recapId: null, hearPressed: false, letterTaps: 0,
     completedCount: 0, roundCorrect: 0, roundSilentCorrect: 0,
@@ -57,7 +73,7 @@ function createReadingVoiceHarness(options = {}) {
     modelLoads: 0, pickerRenders: 0, imageManifestLoads: 0,
     presentedWords: [], nextWordCount: 0, auditMessages: [],
     tuningListeningRows: [], tuningResults: [], tuningErrorRows: [],
-    speechCancelCount: 0,
+    speechCancelCount: 0, recordedSounds: [],
   };
   let currentTime = 10000;
   class ReadingCaptureClock extends Date { static now() { return currentTime; } }
@@ -146,6 +162,12 @@ function createReadingVoiceHarness(options = {}) {
     },
   };
 
+  class ReadingRuleSound {
+    constructor(url) { this.url = url; this.paused = false; observations.recordedSounds.push(this); }
+    play() { this.paused = false; return Promise.resolve(); }
+    pause() { this.paused = true; }
+  }
+
   const localSpeechModel = { KaldiRecognizer: LocalWordRecognizer, setLogLevel() {} };
   const modelApi = { async createModel() {
     observations.modelLoads++;
@@ -160,9 +182,12 @@ function createReadingVoiceHarness(options = {}) {
       const classes = new Set();
       pageElements.set(elementId, {
         textContent: '',
-        style: {}, disabled: false, hidden: false,
+        style: { setProperty() {} }, disabled: false, hidden: false,
         children: [],
+        set innerHTML(value) { this.markup = value; this.children = []; },
+        get innerHTML() { return this.markup || ''; },
         appendChild(child) { this.children.push(child); },
+        append(...children) { this.children.push(...children); },
         setAttribute(name, value) { this[name] = String(value); },
         classList: {
           add: (...names) => names.forEach(name => classes.add(name)),
@@ -184,14 +209,14 @@ function createReadingVoiceHarness(options = {}) {
   const context = vm.createContext({
     console, URL, Promise, Date: ReadingCaptureClock,
     document: { getElementById: pageElement, querySelectorAll: () => [],
-      querySelector: pageElement, createElement: pageElement, body: pageElement('body') },
+      querySelector: pageElement, createElement: tag => pageElement(Symbol(tag)), body: pageElement('body') },
     window: {
       Vosk: options.localRecognizerLibraryMissing ? undefined : modelApi, AudioContext: MicrophoneAudioContext,
       speechSynthesis,
       SpeechRecognition: BrowserSpeechRecognizer, webkitSpeechRecognition: BrowserSpeechRecognizer,
       location: { href: 'https://example.invalid/readinglearner/index.html' },
     },
-    AudioContext: MicrophoneAudioContext, Vosk: modelApi,
+    AudioContext: MicrophoneAudioContext, Vosk: modelApi, Audio: ReadingRuleSound, AUDIO_VERSION: 4,
     speechSynthesis, SpeechSynthesisUtterance: ReadingSpeechUtterance, getVoice: () => null,
     navigator: { mediaDevices: { async getUserMedia(configuration) {
       observations.microphoneRequests.push(configuration);
@@ -202,9 +227,8 @@ function createReadingVoiceHarness(options = {}) {
     spokenWordEncounterSequence: 0,
     currentlyDisplayedScreenSequence: 0, currentlyDisplayedScreenName: 'practice',
     tuneSearch: '', renderTuneList() {},
-    stored: { items: { [word.id]: word }, rulesHeard: {}, settings: { wordLevel: 1, numberLevel: 1 } },
-    MAX_LEVEL: 10, isPracticeEligible: () => true,
-    kindForSet: set => set === 'numbers' ? 'number' : 'word',
+    stored: { items: wordItems, rounds: [], wordCourse: null,
+      settings: { wordLevel: 1, numberLevel: 1, knownStarterWordIds: ['word:mat'] } },
     DBG: (...message) => observations.auditMessages.push(message),
     setTimeout(callback, milliseconds) {
       const timerId = nextTimerId++;
@@ -223,20 +247,7 @@ function createReadingVoiceHarness(options = {}) {
     speak: (text, rate, finished) => observations.speech.push({ text, rate, finished }),
     speakWord: (text, finished) => observations.speech.push({ text, finished }),
     nextItem: () => observations.nextWordCount++,
-    buildSoundUnitSpans: () => ({}), renderRuleChips() {},
-    famsOf: () => options.families || [],
-    PATTERN_META: { practiceRule: { line: () => 'Say the sounds.', praise: 'Good sounds.' } },
-    activeRuleLessonPlayback: null,
-    cancelRuleLessonPlayback() {}, stopLetterSoundPlayback() {},
-    startRuleLessonPlayback(family) {
-      const encounter = practice.spokenWordEncounter;
-      context.setMicState('waiting');
-      context.speak('Say the sounds.', 0.9, how => {
-        if (practice.spokenWordEncounter !== encounter || encounter.phase !== 'first-ready') return;
-        if (how === 'onend') { context.stored.rulesHeard[family] = true; context.saveStored(); }
-        context.setMicState('ready');
-      });
-    },
+    buildSoundUnitSpans: () => ({}), stopLetterSoundPlayback() {},
     loadStored() {}, loadVoices() {}, setupEvents() {}, levelFromHash: () => null,
     loadImageManifest: async () => { observations.imageManifestLoads++; },
     renderPicker: () => { observations.pickerRenders++; },
@@ -252,7 +263,7 @@ function createReadingVoiceHarness(options = {}) {
 
   const speechCompletionSource = options.useRealSpeechCompletion ?
     readingAppSection('let currentUtterance = null;', '// MICROPHONE CAPTURE AND TUNING RECOGNITION') : '';
-  vm.runInContext(speechCompletionSource + testedReadingAppSource, context,
+  vm.runInContext(speechCompletionSource + testedReadingAppSource + '\nstored.wordCourse = createWordCourseProgress();', context,
     { filename: 'app.js local reading voice', timeout: 1000 });
 
   const run = expression => vm.runInContext(expression, context, { timeout: 1000 });
@@ -493,6 +504,7 @@ async function askSelfCheck(app) {
 
 async function testPhysicalCaptureAsksAfterPauseWithoutSpeechRecognition() {
   const app = createReadingVoiceHarness({ localRecognizerLibraryMissing: true });
+  const tuningSpellingsBeforePractice = [...app.word.accepted];
   await app.prepare();
   await app.beginAttempt();
   assert.equal(app.run('micState'), 'listening');
@@ -550,7 +562,7 @@ async function testPhysicalCaptureAsksAfterPauseWithoutSpeechRecognition() {
   assert.equal(app.word.flawlessConfirmationCount, 1);
   assert.equal(app.word.mastered, false, 'One self-confirmation must leave one gold dot');
   assert.equal(app.word.flawless, false, 'One zero-tap self-confirmation must leave one purple dot');
-  assert.deepEqual(app.word.accepted, ['mat'], 'Self-checking must never mutate tuning spellings');
+  assert.deepEqual(app.word.accepted, tuningSpellingsBeforePractice, 'Self-checking must never mutate tuning spellings');
   assert.deepEqual(app.observations.displayedTranscripts, [], 'Practice must never display an ASR transcript');
 }
 
@@ -713,9 +725,9 @@ async function testHelpUsageIsFrozenBeforeFeedbackAndCountsDistinctTrophyRequire
 }
 
 async function testSameMicrophoneRepeatCompletesAsHelpedAndPreservesEarnedDots() {
-  const app = createReadingVoiceHarness();
+  const app = createReadingVoiceHarness({ wordDisplay: 'cat', encounterRole: 'focus' });
   await app.prepare(); await askSelfCheck(app); app.run('confirmFirstSpokenAttempt()');
-  app.beginEncounter(); app.practice.ruleIds = [app.word.id];
+  app.beginEncounter();
   await askSelfCheck(app);
   const questionsBeforeRepeat = app.observations.speech.filter(utterance => /Got it\?/.test(utterance.text)).length;
   app.dispatchMicrophoneEvent('pointerdown');
@@ -1254,11 +1266,15 @@ async function testRecapFirstConfirmationAndHelpedRepeatAreFeedbackOnly() {
 }
 
 async function testLevelAdvancesOnlyAfterSecondQualifyingFirstConfirmation() {
-  const app = createReadingVoiceHarness();
+  const app = createReadingVoiceHarness({ wordDisplay: 'cat', encounterRole: 'focus' });
+  app.run("wordFocusItems(1).filter(item => item.id !== gs.currentItem.id).forEach(item => { item.mastered = true; })");
   await app.prepare(); await askSelfCheck(app); app.run('confirmFirstSpokenAttempt()');
   assert.equal(app.run('checkLevelComplete()'), null);
   assert.equal(app.run('stored.settings.wordLevel'), 1);
+  assert.equal(app.run('wordCourseFocusComplete(1)'), false,
+    'Every focus word must earn mastery before the active course level advances');
   app.beginEncounter(); await askSelfCheck(app); app.run('confirmFirstSpokenAttempt()');
+  assert.equal(app.run('wordCourseFocusComplete(1)'), true);
   assert.equal(app.run('checkLevelComplete()'), 'level_complete');
   assert.equal(app.run('stored.settings.wordLevel'), 2);
 }
@@ -1370,27 +1386,36 @@ async function testTuningCaptureFailuresClearTheListeningRowAndPublishTheError()
 function createPracticeOrderHarness() {
   const context = vm.createContext({
     console, Math: { ...Math, random: () => 0.999, min: Math.min, max: Math.max, ceil: Math.ceil },
-    stored: { settings: { roundSize: 1 }, items: {} },
-    SOUND_FIXES: { mat: { fams: [{ fam: 'vowel-a' }] }, cat: { fams: [{ fam: 'vowel-a' }] } },
-    EXCLUDED_WORDS: new Set(), saveStored() {},
+    stored: { settings: { roundSize: 1, knownStarterWordIds: ['word:mat'] },
+      items: createWordItemFixtures(), wordCourse: null },
+    saveStored() {},
   });
-  vm.runInContext(readingAppSection('// ROUND BUILDING', '// GAME STATE'), context,
+  vm.runInContext([wordCourseSource, wordPracticeSource,
+    readingAppSection('// ROUND BUILDING', '// GAME STATE'),
+    'stored.wordCourse = createWordCourseProgress();'].join('\n'), context,
     { filename: 'app.js practice order', timeout: 1000 });
   return expression => vm.runInContext(expression, context, { timeout: 1000 });
 }
 
-async function testHelpedAnswersReturnToTheNextNumberAndWordFamilyPractice() {
+async function testHelpedAnswersReturnToNumberPracticeAndTheActiveFocusBank() {
   const run = createPracticeOrderHarness();
   const numberPick = run(`buildNumberRound([
     { id: 'num:1', kind: 'number', display: '1', totalAttempts: 3, mastered: false, lastResult: 'correct' },
     { id: 'num:2', kind: 'number', display: '2', totalAttempts: 2, mastered: false, lastResult: 'helped' }
   ])[0].id`);
   assert.equal(numberPick, 'num:2', 'A helped number must return before an ordinary correct number');
-  const wordPick = run(`buildWordRound([
-    { id: 'word:cat', kind: 'word', display: 'cat', totalAttempts: 3, mastered: false, lastResult: 'correct' },
-    { id: 'word:mat', kind: 'word', display: 'mat', totalAttempts: 2, mastered: false, lastResult: 'helped' }
-  ]).ruleIds[0]`);
-  assert.equal(wordPick, 'word:mat', 'The family block must select a helped word before an ordinary correct word');
+  run("Object.assign(stored.items['word:cat'], { totalAttempts: 2, lastResult: 'helped' });");
+  const wordRound = run('buildRound("words", 1)');
+  const expectedRoles = run('Array(WORD_COURSE.roundRecipe.openingCount).fill("familiar").concat(Array(WORD_COURSE.roundRecipe.focusCount).fill("focus"), Array(WORD_COURSE.roundRecipe.closingCount).fill("familiar"))');
+  assert.deepEqual(Array.from(wordRound.encounters, encounter => encounter.role), Array.from(expectedRoles),
+    'The active word course must keep its familiar/focus/familiar sequence');
+  assert.ok(wordRound.ruleIds.includes('word:cat'), 'A helped focus word remains unmastered and returns for practice');
+  assert.equal(wordRound.ruleFocusId, 'short-a');
+  assert.ok(wordRound.encounters.filter(encounter => encounter.role === 'familiar').every(encounter => encounter.item.id === 'word:mat'),
+    'A declared known starter supplies the familiar encounters independently of the focus bank');
+  const laterFocusWords = run('buildRound("words", 1).ruleIds');
+  assert.ok(laterFocusWords.includes('word:bag') && laterFocusWords.includes('word:jam'),
+    'The next round rotates through the remaining declared focus words');
   assert.equal(run("needsMorePractice({ lastResult: 'miss' })"), true, 'Historical misses must retain their priority');
   assert.equal(run("needsMorePractice({ lastResult: 'helped' })"), true);
   assert.equal(run("needsMorePractice({ lastResult: 'correct' })"), false);
@@ -1417,16 +1442,35 @@ async function testAllDoneDelayedSpeechCannotInterruptAnotherScreen() {
 
 async function testAutomaticWordGuidanceFinishesBeforeTheMicrophoneBecomesReady() {
   for (const guidance of ['recap', 'known-word', 'first-rule']) {
-    const app = createReadingVoiceHarness({ families: guidance === 'first-rule' ? [{ fam: 'practiceRule' }] : [] });
+    const app = createReadingVoiceHarness(guidance === 'first-rule' ?
+      { wordDisplay: 'cat', encounterRole: 'focus' } : {});
     await app.prepare();
     if (guidance === 'recap') app.practice.recapId = app.word.id;
     if (guidance === 'known-word') app.word.mastered = true;
     app.run('presentItem(gs.currentItem)');
     assert.equal(app.run('micState'), 'waiting', `${guidance} guidance must complete before recording`);
     assert.equal(app.element('mic-button').disabled, true);
-    const guidanceIndex = app.observations.speech.length - 1;
-    await app.finishSpeech(guidanceIndex);
+    if (guidance === 'first-rule') {
+      assert.equal(app.observations.speech.at(-1).text, 'Letter A.');
+      assert.equal(app.observations.speech.at(-1).rate, 0.72);
+      await app.finishSpeech();
+      app.advanceTime(219);
+      assert.equal(app.run('micState'), 'waiting');
+      assert.equal(app.run('stored.wordCourse.ruleLessonsHeard["short-a"]'), undefined);
+      app.advanceTime(1);
+      await app.finishSpeech();
+      assert.match(app.observations.recordedSounds.at(-1).url, /\/a\.mp3\?v=4$/);
+      app.observations.recordedSounds.at(-1).onended();
+      assert.equal(app.observations.speech.at(-1).text, 'cat. map.');
+      assert.equal(app.run('micState'), 'waiting', 'A recorded sound cannot finish the complete spoken rule');
+      assert.equal(app.run('stored.wordCourse.ruleLessonsHeard["short-a"]'), undefined);
+    }
+    await app.finishSpeech();
     assert.equal(app.run('micState'), 'ready');
+    if (guidance === 'first-rule') {
+      assert.equal(app.run('stored.wordCourse.ruleLessonsHeard["short-a"]'), true);
+      app.run('stored.wordCourse.ruleLessonsHeard["short-a"] = false');
+    }
     app.run('presentItem(gs.currentItem)');
     const obsoleteGuidanceIndex = app.observations.speech.length - 1;
     app.run("showScreen('picker')");
@@ -1550,7 +1594,7 @@ const readingVoiceChecks = [
   testChildStartupDoesNotLoadTheAdultRecognitionModel,
   testOpeningTuningLoadsItsModelLazilyAndRejectsStaleStatusCallbacks,
   testTuningCaptureFailuresClearTheListeningRowAndPublishTheError,
-  testHelpedAnswersReturnToTheNextNumberAndWordFamilyPractice,
+  testHelpedAnswersReturnToNumberPracticeAndTheActiveFocusBank,
   testAllDoneDelayedSpeechCannotInterruptAnotherScreen,
   testAutomaticWordGuidanceFinishesBeforeTheMicrophoneBecomesReady,
   testSpeechWatchdogStopsVoiceBeforeCallbackAndCannotStopANewerUtterance,

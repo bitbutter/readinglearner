@@ -1,3089 +1,2581 @@
 {
-  "courseId": "one-rule-word-course-draft",
+  "courseId": "one-focus-word-course-v1",
+  "status": "active",
   "createdDate": "2026-10-06",
-  "counts": {
-    "proposedLevels": 41,
-    "proposedFocusWords": 240,
-    "currentBuiltInWords": 286,
-    "currentActiveWords": 257,
-    "currentExcludedWords": 29,
-    "retainedActiveWords": 94,
-    "reintroducedExcludedWords": 1,
-    "newFocusWords": 145,
-    "parkedActiveWords": 163,
-    "parkedExcludedWords": 28,
-    "parkedBuiltInWords": 191
+  "descriptions": {
+    "originalWordIds": "Stable identities from the original 286-word WORDS_CONTENT catalog, before the active course additions.",
+    "originalLevel": "The original catalog level; it does not determine membership or progression in the active course.",
+    "parkedOriginalWords": "Original words outside the active focus banks. Their progress and tuning remain available.",
+    "familiarStarterWords": "These original words are counted within parkedOriginalWords and remain available as familiar starters when mastered or explicitly confirmed by a grown-up."
   },
-  "retainedActiveWords": [
+  "counts": {
+    "courseLevels": 41,
+    "courseFocusWords": 240,
+    "originalCatalogWords": 286,
+    "retainedOriginalFocusWords": 95,
+    "additionalFocusWords": 145,
+    "parkedOriginalWords": 191,
+    "familiarStarterWords": 3
+  },
+  "originalWordIds": [
+    "word:cat",
+    "word:hat",
+    "word:mat",
+    "word:bat",
+    "word:rat",
+    "word:sat",
+    "word:bad",
+    "word:dad",
+    "word:mad",
+    "word:sad",
+    "word:bag",
+    "word:tag",
+    "word:rag",
+    "word:can",
+    "word:man",
+    "word:pan",
+    "word:ran",
+    "word:cap",
+    "word:map",
+    "word:tap",
+    "word:bed",
+    "word:hen",
+    "word:pen",
+    "word:net",
+    "word:wet",
+    "word:pig",
+    "word:pin",
+    "word:lip",
+    "word:fin",
+    "word:zip",
+    "word:pot",
+    "word:log",
+    "word:fox",
+    "word:hop",
+    "word:mop",
+    "word:bus",
+    "word:bug",
+    "word:cup",
+    "word:bun",
+    "word:jug",
+    "word:the",
+    "word:and",
+    "word:up",
+    "word:down",
+    "word:it",
+    "word:not",
+    "word:run",
+    "word:frog",
+    "word:crab",
+    "word:flag",
+    "word:clap",
+    "word:slip",
+    "word:drum",
+    "word:sled",
+    "word:mud",
+    "word:web",
+    "word:van",
+    "word:back",
+    "word:duck",
+    "word:rock",
+    "word:sock",
+    "word:pick",
+    "word:lock",
+    "word:ship",
+    "word:fish",
+    "word:dish",
+    "word:chip",
+    "word:thin",
+    "word:baby",
+    "word:milk",
+    "word:cake",
+    "word:make",
+    "word:tape",
+    "word:gate",
+    "word:name",
+    "word:bike",
+    "word:pipe",
+    "word:ride",
+    "word:five",
+    "word:cube",
+    "word:cute",
+    "word:tube",
+    "word:home",
+    "word:bone",
+    "word:note",
+    "word:see",
+    "word:feed",
+    "word:meet",
+    "word:sweet",
+    "word:moon",
+    "word:boot",
+    "word:cool",
+    "word:food",
+    "word:play",
+    "word:day",
+    "word:say",
+    "word:way",
+    "word:rain",
+    "word:train",
+    "word:boat",
+    "word:coat",
+    "word:are",
+    "word:at",
+    "word:but",
+    "word:do",
+    "word:he",
+    "word:she",
+    "word:so",
+    "word:no",
+    "word:on",
+    "word:be",
+    "word:we",
+    "word:car",
+    "word:star",
+    "word:arm",
+    "word:farm",
+    "word:park",
+    "word:part",
+    "word:cart",
+    "word:fork",
+    "word:corn",
+    "word:horn",
+    "word:short",
+    "word:shore",
+    "word:her",
+    "word:bird",
+    "word:girl",
+    "word:turn",
+    "word:hurt",
+    "word:burn",
+    "word:tiger",
+    "word:door",
+    "word:floor",
+    "word:store",
+    "word:more",
+    "word:coin",
+    "word:join",
+    "word:toy",
+    "word:boy",
+    "word:night",
+    "word:light",
+    "word:right",
+    "word:high",
+    "word:read",
+    "word:tea",
+    "word:beat",
+    "word:hair",
+    "word:bear",
+    "word:pear",
+    "word:is",
+    "word:in",
+    "word:to",
+    "word:go",
+    "word:was",
+    "word:always",
+    "word:around",
+    "word:because",
+    "word:been",
+    "word:before",
+    "word:best",
+    "word:both",
+    "word:buy",
+    "word:call",
+    "word:cold",
+    "word:does",
+    "word:dont",
+    "word:fast",
+    "word:first",
+    "word:found",
+    "word:gave",
+    "word:goes",
+    "word:green",
+    "word:its",
+    "word:made",
+    "word:many",
+    "word:off",
+    "word:or",
+    "word:pull",
+    "word:sing",
+    "word:sit",
+    "word:sleep",
+    "word:tell",
+    "word:their",
+    "word:these",
+    "word:those",
+    "word:upon",
+    "word:us",
+    "word:use",
+    "word:very",
+    "word:wash",
+    "word:which",
+    "word:why",
+    "word:wish",
+    "word:work",
+    "word:would",
+    "word:write",
+    "word:your",
+    "word:about",
+    "word:better",
+    "word:bring",
+    "word:carry",
+    "word:clean",
+    "word:cut",
+    "word:done",
+    "word:draw",
+    "word:drink",
+    "word:eight",
+    "word:fall",
+    "word:far",
+    "word:full",
+    "word:got",
+    "word:grow",
+    "word:hold",
+    "word:hot",
+    "word:if",
+    "word:keep",
+    "word:kind",
+    "word:laugh",
+    "word:long",
+    "word:much",
+    "word:myself",
+    "word:never",
+    "word:only",
+    "word:own",
+    "word:seven",
+    "word:shall",
+    "word:show",
+    "word:six",
+    "word:small",
+    "word:start",
+    "word:ten",
+    "word:today",
+    "word:together",
+    "word:try",
+    "word:warm",
+    "word:time",
+    "word:water",
+    "word:people",
+    "word:year",
+    "word:place",
+    "word:end",
+    "word:land",
+    "word:air",
+    "word:animal",
+    "word:mother",
+    "word:face",
+    "word:family",
+    "word:school",
+    "word:father",
+    "word:body",
+    "word:music",
+    "word:colour",
+    "word:sun",
+    "word:dog",
+    "word:horse",
+    "word:river",
+    "word:sea",
+    "word:tree",
+    "word:mountain",
+    "word:morning",
+    "word:city",
+    "word:road",
+    "word:room",
+    "word:book",
+    "word:page",
+    "word:story",
+    "word:friend",
+    "word:children",
+    "word:brother",
+    "word:sister",
+    "word:teacher",
+    "word:window",
+    "word:table",
+    "word:chair",
+    "word:wall",
+    "word:clock",
+    "word:paper",
+    "word:pencil",
+    "word:picture",
+    "word:street",
+    "word:garden",
+    "word:kitchen",
+    "word:weather",
+    "word:sound",
+    "word:earth",
+    "word:idea"
+  ],
+  "retainedOriginalFocusWords": [
     {
-      "wordId": "word:arm",
+      "originalWordId": "word:arm",
       "word": "arm",
-      "currentLevel": 5,
-      "proposedLevel": 35
+      "originalLevel": 5,
+      "courseLevel": 35
     },
     {
-      "wordId": "word:back",
+      "originalWordId": "word:back",
       "word": "back",
-      "currentLevel": 3,
-      "proposedLevel": 8
+      "originalLevel": 3,
+      "courseLevel": 8
     },
     {
-      "wordId": "word:bag",
+      "originalWordId": "word:bag",
       "word": "bag",
-      "currentLevel": 1,
-      "proposedLevel": 1
+      "originalLevel": 1,
+      "courseLevel": 1
     },
     {
-      "wordId": "word:bed",
+      "originalWordId": "word:bed",
       "word": "bed",
-      "currentLevel": 2,
-      "proposedLevel": 2
+      "originalLevel": 2,
+      "courseLevel": 2
     },
     {
-      "wordId": "word:bike",
+      "originalWordId": "word:bike",
       "word": "bike",
-      "currentLevel": 4,
-      "proposedLevel": 20
+      "originalLevel": 4,
+      "courseLevel": 20
     },
     {
-      "wordId": "word:bird",
+      "originalWordId": "word:bird",
       "word": "bird",
-      "currentLevel": 5,
-      "proposedLevel": 39
+      "originalLevel": 5,
+      "courseLevel": 39
     },
     {
-      "wordId": "word:boat",
+      "originalWordId": "word:boat",
       "word": "boat",
-      "currentLevel": 4,
-      "proposedLevel": 26
+      "originalLevel": 4,
+      "courseLevel": 26
     },
     {
-      "wordId": "word:bone",
+      "originalWordId": "word:bone",
       "word": "bone",
-      "currentLevel": 4,
-      "proposedLevel": 21
+      "originalLevel": 4,
+      "courseLevel": 21
     },
     {
-      "wordId": "word:boot",
-      "word": "boot",
-      "currentLevel": 4,
-      "proposedLevel": 27
-    },
-    {
-      "wordId": "word:boy",
-      "word": "boy",
-      "currentLevel": 5,
-      "proposedLevel": 34
-    },
-    {
-      "wordId": "word:burn",
-      "word": "burn",
-      "currentLevel": 5,
-      "proposedLevel": 37
-    },
-    {
-      "wordId": "word:bus",
-      "word": "bus",
-      "currentLevel": 2,
-      "proposedLevel": 5
-    },
-    {
-      "wordId": "word:cake",
-      "word": "cake",
-      "currentLevel": 4,
-      "proposedLevel": 19
-    },
-    {
-      "wordId": "word:call",
-      "word": "call",
-      "currentLevel": 6,
-      "proposedLevel": 41
-    },
-    {
-      "wordId": "word:car",
-      "word": "car",
-      "currentLevel": 5,
-      "proposedLevel": 35
-    },
-    {
-      "wordId": "word:cat",
-      "word": "cat",
-      "currentLevel": 1,
-      "proposedLevel": 1
-    },
-    {
-      "wordId": "word:chip",
-      "word": "chip",
-      "currentLevel": 3,
-      "proposedLevel": 14
-    },
-    {
-      "wordId": "word:clap",
-      "word": "clap",
-      "currentLevel": 3,
-      "proposedLevel": 6
-    },
-    {
-      "wordId": "word:coat",
-      "word": "coat",
-      "currentLevel": 4,
-      "proposedLevel": 26
-    },
-    {
-      "wordId": "word:coin",
-      "word": "coin",
-      "currentLevel": 5,
-      "proposedLevel": 33
-    },
-    {
-      "wordId": "word:corn",
-      "word": "corn",
-      "currentLevel": 5,
-      "proposedLevel": 36
-    },
-    {
-      "wordId": "word:cube",
-      "word": "cube",
-      "currentLevel": 4,
-      "proposedLevel": 22
-    },
-    {
-      "wordId": "word:cup",
-      "word": "cup",
-      "currentLevel": 2,
-      "proposedLevel": 5
-    },
-    {
-      "wordId": "word:cute",
-      "word": "cute",
-      "currentLevel": 4,
-      "proposedLevel": 22
-    },
-    {
-      "wordId": "word:day",
-      "word": "day",
-      "currentLevel": 4,
-      "proposedLevel": 25
-    },
-    {
-      "wordId": "word:dog",
-      "word": "dog",
-      "currentLevel": 9,
-      "proposedLevel": 4
-    },
-    {
-      "wordId": "word:down",
-      "word": "down",
-      "currentLevel": 3,
-      "proposedLevel": 30
-    },
-    {
-      "wordId": "word:draw",
-      "word": "draw",
-      "currentLevel": 7,
-      "proposedLevel": 40
-    },
-    {
-      "wordId": "word:duck",
-      "word": "duck",
-      "currentLevel": 3,
-      "proposedLevel": 8
-    },
-    {
-      "wordId": "word:fall",
-      "word": "fall",
-      "currentLevel": 7,
-      "proposedLevel": 41
-    },
-    {
-      "wordId": "word:far",
-      "word": "far",
-      "currentLevel": 7,
-      "proposedLevel": 35
-    },
-    {
-      "wordId": "word:farm",
-      "word": "farm",
-      "currentLevel": 5,
-      "proposedLevel": 35
-    },
-    {
-      "wordId": "word:fin",
-      "word": "fin",
-      "currentLevel": 2,
-      "proposedLevel": 3
-    },
-    {
-      "wordId": "word:fish",
-      "word": "fish",
-      "currentLevel": 3,
-      "proposedLevel": 13
-    },
-    {
-      "wordId": "word:five",
-      "word": "five",
-      "currentLevel": 4,
-      "proposedLevel": 20
-    },
-    {
-      "wordId": "word:flag",
-      "word": "flag",
-      "currentLevel": 3,
-      "proposedLevel": 6
-    },
-    {
-      "wordId": "word:food",
-      "word": "food",
-      "currentLevel": 4,
-      "proposedLevel": 27
-    },
-    {
-      "wordId": "word:fork",
-      "word": "fork",
-      "currentLevel": 5,
-      "proposedLevel": 36
-    },
-    {
-      "wordId": "word:frog",
-      "word": "frog",
-      "currentLevel": 3,
-      "proposedLevel": 6
-    },
-    {
-      "wordId": "word:girl",
-      "word": "girl",
-      "currentLevel": 5,
-      "proposedLevel": 39
-    },
-    {
-      "wordId": "word:green",
-      "word": "green",
-      "currentLevel": 6,
-      "proposedLevel": 23
-    },
-    {
-      "wordId": "word:grow",
-      "word": "grow",
-      "currentLevel": 7,
-      "proposedLevel": 32
-    },
-    {
-      "wordId": "word:hen",
-      "word": "hen",
-      "currentLevel": 2,
-      "proposedLevel": 2
-    },
-    {
-      "wordId": "word:high",
-      "word": "high",
-      "currentLevel": 5,
-      "proposedLevel": 29
-    },
-    {
-      "wordId": "word:home",
-      "word": "home",
-      "currentLevel": 4,
-      "proposedLevel": 21
-    },
-    {
-      "wordId": "word:horn",
-      "word": "horn",
-      "currentLevel": 5,
-      "proposedLevel": 36
-    },
-    {
-      "wordId": "word:hot",
-      "word": "hot",
-      "currentLevel": 7,
-      "proposedLevel": 4
-    },
-    {
-      "wordId": "word:hurt",
-      "word": "hurt",
-      "currentLevel": 5,
-      "proposedLevel": 37
-    },
-    {
-      "wordId": "word:join",
-      "word": "join",
-      "currentLevel": 5,
-      "proposedLevel": 33
-    },
-    {
-      "wordId": "word:light",
-      "word": "light",
-      "currentLevel": 5,
-      "proposedLevel": 29
-    },
-    {
-      "wordId": "word:lip",
-      "word": "lip",
-      "currentLevel": 2,
-      "proposedLevel": 3
-    },
-    {
-      "wordId": "word:log",
-      "word": "log",
-      "currentLevel": 2,
-      "proposedLevel": 4
-    },
-    {
-      "wordId": "word:map",
-      "word": "map",
-      "currentLevel": 1,
-      "proposedLevel": 1
-    },
-    {
-      "wordId": "word:milk",
-      "word": "milk",
-      "currentLevel": 3,
-      "proposedLevel": 7
-    },
-    {
-      "wordId": "word:moon",
-      "word": "moon",
-      "currentLevel": 4,
-      "proposedLevel": 27
-    },
-    {
-      "wordId": "word:mop",
-      "word": "mop",
-      "currentLevel": 2,
-      "proposedLevel": 4
-    },
-    {
-      "wordId": "word:much",
-      "word": "much",
-      "currentLevel": 7,
-      "proposedLevel": 14
-    },
-    {
-      "wordId": "word:mud",
-      "word": "mud",
-      "currentLevel": 3,
-      "proposedLevel": 5
-    },
-    {
-      "wordId": "word:name",
-      "word": "name",
-      "currentLevel": 4,
-      "proposedLevel": 19
-    },
-    {
-      "wordId": "word:net",
-      "word": "net",
-      "currentLevel": 2,
-      "proposedLevel": 2
-    },
-    {
-      "wordId": "word:night",
-      "word": "night",
-      "currentLevel": 5,
-      "proposedLevel": 29
-    },
-    {
-      "wordId": "word:note",
-      "word": "note",
-      "currentLevel": 4,
-      "proposedLevel": 21
-    },
-    {
-      "wordId": "word:off",
-      "word": "off",
-      "currentLevel": 6,
-      "proposedLevel": 9
-    },
-    {
-      "wordId": "word:pen",
-      "word": "pen",
-      "currentLevel": 2,
-      "proposedLevel": 2
-    },
-    {
-      "wordId": "word:pig",
-      "word": "pig",
-      "currentLevel": 2,
-      "proposedLevel": 3
-    },
-    {
-      "wordId": "word:pin",
-      "word": "pin",
-      "currentLevel": 2,
-      "proposedLevel": 3
-    },
-    {
-      "wordId": "word:play",
-      "word": "play",
-      "currentLevel": 4,
-      "proposedLevel": 25
-    },
-    {
-      "wordId": "word:pot",
-      "word": "pot",
-      "currentLevel": 2,
-      "proposedLevel": 4
-    },
-    {
-      "wordId": "word:rain",
-      "word": "rain",
-      "currentLevel": 4,
-      "proposedLevel": 24
-    },
-    {
-      "wordId": "word:right",
-      "word": "right",
-      "currentLevel": 5,
-      "proposedLevel": 29
-    },
-    {
-      "wordId": "word:road",
-      "word": "road",
-      "currentLevel": 9,
-      "proposedLevel": 26
-    },
-    {
-      "wordId": "word:rock",
-      "word": "rock",
-      "currentLevel": 3,
-      "proposedLevel": 8
-    },
-    {
-      "wordId": "word:run",
-      "word": "run",
-      "currentLevel": 3,
-      "proposedLevel": 5
-    },
-    {
-      "wordId": "word:sad",
-      "word": "sad",
-      "currentLevel": 1,
-      "proposedLevel": 1
-    },
-    {
-      "wordId": "word:say",
-      "word": "say",
-      "currentLevel": 4,
-      "proposedLevel": 25
-    },
-    {
-      "wordId": "word:see",
-      "word": "see",
-      "currentLevel": 4,
-      "proposedLevel": 23
-    },
-    {
-      "wordId": "word:ship",
-      "word": "ship",
-      "currentLevel": 3,
-      "proposedLevel": 13
-    },
-    {
-      "wordId": "word:short",
-      "word": "short",
-      "currentLevel": 5,
-      "proposedLevel": 36
-    },
-    {
-      "wordId": "word:sing",
-      "word": "sing",
-      "currentLevel": 6,
-      "proposedLevel": 17
-    },
-    {
-      "wordId": "word:sit",
-      "word": "sit",
-      "currentLevel": 6,
-      "proposedLevel": 3
-    },
-    {
-      "wordId": "word:sock",
-      "word": "sock",
-      "currentLevel": 3,
-      "proposedLevel": 8
-    },
-    {
-      "wordId": "word:star",
-      "word": "star",
-      "currentLevel": 5,
-      "proposedLevel": 35
-    },
-    {
-      "wordId": "word:sun",
-      "word": "sun",
-      "currentLevel": 9,
-      "proposedLevel": 5
-    },
-    {
-      "wordId": "word:tap",
-      "word": "tap",
-      "currentLevel": 1,
-      "proposedLevel": 1
-    },
-    {
-      "wordId": "word:tape",
-      "word": "tape",
-      "currentLevel": 4,
-      "proposedLevel": 19
-    },
-    {
-      "wordId": "word:tell",
-      "word": "tell",
-      "currentLevel": 6,
-      "proposedLevel": 10
-    },
-    {
-      "wordId": "word:thin",
-      "word": "thin",
-      "currentLevel": 3,
-      "proposedLevel": 15
-    },
-    {
-      "wordId": "word:time",
-      "word": "time",
-      "currentLevel": 8,
-      "proposedLevel": 20
-    },
-    {
-      "wordId": "word:toy",
-      "word": "toy",
-      "currentLevel": 5,
-      "proposedLevel": 34
-    },
-    {
-      "wordId": "word:train",
-      "word": "train",
-      "currentLevel": 4,
-      "proposedLevel": 24
-    },
-    {
-      "wordId": "word:turn",
-      "word": "turn",
-      "currentLevel": 5,
-      "proposedLevel": 37
-    },
-    {
-      "wordId": "word:way",
-      "word": "way",
-      "currentLevel": 4,
-      "proposedLevel": 25
-    },
-    {
-      "wordId": "word:wet",
-      "word": "wet",
-      "currentLevel": 2,
-      "proposedLevel": 2
-    },
-    {
-      "wordId": "word:wish",
-      "word": "wish",
-      "currentLevel": 6,
-      "proposedLevel": 13
-    }
-  ],
-  "reintroducedExcludedWords": [
-    {
-      "wordId": "word:book",
+      "originalWordId": "word:book",
       "word": "book",
-      "currentLevel": 9,
-      "proposedLevel": 28
+      "originalLevel": 9,
+      "courseLevel": 28
+    },
+    {
+      "originalWordId": "word:boot",
+      "word": "boot",
+      "originalLevel": 4,
+      "courseLevel": 27
+    },
+    {
+      "originalWordId": "word:boy",
+      "word": "boy",
+      "originalLevel": 5,
+      "courseLevel": 34
+    },
+    {
+      "originalWordId": "word:burn",
+      "word": "burn",
+      "originalLevel": 5,
+      "courseLevel": 37
+    },
+    {
+      "originalWordId": "word:bus",
+      "word": "bus",
+      "originalLevel": 2,
+      "courseLevel": 5
+    },
+    {
+      "originalWordId": "word:cake",
+      "word": "cake",
+      "originalLevel": 4,
+      "courseLevel": 19
+    },
+    {
+      "originalWordId": "word:call",
+      "word": "call",
+      "originalLevel": 6,
+      "courseLevel": 41
+    },
+    {
+      "originalWordId": "word:car",
+      "word": "car",
+      "originalLevel": 5,
+      "courseLevel": 35
+    },
+    {
+      "originalWordId": "word:cat",
+      "word": "cat",
+      "originalLevel": 1,
+      "courseLevel": 1
+    },
+    {
+      "originalWordId": "word:chip",
+      "word": "chip",
+      "originalLevel": 3,
+      "courseLevel": 14
+    },
+    {
+      "originalWordId": "word:clap",
+      "word": "clap",
+      "originalLevel": 3,
+      "courseLevel": 6
+    },
+    {
+      "originalWordId": "word:coat",
+      "word": "coat",
+      "originalLevel": 4,
+      "courseLevel": 26
+    },
+    {
+      "originalWordId": "word:coin",
+      "word": "coin",
+      "originalLevel": 5,
+      "courseLevel": 33
+    },
+    {
+      "originalWordId": "word:corn",
+      "word": "corn",
+      "originalLevel": 5,
+      "courseLevel": 36
+    },
+    {
+      "originalWordId": "word:cube",
+      "word": "cube",
+      "originalLevel": 4,
+      "courseLevel": 22
+    },
+    {
+      "originalWordId": "word:cup",
+      "word": "cup",
+      "originalLevel": 2,
+      "courseLevel": 5
+    },
+    {
+      "originalWordId": "word:cute",
+      "word": "cute",
+      "originalLevel": 4,
+      "courseLevel": 22
+    },
+    {
+      "originalWordId": "word:day",
+      "word": "day",
+      "originalLevel": 4,
+      "courseLevel": 25
+    },
+    {
+      "originalWordId": "word:dog",
+      "word": "dog",
+      "originalLevel": 9,
+      "courseLevel": 4
+    },
+    {
+      "originalWordId": "word:down",
+      "word": "down",
+      "originalLevel": 3,
+      "courseLevel": 30
+    },
+    {
+      "originalWordId": "word:draw",
+      "word": "draw",
+      "originalLevel": 7,
+      "courseLevel": 40
+    },
+    {
+      "originalWordId": "word:duck",
+      "word": "duck",
+      "originalLevel": 3,
+      "courseLevel": 8
+    },
+    {
+      "originalWordId": "word:fall",
+      "word": "fall",
+      "originalLevel": 7,
+      "courseLevel": 41
+    },
+    {
+      "originalWordId": "word:far",
+      "word": "far",
+      "originalLevel": 7,
+      "courseLevel": 35
+    },
+    {
+      "originalWordId": "word:farm",
+      "word": "farm",
+      "originalLevel": 5,
+      "courseLevel": 35
+    },
+    {
+      "originalWordId": "word:fin",
+      "word": "fin",
+      "originalLevel": 2,
+      "courseLevel": 3
+    },
+    {
+      "originalWordId": "word:fish",
+      "word": "fish",
+      "originalLevel": 3,
+      "courseLevel": 13
+    },
+    {
+      "originalWordId": "word:five",
+      "word": "five",
+      "originalLevel": 4,
+      "courseLevel": 20
+    },
+    {
+      "originalWordId": "word:flag",
+      "word": "flag",
+      "originalLevel": 3,
+      "courseLevel": 6
+    },
+    {
+      "originalWordId": "word:food",
+      "word": "food",
+      "originalLevel": 4,
+      "courseLevel": 27
+    },
+    {
+      "originalWordId": "word:fork",
+      "word": "fork",
+      "originalLevel": 5,
+      "courseLevel": 36
+    },
+    {
+      "originalWordId": "word:frog",
+      "word": "frog",
+      "originalLevel": 3,
+      "courseLevel": 6
+    },
+    {
+      "originalWordId": "word:girl",
+      "word": "girl",
+      "originalLevel": 5,
+      "courseLevel": 39
+    },
+    {
+      "originalWordId": "word:green",
+      "word": "green",
+      "originalLevel": 6,
+      "courseLevel": 23
+    },
+    {
+      "originalWordId": "word:grow",
+      "word": "grow",
+      "originalLevel": 7,
+      "courseLevel": 32
+    },
+    {
+      "originalWordId": "word:hen",
+      "word": "hen",
+      "originalLevel": 2,
+      "courseLevel": 2
+    },
+    {
+      "originalWordId": "word:high",
+      "word": "high",
+      "originalLevel": 5,
+      "courseLevel": 29
+    },
+    {
+      "originalWordId": "word:home",
+      "word": "home",
+      "originalLevel": 4,
+      "courseLevel": 21
+    },
+    {
+      "originalWordId": "word:horn",
+      "word": "horn",
+      "originalLevel": 5,
+      "courseLevel": 36
+    },
+    {
+      "originalWordId": "word:hot",
+      "word": "hot",
+      "originalLevel": 7,
+      "courseLevel": 4
+    },
+    {
+      "originalWordId": "word:hurt",
+      "word": "hurt",
+      "originalLevel": 5,
+      "courseLevel": 37
+    },
+    {
+      "originalWordId": "word:join",
+      "word": "join",
+      "originalLevel": 5,
+      "courseLevel": 33
+    },
+    {
+      "originalWordId": "word:light",
+      "word": "light",
+      "originalLevel": 5,
+      "courseLevel": 29
+    },
+    {
+      "originalWordId": "word:lip",
+      "word": "lip",
+      "originalLevel": 2,
+      "courseLevel": 3
+    },
+    {
+      "originalWordId": "word:log",
+      "word": "log",
+      "originalLevel": 2,
+      "courseLevel": 4
+    },
+    {
+      "originalWordId": "word:map",
+      "word": "map",
+      "originalLevel": 1,
+      "courseLevel": 1
+    },
+    {
+      "originalWordId": "word:milk",
+      "word": "milk",
+      "originalLevel": 3,
+      "courseLevel": 7
+    },
+    {
+      "originalWordId": "word:moon",
+      "word": "moon",
+      "originalLevel": 4,
+      "courseLevel": 27
+    },
+    {
+      "originalWordId": "word:mop",
+      "word": "mop",
+      "originalLevel": 2,
+      "courseLevel": 4
+    },
+    {
+      "originalWordId": "word:much",
+      "word": "much",
+      "originalLevel": 7,
+      "courseLevel": 14
+    },
+    {
+      "originalWordId": "word:mud",
+      "word": "mud",
+      "originalLevel": 3,
+      "courseLevel": 5
+    },
+    {
+      "originalWordId": "word:name",
+      "word": "name",
+      "originalLevel": 4,
+      "courseLevel": 19
+    },
+    {
+      "originalWordId": "word:net",
+      "word": "net",
+      "originalLevel": 2,
+      "courseLevel": 2
+    },
+    {
+      "originalWordId": "word:night",
+      "word": "night",
+      "originalLevel": 5,
+      "courseLevel": 29
+    },
+    {
+      "originalWordId": "word:note",
+      "word": "note",
+      "originalLevel": 4,
+      "courseLevel": 21
+    },
+    {
+      "originalWordId": "word:off",
+      "word": "off",
+      "originalLevel": 6,
+      "courseLevel": 9
+    },
+    {
+      "originalWordId": "word:pen",
+      "word": "pen",
+      "originalLevel": 2,
+      "courseLevel": 2
+    },
+    {
+      "originalWordId": "word:pig",
+      "word": "pig",
+      "originalLevel": 2,
+      "courseLevel": 3
+    },
+    {
+      "originalWordId": "word:pin",
+      "word": "pin",
+      "originalLevel": 2,
+      "courseLevel": 3
+    },
+    {
+      "originalWordId": "word:play",
+      "word": "play",
+      "originalLevel": 4,
+      "courseLevel": 25
+    },
+    {
+      "originalWordId": "word:pot",
+      "word": "pot",
+      "originalLevel": 2,
+      "courseLevel": 4
+    },
+    {
+      "originalWordId": "word:rain",
+      "word": "rain",
+      "originalLevel": 4,
+      "courseLevel": 24
+    },
+    {
+      "originalWordId": "word:right",
+      "word": "right",
+      "originalLevel": 5,
+      "courseLevel": 29
+    },
+    {
+      "originalWordId": "word:road",
+      "word": "road",
+      "originalLevel": 9,
+      "courseLevel": 26
+    },
+    {
+      "originalWordId": "word:rock",
+      "word": "rock",
+      "originalLevel": 3,
+      "courseLevel": 8
+    },
+    {
+      "originalWordId": "word:run",
+      "word": "run",
+      "originalLevel": 3,
+      "courseLevel": 5
+    },
+    {
+      "originalWordId": "word:sad",
+      "word": "sad",
+      "originalLevel": 1,
+      "courseLevel": 1
+    },
+    {
+      "originalWordId": "word:say",
+      "word": "say",
+      "originalLevel": 4,
+      "courseLevel": 25
+    },
+    {
+      "originalWordId": "word:see",
+      "word": "see",
+      "originalLevel": 4,
+      "courseLevel": 23
+    },
+    {
+      "originalWordId": "word:ship",
+      "word": "ship",
+      "originalLevel": 3,
+      "courseLevel": 13
+    },
+    {
+      "originalWordId": "word:short",
+      "word": "short",
+      "originalLevel": 5,
+      "courseLevel": 36
+    },
+    {
+      "originalWordId": "word:sing",
+      "word": "sing",
+      "originalLevel": 6,
+      "courseLevel": 17
+    },
+    {
+      "originalWordId": "word:sit",
+      "word": "sit",
+      "originalLevel": 6,
+      "courseLevel": 3
+    },
+    {
+      "originalWordId": "word:sock",
+      "word": "sock",
+      "originalLevel": 3,
+      "courseLevel": 8
+    },
+    {
+      "originalWordId": "word:star",
+      "word": "star",
+      "originalLevel": 5,
+      "courseLevel": 35
+    },
+    {
+      "originalWordId": "word:sun",
+      "word": "sun",
+      "originalLevel": 9,
+      "courseLevel": 5
+    },
+    {
+      "originalWordId": "word:tap",
+      "word": "tap",
+      "originalLevel": 1,
+      "courseLevel": 1
+    },
+    {
+      "originalWordId": "word:tape",
+      "word": "tape",
+      "originalLevel": 4,
+      "courseLevel": 19
+    },
+    {
+      "originalWordId": "word:tell",
+      "word": "tell",
+      "originalLevel": 6,
+      "courseLevel": 10
+    },
+    {
+      "originalWordId": "word:thin",
+      "word": "thin",
+      "originalLevel": 3,
+      "courseLevel": 15
+    },
+    {
+      "originalWordId": "word:time",
+      "word": "time",
+      "originalLevel": 8,
+      "courseLevel": 20
+    },
+    {
+      "originalWordId": "word:toy",
+      "word": "toy",
+      "originalLevel": 5,
+      "courseLevel": 34
+    },
+    {
+      "originalWordId": "word:train",
+      "word": "train",
+      "originalLevel": 4,
+      "courseLevel": 24
+    },
+    {
+      "originalWordId": "word:turn",
+      "word": "turn",
+      "originalLevel": 5,
+      "courseLevel": 37
+    },
+    {
+      "originalWordId": "word:way",
+      "word": "way",
+      "originalLevel": 4,
+      "courseLevel": 25
+    },
+    {
+      "originalWordId": "word:wet",
+      "word": "wet",
+      "originalLevel": 2,
+      "courseLevel": 2
+    },
+    {
+      "originalWordId": "word:wish",
+      "word": "wish",
+      "originalLevel": 6,
+      "courseLevel": 13
     }
   ],
-  "newFocusWords": [
+  "additionalFocusWords": [
     {
+      "wordId": "word:all",
       "word": "all",
-      "proposedLevel": 41
+      "courseLevel": 41
     },
     {
+      "wordId": "word:ball",
       "word": "ball",
-      "proposedLevel": 41
+      "courseLevel": 41
     },
     {
+      "wordId": "word:bang",
       "word": "bang",
-      "proposedLevel": 17
+      "courseLevel": 17
     },
     {
+      "wordId": "word:bee",
       "word": "bee",
-      "proposedLevel": 23
+      "courseLevel": 23
     },
     {
+      "wordId": "word:bell",
       "word": "bell",
-      "proposedLevel": 10
+      "courseLevel": 10
     },
     {
+      "wordId": "word:blow",
       "word": "blow",
-      "proposedLevel": 32
+      "courseLevel": 32
     },
     {
+      "wordId": "word:boil",
       "word": "boil",
-      "proposedLevel": 33
+      "courseLevel": 33
     },
     {
+      "wordId": "word:boss",
       "word": "boss",
-      "proposedLevel": 11
+      "courseLevel": 11
     },
     {
+      "wordId": "word:brown",
       "word": "brown",
-      "proposedLevel": 30
+      "courseLevel": 30
     },
     {
+      "wordId": "word:buzz",
       "word": "buzz",
-      "proposedLevel": 12
+      "courseLevel": 12
     },
     {
+      "wordId": "word:chat",
       "word": "chat",
-      "proposedLevel": 14
+      "courseLevel": 14
     },
     {
+      "wordId": "word:chin",
       "word": "chin",
-      "proposedLevel": 14
+      "courseLevel": 14
     },
     {
+      "wordId": "word:chop",
       "word": "chop",
-      "proposedLevel": 14
+      "courseLevel": 14
     },
     {
+      "wordId": "word:claw",
       "word": "claw",
-      "proposedLevel": 40
+      "courseLevel": 40
     },
     {
+      "wordId": "word:cloth",
       "word": "cloth",
-      "proposedLevel": 15
+      "courseLevel": 15
     },
     {
+      "wordId": "word:cloud",
       "word": "cloud",
-      "proposedLevel": 31
+      "courseLevel": 31
     },
     {
+      "wordId": "word:coil",
       "word": "coil",
-      "proposedLevel": 33
+      "courseLevel": 33
     },
     {
+      "wordId": "word:cone",
       "word": "cone",
-      "proposedLevel": 21
+      "courseLevel": 21
     },
     {
+      "wordId": "word:cook",
       "word": "cook",
-      "proposedLevel": 28
+      "courseLevel": 28
     },
     {
+      "wordId": "word:cord",
       "word": "cord",
-      "proposedLevel": 36
+      "courseLevel": 36
     },
     {
+      "wordId": "word:cow",
       "word": "cow",
-      "proposedLevel": 30
+      "courseLevel": 30
     },
     {
+      "wordId": "word:cuff",
       "word": "cuff",
-      "proposedLevel": 9
+      "courseLevel": 9
     },
     {
+      "wordId": "word:curl",
       "word": "curl",
-      "proposedLevel": 37
+      "courseLevel": 37
     },
     {
+      "wordId": "word:dig",
       "word": "dig",
-      "proposedLevel": 3
+      "courseLevel": 3
     },
     {
+      "wordId": "word:dirt",
       "word": "dirt",
-      "proposedLevel": 39
+      "courseLevel": 39
     },
     {
+      "wordId": "word:doll",
       "word": "doll",
-      "proposedLevel": 10
+      "courseLevel": 10
     },
     {
+      "wordId": "word:dust",
       "word": "dust",
-      "proposedLevel": 7
+      "courseLevel": 7
     },
     {
+      "wordId": "word:feet",
       "word": "feet",
-      "proposedLevel": 23
+      "courseLevel": 23
     },
     {
+      "wordId": "word:fern",
       "word": "fern",
-      "proposedLevel": 38
+      "courseLevel": 38
     },
     {
+      "wordId": "word:fill",
       "word": "fill",
-      "proposedLevel": 10
+      "courseLevel": 10
     },
     {
+      "wordId": "word:firm",
       "word": "firm",
-      "proposedLevel": 39
+      "courseLevel": 39
     },
     {
+      "wordId": "word:fizz",
       "word": "fizz",
-      "proposedLevel": 12
+      "courseLevel": 12
     },
     {
+      "wordId": "word:flow",
       "word": "flow",
-      "proposedLevel": 32
+      "courseLevel": 32
     },
     {
+      "wordId": "word:foil",
       "word": "foil",
-      "proposedLevel": 33
+      "courseLevel": 33
     },
     {
+      "wordId": "word:foot",
       "word": "foot",
-      "proposedLevel": 28
+      "courseLevel": 28
     },
     {
+      "wordId": "word:fume",
       "word": "fume",
-      "proposedLevel": 22
+      "courseLevel": 22
     },
     {
+      "wordId": "word:fur",
       "word": "fur",
-      "proposedLevel": 37
+      "courseLevel": 37
     },
     {
+      "wordId": "word:fuss",
       "word": "fuss",
-      "proposedLevel": 11
+      "courseLevel": 11
     },
     {
+      "wordId": "word:fuzz",
       "word": "fuzz",
-      "proposedLevel": 12
+      "courseLevel": 12
     },
     {
+      "wordId": "word:game",
       "word": "game",
-      "proposedLevel": 19
+      "courseLevel": 19
     },
     {
+      "wordId": "word:goat",
       "word": "goat",
-      "proposedLevel": 26
+      "courseLevel": 26
     },
     {
+      "wordId": "word:good",
       "word": "good",
-      "proposedLevel": 28
+      "courseLevel": 28
     },
     {
+      "wordId": "word:hall",
       "word": "hall",
-      "proposedLevel": 41
+      "courseLevel": 41
     },
     {
+      "wordId": "word:hand",
       "word": "hand",
-      "proposedLevel": 7
+      "courseLevel": 7
     },
     {
+      "wordId": "word:hang",
       "word": "hang",
-      "proposedLevel": 17
+      "courseLevel": 17
     },
     {
+      "wordId": "word:herd",
       "word": "herd",
-      "proposedLevel": 38
+      "courseLevel": 38
     },
     {
+      "wordId": "word:hide",
       "word": "hide",
-      "proposedLevel": 20
+      "courseLevel": 20
     },
     {
+      "wordId": "word:hill",
       "word": "hill",
-      "proposedLevel": 10
+      "courseLevel": 10
     },
     {
+      "wordId": "word:hiss",
       "word": "hiss",
-      "proposedLevel": 11
+      "courseLevel": 11
     },
     {
+      "wordId": "word:hope",
       "word": "hope",
-      "proposedLevel": 21
+      "courseLevel": 21
     },
     {
+      "wordId": "word:how",
       "word": "how",
-      "proposedLevel": 30
+      "courseLevel": 30
     },
     {
+      "wordId": "word:huff",
       "word": "huff",
-      "proposedLevel": 9
+      "courseLevel": 9
     },
     {
+      "wordId": "word:hut",
       "word": "hut",
-      "proposedLevel": 5
+      "courseLevel": 5
     },
     {
+      "wordId": "word:jam",
       "word": "jam",
-      "proposedLevel": 1
+      "courseLevel": 1
     },
     {
+      "wordId": "word:jar",
       "word": "jar",
-      "proposedLevel": 35
+      "courseLevel": 35
     },
     {
+      "wordId": "word:jaw",
       "word": "jaw",
-      "proposedLevel": 40
+      "courseLevel": 40
     },
     {
+      "wordId": "word:jazz",
       "word": "jazz",
-      "proposedLevel": 12
+      "courseLevel": 12
     },
     {
+      "wordId": "word:joy",
       "word": "joy",
-      "proposedLevel": 34
+      "courseLevel": 34
     },
     {
+      "wordId": "word:kick",
       "word": "kick",
-      "proposedLevel": 8
+      "courseLevel": 8
     },
     {
+      "wordId": "word:king",
       "word": "king",
-      "proposedLevel": 17
+      "courseLevel": 17
     },
     {
+      "wordId": "word:kiss",
       "word": "kiss",
-      "proposedLevel": 11
+      "courseLevel": 11
     },
     {
+      "wordId": "word:kite",
       "word": "kite",
-      "proposedLevel": 20
+      "courseLevel": 20
     },
     {
+      "wordId": "word:lamp",
       "word": "lamp",
-      "proposedLevel": 7
+      "courseLevel": 7
     },
     {
+      "wordId": "word:late",
       "word": "late",
-      "proposedLevel": 19
+      "courseLevel": 19
     },
     {
+      "wordId": "word:lime",
       "word": "lime",
-      "proposedLevel": 20
+      "courseLevel": 20
     },
     {
+      "wordId": "word:look",
       "word": "look",
-      "proposedLevel": 28
+      "courseLevel": 28
     },
     {
+      "wordId": "word:loud",
       "word": "loud",
-      "proposedLevel": 31
+      "courseLevel": 31
     },
     {
+      "wordId": "word:low",
       "word": "low",
-      "proposedLevel": 32
+      "courseLevel": 32
     },
     {
+      "wordId": "word:mail",
       "word": "mail",
-      "proposedLevel": 24
+      "courseLevel": 24
     },
     {
+      "wordId": "word:mess",
       "word": "mess",
-      "proposedLevel": 11
+      "courseLevel": 11
     },
     {
+      "wordId": "word:miss",
       "word": "miss",
-      "proposedLevel": 11
+      "courseLevel": 11
     },
     {
+      "wordId": "word:moth",
       "word": "moth",
-      "proposedLevel": 15
+      "courseLevel": 15
     },
     {
+      "wordId": "word:mule",
       "word": "mule",
-      "proposedLevel": 22
+      "courseLevel": 22
     },
     {
+      "wordId": "word:mute",
       "word": "mute",
-      "proposedLevel": 22
+      "courseLevel": 22
     },
     {
+      "wordId": "word:neck",
       "word": "neck",
-      "proposedLevel": 8
+      "courseLevel": 8
     },
     {
+      "wordId": "word:now",
       "word": "now",
-      "proposedLevel": 30
+      "courseLevel": 30
     },
     {
+      "wordId": "word:oil",
       "word": "oil",
-      "proposedLevel": 33
+      "courseLevel": 33
     },
     {
+      "wordId": "word:out",
       "word": "out",
-      "proposedLevel": 31
+      "courseLevel": 31
     },
     {
+      "wordId": "word:pain",
       "word": "pain",
-      "proposedLevel": 24
+      "courseLevel": 24
     },
     {
+      "wordId": "word:paw",
       "word": "paw",
-      "proposedLevel": 40
+      "courseLevel": 40
     },
     {
+      "wordId": "word:pay",
       "word": "pay",
-      "proposedLevel": 25
+      "courseLevel": 25
     },
     {
+      "wordId": "word:perch",
       "word": "perch",
-      "proposedLevel": 38
+      "courseLevel": 38
     },
     {
+      "wordId": "word:plum",
       "word": "plum",
-      "proposedLevel": 6
+      "courseLevel": 6
     },
     {
+      "wordId": "word:pond",
       "word": "pond",
-      "proposedLevel": 7
+      "courseLevel": 7
     },
     {
+      "wordId": "word:pool",
       "word": "pool",
-      "proposedLevel": 27
+      "courseLevel": 27
     },
     {
+      "wordId": "word:proud",
       "word": "proud",
-      "proposedLevel": 31
+      "courseLevel": 31
     },
     {
+      "wordId": "word:puff",
       "word": "puff",
-      "proposedLevel": 9
+      "courseLevel": 9
     },
     {
+      "wordId": "word:quack",
       "word": "quack",
-      "proposedLevel": 18
+      "courseLevel": 18
     },
     {
+      "wordId": "word:quest",
       "word": "quest",
-      "proposedLevel": 18
+      "courseLevel": 18
     },
     {
+      "wordId": "word:quick",
       "word": "quick",
-      "proposedLevel": 18
+      "courseLevel": 18
     },
     {
+      "wordId": "word:quill",
       "word": "quill",
-      "proposedLevel": 18
+      "courseLevel": 18
     },
     {
+      "wordId": "word:quit",
       "word": "quit",
-      "proposedLevel": 18
+      "courseLevel": 18
     },
     {
+      "wordId": "word:quiz",
       "word": "quiz",
-      "proposedLevel": 18
+      "courseLevel": 18
     },
     {
+      "wordId": "word:rang",
       "word": "rang",
-      "proposedLevel": 17
+      "courseLevel": 17
     },
     {
+      "wordId": "word:raw",
       "word": "raw",
-      "proposedLevel": 40
+      "courseLevel": 40
     },
     {
+      "wordId": "word:ray",
       "word": "ray",
-      "proposedLevel": 25
+      "courseLevel": 25
     },
     {
+      "wordId": "word:red",
       "word": "red",
-      "proposedLevel": 2
+      "courseLevel": 2
     },
     {
+      "wordId": "word:rich",
       "word": "rich",
-      "proposedLevel": 14
+      "courseLevel": 14
     },
     {
+      "wordId": "word:ring",
       "word": "ring",
-      "proposedLevel": 17
+      "courseLevel": 17
     },
     {
+      "wordId": "word:rope",
       "word": "rope",
-      "proposedLevel": 21
+      "courseLevel": 21
     },
     {
+      "wordId": "word:round",
       "word": "round",
-      "proposedLevel": 31
+      "courseLevel": 31
     },
     {
+      "wordId": "word:sail",
       "word": "sail",
-      "proposedLevel": 24
+      "courseLevel": 24
     },
     {
+      "wordId": "word:saw",
       "word": "saw",
-      "proposedLevel": 40
+      "courseLevel": 40
     },
     {
+      "wordId": "word:seed",
       "word": "seed",
-      "proposedLevel": 23
+      "courseLevel": 23
     },
     {
+      "wordId": "word:shed",
       "word": "shed",
-      "proposedLevel": 13
+      "courseLevel": 13
     },
     {
+      "wordId": "word:sheep",
       "word": "sheep",
-      "proposedLevel": 23
+      "courseLevel": 23
     },
     {
+      "wordId": "word:shop",
       "word": "shop",
-      "proposedLevel": 13
+      "courseLevel": 13
     },
     {
+      "wordId": "word:shout",
       "word": "shout",
-      "proposedLevel": 31
+      "courseLevel": 31
     },
     {
+      "wordId": "word:shut",
       "word": "shut",
-      "proposedLevel": 13
+      "courseLevel": 13
     },
     {
+      "wordId": "word:sigh",
       "word": "sigh",
-      "proposedLevel": 29
+      "courseLevel": 29
     },
     {
+      "wordId": "word:slow",
       "word": "slow",
-      "proposedLevel": 32
+      "courseLevel": 32
     },
     {
+      "wordId": "word:sniff",
       "word": "sniff",
-      "proposedLevel": 9
+      "courseLevel": 9
     },
     {
+      "wordId": "word:snow",
       "word": "snow",
-      "proposedLevel": 32
+      "courseLevel": 32
     },
     {
+      "wordId": "word:soap",
       "word": "soap",
-      "proposedLevel": 26
+      "courseLevel": 26
     },
     {
+      "wordId": "word:soon",
       "word": "soon",
-      "proposedLevel": 27
+      "courseLevel": 27
     },
     {
+      "wordId": "word:soy",
       "word": "soy",
-      "proposedLevel": 34
+      "courseLevel": 34
     },
     {
+      "wordId": "word:spoon",
       "word": "spoon",
-      "proposedLevel": 27
+      "courseLevel": 27
     },
     {
+      "wordId": "word:sport",
       "word": "sport",
-      "proposedLevel": 36
+      "courseLevel": 36
     },
     {
+      "wordId": "word:stern",
       "word": "stern",
-      "proposedLevel": 38
+      "courseLevel": 38
     },
     {
+      "wordId": "word:stiff",
       "word": "stiff",
-      "proposedLevel": 9
+      "courseLevel": 9
     },
     {
+      "wordId": "word:stir",
       "word": "stir",
-      "proposedLevel": 39
+      "courseLevel": 39
     },
     {
+      "wordId": "word:stop",
       "word": "stop",
-      "proposedLevel": 6
+      "courseLevel": 6
     },
     {
+      "wordId": "word:surf",
       "word": "surf",
-      "proposedLevel": 37
+      "courseLevel": 37
     },
     {
+      "wordId": "word:swim",
       "word": "swim",
-      "proposedLevel": 6
+      "courseLevel": 6
     },
     {
+      "wordId": "word:tail",
       "word": "tail",
-      "proposedLevel": 24
+      "courseLevel": 24
     },
     {
+      "wordId": "word:tall",
       "word": "tall",
-      "proposedLevel": 41
+      "courseLevel": 41
     },
     {
+      "wordId": "word:tent",
       "word": "tent",
-      "proposedLevel": 7
+      "courseLevel": 7
     },
     {
+      "wordId": "word:term",
       "word": "term",
-      "proposedLevel": 38
+      "courseLevel": 38
     },
     {
+      "wordId": "word:than",
       "word": "than",
-      "proposedLevel": 16
+      "courseLevel": 16
     },
     {
+      "wordId": "word:that",
       "word": "that",
-      "proposedLevel": 16
+      "courseLevel": 16
     },
     {
+      "wordId": "word:them",
       "word": "them",
-      "proposedLevel": 16
+      "courseLevel": 16
     },
     {
+      "wordId": "word:then",
       "word": "then",
-      "proposedLevel": 16
+      "courseLevel": 16
     },
     {
+      "wordId": "word:thick",
       "word": "thick",
-      "proposedLevel": 15
+      "courseLevel": 15
     },
     {
+      "wordId": "word:third",
       "word": "third",
-      "proposedLevel": 39
+      "courseLevel": 39
     },
     {
+      "wordId": "word:this",
       "word": "this",
-      "proposedLevel": 16
+      "courseLevel": 16
     },
     {
+      "wordId": "word:thrush",
       "word": "thrush",
-      "proposedLevel": 15
+      "courseLevel": 15
     },
     {
+      "wordId": "word:thud",
       "word": "thud",
-      "proposedLevel": 15
+      "courseLevel": 15
     },
     {
+      "wordId": "word:tight",
       "word": "tight",
-      "proposedLevel": 29
+      "courseLevel": 29
     },
     {
+      "wordId": "word:toad",
       "word": "toad",
-      "proposedLevel": 26
+      "courseLevel": 26
     },
     {
+      "wordId": "word:took",
       "word": "took",
-      "proposedLevel": 28
+      "courseLevel": 28
     },
     {
+      "wordId": "word:top",
       "word": "top",
-      "proposedLevel": 4
+      "courseLevel": 4
     },
     {
+      "wordId": "word:town",
       "word": "town",
-      "proposedLevel": 30
+      "courseLevel": 30
     },
     {
+      "wordId": "word:verb",
       "word": "verb",
-      "proposedLevel": 38
+      "courseLevel": 38
     },
     {
+      "wordId": "word:wave",
       "word": "wave",
-      "proposedLevel": 19
+      "courseLevel": 19
     },
     {
+      "wordId": "word:well",
       "word": "well",
-      "proposedLevel": 10
+      "courseLevel": 10
     }
   ],
-  "parkedActiveWords": [
+  "parkedOriginalWords": [
     {
-      "wordId": "word:about",
+      "originalWordId": "word:about",
       "word": "about",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:air",
+      "originalWordId": "word:air",
       "word": "air",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:always",
+      "originalWordId": "word:always",
       "word": "always",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:and",
+      "originalWordId": "word:and",
       "word": "and",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:animal",
+      "originalWordId": "word:animal",
       "word": "animal",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:around",
+      "originalWordId": "word:are",
+      "word": "are",
+      "originalLevel": 4
+    },
+    {
+      "originalWordId": "word:around",
       "word": "around",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:at",
+      "originalWordId": "word:at",
       "word": "at",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:baby",
+      "originalWordId": "word:baby",
       "word": "baby",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:bad",
+      "originalWordId": "word:bad",
       "word": "bad",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:bat",
+      "originalWordId": "word:bat",
       "word": "bat",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:be",
+      "originalWordId": "word:be",
       "word": "be",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:bear",
+      "originalWordId": "word:bear",
       "word": "bear",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:beat",
+      "originalWordId": "word:beat",
       "word": "beat",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:been",
+      "originalWordId": "word:because",
+      "word": "because",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:been",
       "word": "been",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:before",
+      "originalWordId": "word:before",
       "word": "before",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:best",
+      "originalWordId": "word:best",
       "word": "best",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:better",
+      "originalWordId": "word:better",
       "word": "better",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:body",
+      "originalWordId": "word:body",
       "word": "body",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:both",
+      "originalWordId": "word:both",
       "word": "both",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:bring",
+      "originalWordId": "word:bring",
       "word": "bring",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:bug",
+      "originalWordId": "word:brother",
+      "word": "brother",
+      "originalLevel": 10
+    },
+    {
+      "originalWordId": "word:bug",
       "word": "bug",
-      "currentLevel": 2
+      "originalLevel": 2
     },
     {
-      "wordId": "word:bun",
+      "originalWordId": "word:bun",
       "word": "bun",
-      "currentLevel": 2
+      "originalLevel": 2
     },
     {
-      "wordId": "word:but",
+      "originalWordId": "word:but",
       "word": "but",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:can",
+      "originalWordId": "word:buy",
+      "word": "buy",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:can",
       "word": "can",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:cap",
+      "originalWordId": "word:cap",
       "word": "cap",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:carry",
+      "originalWordId": "word:carry",
       "word": "carry",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:cart",
+      "originalWordId": "word:cart",
       "word": "cart",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:chair",
+      "originalWordId": "word:chair",
       "word": "chair",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:children",
+      "originalWordId": "word:children",
       "word": "children",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:city",
+      "originalWordId": "word:city",
       "word": "city",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:clean",
+      "originalWordId": "word:clean",
       "word": "clean",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:clock",
+      "originalWordId": "word:clock",
       "word": "clock",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:cold",
+      "originalWordId": "word:cold",
       "word": "cold",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:cool",
+      "originalWordId": "word:colour",
+      "word": "colour",
+      "originalLevel": 9
+    },
+    {
+      "originalWordId": "word:cool",
       "word": "cool",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:crab",
+      "originalWordId": "word:crab",
       "word": "crab",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:cut",
+      "originalWordId": "word:cut",
       "word": "cut",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:dad",
+      "originalWordId": "word:dad",
       "word": "dad",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:dish",
+      "originalWordId": "word:dish",
       "word": "dish",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:dont",
+      "originalWordId": "word:do",
+      "word": "do",
+      "originalLevel": 4
+    },
+    {
+      "originalWordId": "word:does",
+      "word": "does",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:dont",
       "word": "don't",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:drink",
+      "originalWordId": "word:done",
+      "word": "done",
+      "originalLevel": 7
+    },
+    {
+      "originalWordId": "word:door",
+      "word": "door",
+      "originalLevel": 5
+    },
+    {
+      "originalWordId": "word:drink",
       "word": "drink",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:drum",
+      "originalWordId": "word:drum",
       "word": "drum",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:end",
+      "originalWordId": "word:earth",
+      "word": "earth",
+      "originalLevel": 10
+    },
+    {
+      "originalWordId": "word:eight",
+      "word": "eight",
+      "originalLevel": 7
+    },
+    {
+      "originalWordId": "word:end",
       "word": "end",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:face",
+      "originalWordId": "word:face",
       "word": "face",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:family",
+      "originalWordId": "word:family",
       "word": "family",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:fast",
+      "originalWordId": "word:fast",
       "word": "fast",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:feed",
+      "originalWordId": "word:father",
+      "word": "father",
+      "originalLevel": 8
+    },
+    {
+      "originalWordId": "word:feed",
       "word": "feed",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:first",
+      "originalWordId": "word:first",
       "word": "first",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:found",
+      "originalWordId": "word:floor",
+      "word": "floor",
+      "originalLevel": 5
+    },
+    {
+      "originalWordId": "word:found",
       "word": "found",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:fox",
+      "originalWordId": "word:fox",
       "word": "fox",
-      "currentLevel": 2
+      "originalLevel": 2
     },
     {
-      "wordId": "word:garden",
+      "originalWordId": "word:friend",
+      "word": "friend",
+      "originalLevel": 9
+    },
+    {
+      "originalWordId": "word:full",
+      "word": "full",
+      "originalLevel": 7
+    },
+    {
+      "originalWordId": "word:garden",
       "word": "garden",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:gate",
+      "originalWordId": "word:gate",
       "word": "gate",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:gave",
+      "originalWordId": "word:gave",
       "word": "gave",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:go",
+      "originalWordId": "word:go",
       "word": "go",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:got",
+      "originalWordId": "word:goes",
+      "word": "goes",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:got",
       "word": "got",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:hair",
+      "originalWordId": "word:hair",
       "word": "hair",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:hat",
+      "originalWordId": "word:hat",
       "word": "hat",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:he",
+      "originalWordId": "word:he",
       "word": "he",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:her",
+      "originalWordId": "word:her",
       "word": "her",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:hold",
+      "originalWordId": "word:hold",
       "word": "hold",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:hop",
+      "originalWordId": "word:hop",
       "word": "hop",
-      "currentLevel": 2
+      "originalLevel": 2
     },
     {
-      "wordId": "word:horse",
+      "originalWordId": "word:horse",
       "word": "horse",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:idea",
+      "originalWordId": "word:idea",
       "word": "idea",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:if",
+      "originalWordId": "word:if",
       "word": "if",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:in",
+      "originalWordId": "word:in",
       "word": "in",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:is",
+      "originalWordId": "word:is",
       "word": "is",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:it",
+      "originalWordId": "word:it",
       "word": "it",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:its",
+      "originalWordId": "word:its",
       "word": "its",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:jug",
+      "originalWordId": "word:jug",
       "word": "jug",
-      "currentLevel": 2
+      "originalLevel": 2
     },
     {
-      "wordId": "word:keep",
+      "originalWordId": "word:keep",
       "word": "keep",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:kind",
+      "originalWordId": "word:kind",
       "word": "kind",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:kitchen",
+      "originalWordId": "word:kitchen",
       "word": "kitchen",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:land",
+      "originalWordId": "word:land",
       "word": "land",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:lock",
+      "originalWordId": "word:laugh",
+      "word": "laugh",
+      "originalLevel": 7
+    },
+    {
+      "originalWordId": "word:lock",
       "word": "lock",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:long",
+      "originalWordId": "word:long",
       "word": "long",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:mad",
+      "originalWordId": "word:mad",
       "word": "mad",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:made",
+      "originalWordId": "word:made",
       "word": "made",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:make",
+      "originalWordId": "word:make",
       "word": "make",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:man",
+      "originalWordId": "word:man",
       "word": "man",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:mat",
+      "originalWordId": "word:many",
+      "word": "many",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:mat",
       "word": "mat",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:meet",
+      "originalWordId": "word:meet",
       "word": "meet",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:more",
+      "originalWordId": "word:more",
       "word": "more",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:morning",
+      "originalWordId": "word:morning",
       "word": "morning",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:mountain",
+      "originalWordId": "word:mother",
+      "word": "mother",
+      "originalLevel": 8
+    },
+    {
+      "originalWordId": "word:mountain",
       "word": "mountain",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:music",
+      "originalWordId": "word:music",
       "word": "music",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:myself",
+      "originalWordId": "word:myself",
       "word": "myself",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:never",
+      "originalWordId": "word:never",
       "word": "never",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:no",
+      "originalWordId": "word:no",
       "word": "no",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:not",
+      "originalWordId": "word:not",
       "word": "not",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:on",
+      "originalWordId": "word:on",
       "word": "on",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:only",
+      "originalWordId": "word:only",
       "word": "only",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:or",
+      "originalWordId": "word:or",
       "word": "or",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:own",
+      "originalWordId": "word:own",
       "word": "own",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:page",
+      "originalWordId": "word:page",
       "word": "page",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:pan",
+      "originalWordId": "word:pan",
       "word": "pan",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:paper",
+      "originalWordId": "word:paper",
       "word": "paper",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:park",
+      "originalWordId": "word:park",
       "word": "park",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:part",
+      "originalWordId": "word:part",
       "word": "part",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:pear",
+      "originalWordId": "word:pear",
       "word": "pear",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:pencil",
+      "originalWordId": "word:pencil",
       "word": "pencil",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:pick",
+      "originalWordId": "word:people",
+      "word": "people",
+      "originalLevel": 8
+    },
+    {
+      "originalWordId": "word:pick",
       "word": "pick",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:pipe",
+      "originalWordId": "word:picture",
+      "word": "picture",
+      "originalLevel": 10
+    },
+    {
+      "originalWordId": "word:pipe",
       "word": "pipe",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:place",
+      "originalWordId": "word:place",
       "word": "place",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:rag",
+      "originalWordId": "word:pull",
+      "word": "pull",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:rag",
       "word": "rag",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:ran",
+      "originalWordId": "word:ran",
       "word": "ran",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:rat",
+      "originalWordId": "word:rat",
       "word": "rat",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:read",
+      "originalWordId": "word:read",
       "word": "read",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:ride",
+      "originalWordId": "word:ride",
       "word": "ride",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:river",
+      "originalWordId": "word:river",
       "word": "river",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:room",
+      "originalWordId": "word:room",
       "word": "room",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:sat",
+      "originalWordId": "word:sat",
       "word": "sat",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:sea",
+      "originalWordId": "word:school",
+      "word": "school",
+      "originalLevel": 8
+    },
+    {
+      "originalWordId": "word:sea",
       "word": "sea",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:seven",
+      "originalWordId": "word:seven",
       "word": "seven",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:shall",
+      "originalWordId": "word:shall",
       "word": "shall",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:she",
+      "originalWordId": "word:she",
       "word": "she",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:shore",
+      "originalWordId": "word:shore",
       "word": "shore",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:show",
+      "originalWordId": "word:show",
       "word": "show",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:sister",
+      "originalWordId": "word:sister",
       "word": "sister",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:six",
+      "originalWordId": "word:six",
       "word": "six",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:sled",
+      "originalWordId": "word:sled",
       "word": "sled",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:sleep",
+      "originalWordId": "word:sleep",
       "word": "sleep",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:slip",
+      "originalWordId": "word:slip",
       "word": "slip",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:small",
+      "originalWordId": "word:small",
       "word": "small",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:so",
+      "originalWordId": "word:so",
       "word": "so",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:sound",
+      "originalWordId": "word:sound",
       "word": "sound",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:start",
+      "originalWordId": "word:start",
       "word": "start",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:store",
+      "originalWordId": "word:store",
       "word": "store",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:story",
+      "originalWordId": "word:story",
       "word": "story",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:street",
+      "originalWordId": "word:street",
       "word": "street",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:sweet",
+      "originalWordId": "word:sweet",
       "word": "sweet",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:table",
+      "originalWordId": "word:table",
       "word": "table",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:tag",
+      "originalWordId": "word:tag",
       "word": "tag",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:tea",
+      "originalWordId": "word:tea",
       "word": "tea",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:teacher",
+      "originalWordId": "word:teacher",
       "word": "teacher",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:ten",
+      "originalWordId": "word:ten",
       "word": "ten",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:the",
+      "originalWordId": "word:the",
       "word": "the",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:these",
+      "originalWordId": "word:their",
+      "word": "their",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:these",
       "word": "these",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:those",
+      "originalWordId": "word:those",
       "word": "those",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:tiger",
+      "originalWordId": "word:tiger",
       "word": "tiger",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:today",
+      "originalWordId": "word:to",
+      "word": "to",
+      "originalLevel": 5
+    },
+    {
+      "originalWordId": "word:today",
       "word": "today",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:together",
+      "originalWordId": "word:together",
       "word": "together",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:tree",
+      "originalWordId": "word:tree",
       "word": "tree",
-      "currentLevel": 9
+      "originalLevel": 9
     },
     {
-      "wordId": "word:try",
+      "originalWordId": "word:try",
       "word": "try",
-      "currentLevel": 7
+      "originalLevel": 7
     },
     {
-      "wordId": "word:tube",
+      "originalWordId": "word:tube",
       "word": "tube",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:up",
+      "originalWordId": "word:up",
       "word": "up",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:upon",
+      "originalWordId": "word:upon",
       "word": "upon",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:us",
+      "originalWordId": "word:us",
       "word": "us",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:use",
+      "originalWordId": "word:use",
       "word": "use",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:van",
+      "originalWordId": "word:van",
       "word": "van",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:very",
+      "originalWordId": "word:very",
       "word": "very",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:wall",
+      "originalWordId": "word:wall",
       "word": "wall",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:was",
+      "originalWordId": "word:warm",
+      "word": "warm",
+      "originalLevel": 7
+    },
+    {
+      "originalWordId": "word:was",
       "word": "was",
-      "currentLevel": 5
+      "originalLevel": 5
     },
     {
-      "wordId": "word:wash",
+      "originalWordId": "word:wash",
       "word": "wash",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:water",
+      "originalWordId": "word:water",
       "word": "water",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:we",
+      "originalWordId": "word:we",
       "word": "we",
-      "currentLevel": 4
+      "originalLevel": 4
     },
     {
-      "wordId": "word:weather",
+      "originalWordId": "word:weather",
       "word": "weather",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:web",
+      "originalWordId": "word:web",
       "word": "web",
-      "currentLevel": 3
+      "originalLevel": 3
     },
     {
-      "wordId": "word:which",
+      "originalWordId": "word:which",
       "word": "which",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:why",
+      "originalWordId": "word:why",
       "word": "why",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:window",
+      "originalWordId": "word:window",
       "word": "window",
-      "currentLevel": 10
+      "originalLevel": 10
     },
     {
-      "wordId": "word:write",
+      "originalWordId": "word:work",
+      "word": "work",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:would",
+      "word": "would",
+      "originalLevel": 6
+    },
+    {
+      "originalWordId": "word:write",
       "word": "write",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:year",
+      "originalWordId": "word:year",
       "word": "year",
-      "currentLevel": 8
+      "originalLevel": 8
     },
     {
-      "wordId": "word:your",
+      "originalWordId": "word:your",
       "word": "your",
-      "currentLevel": 6
+      "originalLevel": 6
     },
     {
-      "wordId": "word:zip",
+      "originalWordId": "word:zip",
       "word": "zip",
-      "currentLevel": 2
+      "originalLevel": 2
     }
   ],
-  "parkedExcludedWords": [
+  "familiarStarterWords": [
     {
-      "wordId": "word:are",
-      "word": "are",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:because",
-      "word": "because",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:brother",
-      "word": "brother",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:buy",
-      "word": "buy",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:colour",
-      "word": "colour",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:do",
-      "word": "do",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:does",
-      "word": "does",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:done",
-      "word": "done",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:door",
-      "word": "door",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:earth",
-      "word": "earth",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:eight",
-      "word": "eight",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:father",
-      "word": "father",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:floor",
-      "word": "floor",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:friend",
-      "word": "friend",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:full",
-      "word": "full",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:goes",
-      "word": "goes",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:laugh",
-      "word": "laugh",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:many",
-      "word": "many",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:mother",
-      "word": "mother",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:people",
-      "word": "people",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:picture",
-      "word": "picture",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:pull",
-      "word": "pull",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:school",
-      "word": "school",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:their",
-      "word": "their",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:to",
-      "word": "to",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:warm",
-      "word": "warm",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:work",
-      "word": "work",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:would",
-      "word": "would",
-      "currentLevel": 6
-    }
-  ],
-  "parkedBuiltInWords": [
-    {
-      "wordId": "word:about",
-      "word": "about",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:air",
-      "word": "air",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:always",
-      "word": "always",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:and",
-      "word": "and",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:animal",
-      "word": "animal",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:are",
-      "word": "are",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:around",
-      "word": "around",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:at",
-      "word": "at",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:baby",
-      "word": "baby",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:bad",
-      "word": "bad",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:bat",
-      "word": "bat",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:be",
-      "word": "be",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:bear",
-      "word": "bear",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:beat",
-      "word": "beat",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:because",
-      "word": "because",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:been",
-      "word": "been",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:before",
-      "word": "before",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:best",
-      "word": "best",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:better",
-      "word": "better",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:body",
-      "word": "body",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:both",
-      "word": "both",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:bring",
-      "word": "bring",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:brother",
-      "word": "brother",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:bug",
-      "word": "bug",
-      "currentLevel": 2
-    },
-    {
-      "wordId": "word:bun",
-      "word": "bun",
-      "currentLevel": 2
-    },
-    {
-      "wordId": "word:but",
-      "word": "but",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:buy",
-      "word": "buy",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:can",
-      "word": "can",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:cap",
-      "word": "cap",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:carry",
-      "word": "carry",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:cart",
-      "word": "cart",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:chair",
-      "word": "chair",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:children",
-      "word": "children",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:city",
-      "word": "city",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:clean",
-      "word": "clean",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:clock",
-      "word": "clock",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:cold",
-      "word": "cold",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:colour",
-      "word": "colour",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:cool",
-      "word": "cool",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:crab",
-      "word": "crab",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:cut",
-      "word": "cut",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:dad",
+      "originalWordId": "word:dad",
       "word": "dad",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:dish",
-      "word": "dish",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:do",
-      "word": "do",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:does",
-      "word": "does",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:dont",
-      "word": "don't",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:done",
-      "word": "done",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:door",
-      "word": "door",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:drink",
-      "word": "drink",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:drum",
-      "word": "drum",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:earth",
-      "word": "earth",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:eight",
-      "word": "eight",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:end",
-      "word": "end",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:face",
-      "word": "face",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:family",
-      "word": "family",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:fast",
-      "word": "fast",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:father",
-      "word": "father",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:feed",
-      "word": "feed",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:first",
-      "word": "first",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:floor",
-      "word": "floor",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:found",
-      "word": "found",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:fox",
-      "word": "fox",
-      "currentLevel": 2
-    },
-    {
-      "wordId": "word:friend",
-      "word": "friend",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:full",
-      "word": "full",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:garden",
-      "word": "garden",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:gate",
-      "word": "gate",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:gave",
-      "word": "gave",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:go",
-      "word": "go",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:goes",
-      "word": "goes",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:got",
-      "word": "got",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:hair",
-      "word": "hair",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:hat",
+      "originalWordId": "word:hat",
       "word": "hat",
-      "currentLevel": 1
+      "originalLevel": 1
     },
     {
-      "wordId": "word:he",
-      "word": "he",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:her",
-      "word": "her",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:hold",
-      "word": "hold",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:hop",
-      "word": "hop",
-      "currentLevel": 2
-    },
-    {
-      "wordId": "word:horse",
-      "word": "horse",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:idea",
-      "word": "idea",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:if",
-      "word": "if",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:in",
-      "word": "in",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:is",
-      "word": "is",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:it",
-      "word": "it",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:its",
-      "word": "its",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:jug",
-      "word": "jug",
-      "currentLevel": 2
-    },
-    {
-      "wordId": "word:keep",
-      "word": "keep",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:kind",
-      "word": "kind",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:kitchen",
-      "word": "kitchen",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:land",
-      "word": "land",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:laugh",
-      "word": "laugh",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:lock",
-      "word": "lock",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:long",
-      "word": "long",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:mad",
-      "word": "mad",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:made",
-      "word": "made",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:make",
-      "word": "make",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:man",
-      "word": "man",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:many",
-      "word": "many",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:mat",
+      "originalWordId": "word:mat",
       "word": "mat",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:meet",
-      "word": "meet",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:more",
-      "word": "more",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:morning",
-      "word": "morning",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:mother",
-      "word": "mother",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:mountain",
-      "word": "mountain",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:music",
-      "word": "music",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:myself",
-      "word": "myself",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:never",
-      "word": "never",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:no",
-      "word": "no",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:not",
-      "word": "not",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:on",
-      "word": "on",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:only",
-      "word": "only",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:or",
-      "word": "or",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:own",
-      "word": "own",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:page",
-      "word": "page",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:pan",
-      "word": "pan",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:paper",
-      "word": "paper",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:park",
-      "word": "park",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:part",
-      "word": "part",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:pear",
-      "word": "pear",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:pencil",
-      "word": "pencil",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:people",
-      "word": "people",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:pick",
-      "word": "pick",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:picture",
-      "word": "picture",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:pipe",
-      "word": "pipe",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:place",
-      "word": "place",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:pull",
-      "word": "pull",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:rag",
-      "word": "rag",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:ran",
-      "word": "ran",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:rat",
-      "word": "rat",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:read",
-      "word": "read",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:ride",
-      "word": "ride",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:river",
-      "word": "river",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:room",
-      "word": "room",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:sat",
-      "word": "sat",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:school",
-      "word": "school",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:sea",
-      "word": "sea",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:seven",
-      "word": "seven",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:shall",
-      "word": "shall",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:she",
-      "word": "she",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:shore",
-      "word": "shore",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:show",
-      "word": "show",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:sister",
-      "word": "sister",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:six",
-      "word": "six",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:sled",
-      "word": "sled",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:sleep",
-      "word": "sleep",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:slip",
-      "word": "slip",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:small",
-      "word": "small",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:so",
-      "word": "so",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:sound",
-      "word": "sound",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:start",
-      "word": "start",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:store",
-      "word": "store",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:story",
-      "word": "story",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:street",
-      "word": "street",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:sweet",
-      "word": "sweet",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:table",
-      "word": "table",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:tag",
-      "word": "tag",
-      "currentLevel": 1
-    },
-    {
-      "wordId": "word:tea",
-      "word": "tea",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:teacher",
-      "word": "teacher",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:ten",
-      "word": "ten",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:the",
-      "word": "the",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:their",
-      "word": "their",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:these",
-      "word": "these",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:those",
-      "word": "those",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:tiger",
-      "word": "tiger",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:to",
-      "word": "to",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:today",
-      "word": "today",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:together",
-      "word": "together",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:tree",
-      "word": "tree",
-      "currentLevel": 9
-    },
-    {
-      "wordId": "word:try",
-      "word": "try",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:tube",
-      "word": "tube",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:up",
-      "word": "up",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:upon",
-      "word": "upon",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:us",
-      "word": "us",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:use",
-      "word": "use",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:van",
-      "word": "van",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:very",
-      "word": "very",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:wall",
-      "word": "wall",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:warm",
-      "word": "warm",
-      "currentLevel": 7
-    },
-    {
-      "wordId": "word:was",
-      "word": "was",
-      "currentLevel": 5
-    },
-    {
-      "wordId": "word:wash",
-      "word": "wash",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:water",
-      "word": "water",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:we",
-      "word": "we",
-      "currentLevel": 4
-    },
-    {
-      "wordId": "word:weather",
-      "word": "weather",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:web",
-      "word": "web",
-      "currentLevel": 3
-    },
-    {
-      "wordId": "word:which",
-      "word": "which",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:why",
-      "word": "why",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:window",
-      "word": "window",
-      "currentLevel": 10
-    },
-    {
-      "wordId": "word:work",
-      "word": "work",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:would",
-      "word": "would",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:write",
-      "word": "write",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:year",
-      "word": "year",
-      "currentLevel": 8
-    },
-    {
-      "wordId": "word:your",
-      "word": "your",
-      "currentLevel": 6
-    },
-    {
-      "wordId": "word:zip",
-      "word": "zip",
-      "currentLevel": 2
+      "originalLevel": 1
     }
   ]
 }

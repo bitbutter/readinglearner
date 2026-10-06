@@ -1,42 +1,42 @@
 {
   "schemaVersion": 1,
-  "status": "proposed",
-  "courseId": "one-rule-word-course-draft",
+  "status": "active",
+  "courseId": "one-focus-word-course-v1",
   "createdDate": "2026-10-06",
   "title": "One new rule per level",
-  "description": "A proposed cumulative word course for the Reading Learner app. Each small level adds one focus; earlier patterns can appear again.",
-  "scope": "Reviewable curriculum map only. The running app still uses its existing ten word levels.",
+  "description": "The active cumulative word course for the Reading Learner app. Each small level adds one focus; earlier patterns can appear again.",
+  "scope": "41 word levels with 240 focus words. Number practice retains its separate ten-level course.",
   "prerequisitesNote": "The sequence is cumulative: every level assumes the patterns from all earlier levels. Listed prerequisites highlight additional earlier patterns inside its focus words; they are not a separate route through the course.",
   "startingSkills": [
     "The child recognises the ordinary single-letter consonant sounds, including hard c and g, consonant y, and x as ks.",
     "The child can attempt blending simple consonant-vowel-consonant words.",
-    "These are provisional assumptions, not confirmed assessment results. Check them before adopting the course."
+    "These are starting requirements, not confirmed assessment results. A grown-up checks them before practice."
   ],
   "startingWordSuggestions": [
     "mat",
     "dad",
     "hat"
   ],
-  "startingWordsNote": "Use these only if the child already reads them independently. Choose and confirm the familiar starter bank before the first practice round. Do not label an unseen word an easy win merely because it is decodable.",
+  "startingWordsNote": "A grown-up can confirm these starter words in settings only when the child already reads them independently. Mastered focus words from the current or earlier levels also qualify as familiar words. Future-level and parked words are outside automatic familiar selection.",
   "roundRecipe": {
     "openingCount": 3,
     "focusCount": 4,
     "closingCount": 3,
-    "opening": "Three familiar words, drawn from the child's demonstrated known-word bank.",
+    "opening": "Three familiar words from mastered focus words at or before the current level, or starter words explicitly confirmed by a grown-up.",
     "focus": "Four encounters from the current level's focus bank. Rotate the bank across rounds; the whole level need not fit in one round.",
     "closing": "Three familiar words again. Repeats of known words are allowed.",
-    "reviewSelection": "The lists below are candidates. Use a candidate only after the child has demonstrated it is familiar. Earlier levels remain available for review; there is no requirement to use every candidate.",
-    "noKnownWords": "Confirm starting skills and a familiar starter bank before enabling this course. If the prerequisite is not met, address the foundation explicitly rather than presenting unfamiliar words as wins."
+    "reviewSelection": "The lists below are examples of earlier words. Automatic selection uses mastered focus words at or before the current level and explicitly confirmed starter words. There is no requirement to use every candidate.",
+    "noKnownWords": "Word practice requires at least one mastered focus word at or before the current level, or an explicitly confirmed starter word. If neither is available, a grown-up confirms familiar starters in settings or addresses the starting skills before practice."
   },
   "completion": {
     "focusWordsOnly": true,
     "firstAttemptYesCount": 2,
-    "description": "Only the focus bank determines level completion. Keep the current requirement of two qualifying first-attempt Yes confirmations per focus word. A helped repeat advances the encounter but does not earn a qualifying first-attempt Yes.",
+    "description": "Only the focus bank determines level completion. Each focus word needs two qualifying first-attempt Yes confirmations for gold mastery. A helped repeat advances the encounter but does not earn a qualifying first-attempt Yes.",
     "familiarWords": "Opening and closing words do not add new completion requirements.",
-    "earnedProgress": "Preserve existing word trophies and earned confirmations. An already mastered focus word keeps its credit.",
-    "restart": "Start the new course at the first unfinished focus bank using preserved word progress. Let a parent choose Level 1 for practice without wiping trophies.",
-    "selfCheck": "Keep the current record → expected word → Got it? → Yes or record again flow. The voice-recognition experiment is not part of this proposal.",
-    "ruleChips": "Show the current level's one focus as the primary rule chip. Earlier spelling help remains available through the word's sound buttons; do not automatically introduce extra rule chips in a focused round."
+    "earnedProgress": "Existing word trophies and earned confirmations are preserved. An already mastered focus word keeps its credit.",
+    "restart": "The course migration selects the first unfinished focus bank from preserved word progress. A grown-up can choose Level 1 for practice without wiping trophies; level overrides survive reloads.",
+    "selfCheck": "The record → expected word → Got it? → Yes or record again flow is unchanged. The voice-recognition experiment remains stopped; no reference recordings are required.",
+    "ruleChips": "Focus encounters show the current level's one primary rule chip. Familiar opening and closing encounters do not introduce a focus chip. Earlier spelling help remains available through each word's sound buttons."
   },
   "levels": [
     {
@@ -1532,7 +1532,7 @@
       ],
       "notes": [
         "This is the second oo pronunciation. Contrast the selected examples with moon; do not claim one pronunciation covers every oo word.",
-        "book is excluded from the old app's general practice bank; this proposal deliberately introduces it here."
+        "book was excluded from the old general practice bank; the active course deliberately introduces it here."
       ],
       "artwork": "images/word-course/tank-21-cromwell.jpg",
       "rulePlaybackSteps": [
@@ -2209,7 +2209,7 @@
         "dirt"
       ],
       "notes": [
-        "draw replaces straw in the draft; the focus bank does not introduce a three-consonant onset."
+        "draw keeps the focus bank within the earlier two-consonant blending skill."
       ],
       "artwork": "images/word-course/tank-31-renault-ft.jpg",
       "rulePlaybackSteps": [
@@ -2344,43 +2344,43 @@
   "implementationNotes": [
     {
       "before": "A word's single numeric level drives both selection and completion.",
-      "after": "Give the new word course explicit focus banks and review membership; keep one stable progress record per word.",
+      "after": "The active word course has explicit focus banks and familiar-word selection, with one stable progress record per word.",
       "reason": "The same familiar word can support many later levels without gaining new mastery requirements."
     },
     {
       "before": "Missing canonical words are deleted from stored progress during loading.",
-      "after": "Keep all existing word identities in the catalog, including parked words; only remove them from this course's selection.",
+      "after": "All existing word identities remain in the catalog, including parked words. Parked and custom words remain available for grown-up tuning outside this fixed course.",
       "reason": "Deferred words must retain their trophies, attempts and settings."
     },
     {
       "before": "The old course's numeric level and old one-time migrations describe the ten-level sequence.",
-      "after": "Introduce a new word-course identity and an explicit migration; preserve old history and select the first unfinished focus bank.",
+      "after": "The new word-course identity has an explicit migration that preserves word progress and old round history, then selects the first unfinished focus bank. Saved level overrides survive later reloads.",
       "reason": "Old Level 3 cannot silently acquire the meaning of the new Level 3."
     },
     {
       "before": "Word and number practice share MAX_LEVEL = 10.",
-      "after": "Use independent word-course and number-course bounds.",
-      "reason": "The proposed 41 word levels do not change the ten number levels."
+      "after": "Word practice uses 41 levels and a fixed 3 + 4 + 3 round. Number practice keeps ten levels and its configurable round size.",
+      "reason": "The two courses have different lesson structures."
     },
     {
       "before": "Artwork is assigned only to the ten old word levels.",
-      "after": "Use the explicit41-picture assignments recorded in this course, retaining source and licence credits for the real tank photographs.",
-      "reason": "Every proposed word level has a different, deliberate image assignment."
+      "after": "Every active word level has its own assigned picture. The 31 real tank photographs retain their source and licence credits; ten existing pictures mark milestones.",
+      "reason": "Every word level has a different, deliberate image assignment."
     },
     {
       "before": "Sound buttons and family tags cover the existing vocabulary.",
-      "after": "Audit the segmentation, sound clips and rule wording for every proposed focus word before adoption; add needed word-specific sound definitions.",
-      "reason": "A valid spelling bank can still play the wrong sound through an old override."
+      "after": "Every active focus bank has explicit sound-authoring coverage. Rule introductions, rule-chip replays and this page's previews use the same declared playback steps.",
+      "reason": "The word bank and its spoken teaching must express the same sounds."
     },
     {
       "before": "Rules heard flags and recap selection rely on old rule IDs and numeric levels.",
-      "after": "Scope rule introductions to the new focus sequence and select word recaps by course membership; ensure number items cannot enter word recaps.",
+      "after": "Rule introductions belong to the active course focus. Familiar sections review mastered words from the current or earlier course banks and confirmed starter words. Feedback-only recaps remain exclusive to number rounds.",
       "reason": "Previously heard rules and old numeric levels must not suppress or misdirect the new course."
     },
     {
       "before": "Several existing rule tags are inconsistent, including both, shall, water and music.",
-      "after": "The current app now corrects those four annotations and demonstrates rules with recorded sounds and whole-word examples. Audit every new bank before course adoption.",
-      "reason": "Those known errors have been fixed; the new vocabulary still needs a complete pronunciation audit."
+      "after": "Those four annotations are corrected. The active course has audited sound definitions and demonstrates its rules with recorded sounds and whole-word examples.",
+      "reason": "Known annotation errors must not become teaching rules."
     }
   ],
   "sources": [
@@ -2399,8 +2399,8 @@
     "One new focus means one unfamiliar spelling pattern or blending skill. A word may use several earlier patterns.",
     "Every candidate still needs a child's-eye check for pronunciation and meaning. The word lists do not certify teaching quality.",
     "The focus labels describe these word cohorts, not universal rules for every English word.",
-    "Review the starting assumptions and the first five banks before adopting the proposed course. No extra reference-audio recordings are required."
+    "A grown-up checks the starting skills and confirms familiar starter words when needed. No extra reference-audio recordings are required."
   ],
   "rulePlaybackNote": "Each letter name is spoken slowly on its own, with a short pause. The lesson then demonstrates the recorded phonics sound and whole-word examples. The U-name demonstration uses the real word you. Blending lessons play the separate consonant sounds before the whole word.",
-  "artworkNote": "Every planned word level has its own picture: ten existing space-knight pictures at milestones, with 31 real tank photographs between them. Photo credits are listed below. These pictures are ready for the proposed 41-level course; the app currently uses its ten-level course."
+  "artworkNote": "Every active word level has its own picture: ten existing space-knight pictures at milestones, with 31 real tank photographs between them. Photo credits are listed below and available from the practice screen."
 }

@@ -9,7 +9,9 @@
 //   silent:  units that should flash but play nothing
 //   tag:     classification of the word overall
 //   note:    remark for the report
-export const AUDIT = {
+import { WORD_COURSE_SOUND_AUDIT } from './word_course_sound_data.mjs';
+
+const PREVIOUS_WORD_SOUND_AUDIT = {
   // ── existing-data bugs (fix the rule/set, no new entries needed) ──
   _bugs: {
     'gave':   "in NOT_MAGIC_E but IS a magic-e word (/geɪv/) — remove from the set so the a gets the ay clip",
@@ -128,6 +130,9 @@ export const AUDIT = {
   sound:   { seg: ['s','ou','n','d'], over: { ou: ['aʊ','ow!','ow-team'] } },
   earth:   { seg: ['ear','th'], over: { ear: ['ɜːr','er','tricky'] }, tag: 'tricky' },
   idea:    { over: { i: ['aɪ','igh','open-syllable'] }, note: 'final a = /ə/, /æ/ is an acceptable kid approximation' },
-  // NB: app.js SEGMENT_OVERRIDES still lists 'tomorrow' but the word is no
-  // longer in WORDS_CONTENT (vocab was trimmed) — stale entry, harmless.
 };
+
+// The new course explicitly teaches these cohorts; its complete annotations
+// replace earlier partial definitions, including book's previous exclusion.
+// Parked vocabulary and its annotations remain in the same canonical audit.
+export const AUDIT = { ...PREVIOUS_WORD_SOUND_AUDIT, ...WORD_COURSE_SOUND_AUDIT };

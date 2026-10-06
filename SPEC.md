@@ -1,7 +1,7 @@
 # Reading Learner Spec
 
 Date: 2026-10-06
-Status: Current self-check design
+Status: Active 41-level word course and self-check design
 
 ## Goal
 
@@ -18,6 +18,14 @@ The practice app is a static browser application served from GitHub Pages. It us
 - English words and English number names remain the lesson content.
 
 ## Product Decisions
+
+OLD: Ten word levels mix several unfamiliar spelling patterns and choose a teaching family within each round.
+CHANGES_TO: A cumulative course has 41 small levels with 240 focus words. Each level teaches one focus and each round uses three familiar words, four focus encounters, then three familiar words.
+REASON: The child gets familiar practice around one new pattern at a time.
+
+OLD: Every eligible word assigned to a numeric level determines completion.
+CHANGES_TO: Only the declared focus bank completes a word level. Earlier mastered course words and explicitly parent-confirmed starter words provide familiar practice.
+REASON: Familiar words can support later levels without gaining new completion requirements.
 
 OLD: A recognizer transcript determined whether an attempt was correct and whether the child retried.
 CHANGES_TO: After the first recording, the app speaks the answer and asks the child “Got it?” The child chooses Yes or records one helped repeat with the same mic button.
@@ -49,17 +57,23 @@ Onboarding is spoken once per saved progress record. It introduces saying the wo
 
 ## Content and Sound Help
 
-The child chooses Words or Numbers. Existing lesson lists and levels remain in use: the numbers ladder covers 1–100, and the words ladder begins with simple decodable words before the sight-word levels. Existing exclusions for rule-breaker words remain in force for practice and recaps.
+The child chooses Words or Numbers. Words use the active course `one-focus-word-course-v1`: 41 cumulative levels, 240 focus words, and one declared focus per level. Numbers retain their separate ten-level ladder covering 1–100. Each later word level assumes the patterns from earlier levels; a focus word may contain several already taught patterns.
+
+The reviewed course source is `plans/word-levels-proposed.json`, retained at its existing published URL. Its status is active. `logs/tools/build_word_course.mjs` generates `word-course.js` from that source, the app's original vocabulary, and the artwork catalog. The generated classic module loads before the app. It declares the focus banks, stable word IDs, rule playback steps, starter choices, 145 additional word records, and the fixed word-round recipe. Generation fails on changed reviewed banks, missing sound clips, missing or repeated images, or incomplete photograph credits.
+
+All original word records remain in the catalog. The 191 original words outside the active banks are parked; custom words also stay outside the fixed course. Their earned progress, accepted tuning forms and grown-up audition remain available. They do not enter course completion or automatic familiar selection. The old exclusion list does not hide a declared active focus word: book is deliberately taught in the short-oo bank. Custom terms do not silently become focus requirements.
 
 The word or number is shown in large type. Words retain their tappable sound groups, drag-to-sound-out interaction, highlighted compound sounds, and silent-letter treatment. Hear it speaks the whole answer before recording when the child requests help.
 
-Rule chips remain visible for the teaching families attached to a word. A chip and the first introduction use the same lesson: short ordinary-English guidance, each relevant letter name spoken separately, the recorded isolated sound, then a whole-word example. The U-name demonstration intentionally speaks the real word “you”; no `ue.mp3` exists. Rule speech and praise do not spell isolated sounds as invented syllables for the synthetic voice.
+Focus encounters show one primary rule chip for the current level. Familiar opening and closing encounters do not introduce a focus chip. The level introduction, chip replay and course-guide preview share the course's declared playback steps: short ordinary-English guidance, each relevant letter name spoken separately, the recorded isolated sound, then whole-word examples. Blending lessons play their separate consonant sounds before the word. The U-name demonstration intentionally speaks the real word “you”; no `ue.mp3` exists. Rule speech and praise do not spell isolated sounds as invented syllables for the synthetic voice.
 
-Each individual letter-name step uses speaking rate 0.72 and a 220 ms pause after successful speech. Guidance and examples keep the normal rule-speaking rate. Both the live lesson and proposed-course preview accept optional positive `rate` and nonnegative `pauseAfterMs` on speech steps. The pause belongs to its current step: replay, competing help, a new word, or navigation cancels it. A rule is marked heard only after every step and declared pause completes.
+Each individual letter-name step uses speaking rate 0.72 and a 220 ms pause after successful speech. Guidance and examples keep the normal rule-speaking rate. Both the live lesson and course-guide preview accept optional positive `rate` and nonnegative `pauseAfterMs` on speech steps. The pause belongs to its current step: replay, competing help, a new word, or navigation cancels it. A rule is marked heard only after every step and declared pause completes.
 
 The lesson owns its speech, sound clip, and deadline. Navigation, a new word, a rule replay, or competing sound/whole-word help cancels the entire old lesson. Only successful playback of every step marks that rule as heard. A spoken-guidance or recorded-sound failure displays an explicit retry message and does not mark the rule as heard or substitute a synthetic sound. The microphone stays unavailable during the lesson; rule chips, letter taps, and Hear it can interrupt it. Existing individual-letter sound help retains its prior audio/TTS behavior.
 
-Word-specific teaching labels distinguish the long O in both from O before L, and the British water vowel from the short wash vowel. Shall uses its ordinary short A; music ends with the ordinary C sound. Current lesson lists, progression, and self-check scoring remain unchanged.
+Word-specific sound definitions cover every active focus bank. The parent's course guide lists the exact words, rules, teaching notes and deferred topics; its artwork gallery shows all level pictures and photograph credits. Each level has its own image: ten existing pictures at milestones and 31 real tank photographs between them. The practice screen exposes the current photograph's credit and source link.
+
+Existing word-specific teaching labels distinguish the long O in both from O before L, and the British water vowel from the short wash vowel. Shall uses its ordinary short A; music ends with the ordinary C sound. Those parked words remain available for grown-up tuning.
 
 ## Core Loop
 
@@ -99,13 +113,15 @@ Gold mastery, silver, and purple trophies remain earned permanently. Loading an 
 
 ## Rounds and Recaps
 
-A round uses the configured number of ordinary practice items, default 10. Numbers favor unmastered items, with previous helped items and new items ahead of other practice items. Existing round selection and level rules remain in use.
+A word round has ten ordinary encounters in a fixed order: three familiar words, four encounters from the current focus bank, then three familiar words. The four focus slots rotate through the bank over successive rounds; a level's entire bank need not fit in one round. The number-round size remains configurable, default 10. Numbers favor unmastered items, with previous helped items and new items ahead of other practice items.
 
-Word rounds keep the current teaching-family structure: easy words open and close the round, with one teaching family practised as a consecutive block in the middle. The family with the fewest attempts is selected from the eligible unmastered words. Rule chips and spoken rule teaching remain part of this structure.
+Familiar selection uses gold-mastered focus words at or before the current word level, including mastered words in the current bank, and declared starter words explicitly confirmed by a grown-up. The starter choices are mat, dad and hat. A grown-up confirms only words the child already reads independently. Repeating a familiar word is allowed. Future-bank, parked and custom words are outside automatic familiar selection. Candidate review words in the course guide are examples, not guarantees that the child knows them.
 
-A level completes when all eligible items have permanent gold mastery. Mastered items can still appear as familiar practice, and one eligible mastered item from an earlier level can appear as a recap. Excluded words do not block level completion. Earned levels do not move backwards.
+If no eligible familiar word is available, word practice gives a clear setup message and directs the grown-up to confirm familiar starters. It does not substitute an unseen word. The course assumes ordinary consonant sounds and an attempt at simple consonant-vowel-consonant blending; the grown-up checks these starting skills before practice.
 
-Recaps use the same self-check and helped-repeat interaction but are feedback only. They earn no confirmation or trophy and do not change the ordinary round score or item practice statistics. Recap-selection bookkeeping may update to rotate the older words.
+A word level completes when every word in its declared focus bank has permanent gold mastery. Familiar opening and closing words add no completion requirements. Existing mastery and confirmation counters retain their credit. Number levels retain completion over their eligible number items. Familiar word encounters use the normal confirmation and trophy mechanics. Feedback-only recaps remain exclusive to number rounds. Earned progress does not move backwards.
+
+Number recaps use the same self-check and helped-repeat interaction but are feedback only. They earn no confirmation or trophy and do not change the ordinary round score or item practice statistics. Recap-selection bookkeeping may update to rotate older numbers.
 
 The all-done screen retains spoken praise, reward visuals, and the tomorrow send-off. A completed round remains a short session rather than an open-ended drill.
 
@@ -122,7 +138,7 @@ The all-done screen retains spoken praise, reward visuals, and the tomorrow send
 
 ## Grown-Up Area
 
-The picker retains the settings button gated by a two-second hold. Settings provide round size, separate word and number level overrides, voice selection, speaking rate, progress, and an explicit reset of `readingLearner.v1`.
+The picker retains the settings button gated by a two-second hold. Settings provide number-round size, separate word and number level overrides, familiar-starter confirmation, voice selection, speaking rate, progress, and an explicit reset of `readingLearner.v1`. Word levels run from 1 through 41; number levels remain 1 through 10. Word rounds keep their fixed 3 + 4 + 3 structure. A saved level override survives reloads.
 
 The existing Words & Numbers audition screen remains available for inspecting how Vosk transcribes the grown-up's voice, editing accepted tuning forms, and maintaining custom terms. Opening this screen starts model loading and displays its loading, ready, or failed status beside the tuning controls. These accepted forms affect tuning rather than the child's self-check. The sound-group preview remains available.
 
@@ -131,6 +147,8 @@ There is no grown-up correctness button, adult-decides mode, audio-fade setting,
 ## Saved Progress
 
 Progress continues to use `readingLearner.v1` with storage version 1. Settings, item records, round records, and existing lesson migration markers remain in that record.
+
+The new course identity owns an explicit one-time word-course migration. It preserves all existing word identities, trophies, confirmation counters, practice statistics, accepted forms, custom records and old round history. It assigns active course membership and starts at the first unfinished focus bank using preserved mastery. Old numeric level history retains its original meaning; it is not relabelled as a new-course level. Later reloads do not rerun the migration or overwrite a parent's saved course-level override. A grown-up can select Level 1 for practice without clearing trophies.
 
 Item records retain their identity, content, level, practice statistics, last-seen information, and permanent `decoded`, `mastered`, and `flawless` trophy flags. They add `masteryConfirmationCount` and `flawlessConfirmationCount`, each initialized to zero when absent. Recognition accepted forms and audition confidence records remain relevant to grown-up tuning.
 
@@ -151,9 +169,15 @@ Commit item progress only when the encounter resolves through Yes or a valid hel
 - Silver retains its two-or-more-letter-taps distinction.
 - A helped repeat, Hear it, or a nonqualifying answer never resets confirmation progress or removes an earned trophy.
 - Older saves retain all earned trophies and levels, with new counters initialized to zero.
+- The active word course has the reviewed 41 focus banks and 240 focus words, with one focus per level.
+- Every ordinary word round follows three familiar words, four focus encounters and three familiar words. Number-round size and its ten-level progression remain independent.
+- Familiar words are mastered course words at or before the current level or explicitly confirmed declared starters. Missing familiar words expose setup rather than an invented easy word.
+- Only the active focus bank determines word-level completion. Parked and custom terms retain tuning and progress without entering course completion.
+- The word-course migration preserves trophies, confirmations, tuning records and old round history, selects the first unfinished focus bank once, and preserves later level overrides across refresh.
+- Every level has a distinct assigned picture; photograph source and licence credits are available from practice.
 - Recaps use the same interaction while remaining feedback only.
 - Rule chips still speak their teaching rule when tapped.
-- Vosk audition, lesson content, phonics assets, evaluator recordings, and separate evaluation tools retain their existing responsibilities.
+- Vosk audition, evaluator recordings, and separate evaluation tools retain their existing responsibilities. The recognition experiment remains stopped.
 - Progress survives refresh through `localStorage`; explicit grown-up reset remains available.
 
 ## Practical Limits
