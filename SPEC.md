@@ -20,7 +20,7 @@ The practice app is a static browser application served from GitHub Pages. It us
 ## Product Decisions
 
 OLD: A recognizer transcript determined whether an attempt was correct and whether the child retried.
-CHANGES_TO: After the first recording, the app speaks the answer and asks the child “Did you get it?” The child chooses Yes or records one helped repeat with the same mic button.
+CHANGES_TO: After the first recording, the app speaks the answer and asks the child “Got it?” The child chooses Yes or records one helped repeat with the same mic button.
 REASON: Recognition of young voices is too uncertain to provide the practice verdict.
 
 OLD: One qualifying answer could earn gold and purple trophies.
@@ -39,7 +39,7 @@ Practice captures microphone audio locally. No practice recognizer, transcript d
 
 The bundled on-device Vosk engine remains available for grown-up audition and tuning only. Its model loads only when the grown-up opens tuning; child startup and practice are independent of model loading or model failure. The tuning screen shows whether the engine is loading, ready, or unavailable. Its model and vocabulary matching do not grade child practice. The separate recording evaluator, its stored recordings, and cloud-model comparisons remain separate tools.
 
-The self-check choice becomes available only after the answer-and-question utterance reports a successful `onend`. A playback failure enters the explicit `question-error` phase: Yes stays hidden or disabled, the mic cannot begin another recording, and parent-readable text explains the problem. The same Hear it button retries the original “[answer]. Did you get it?” utterance. This retry preserves the first recording and its help counts; it does not submit another answer or select an alternative verdict.
+The self-check choice becomes available only after the answer-and-question utterance reports a successful `onend`. A playback failure enters the explicit `question-error` phase: Yes stays hidden or disabled, the mic cannot begin another recording, and parent-readable text explains the problem. The same Hear it button retries the original “[answer]. Got it?” utterance. This retry preserves the first recording and its help counts; it does not submit another answer or select an alternative verdict.
 
 Onboarding is spoken once per saved progress record. It introduces saying the word, hearing the answer, and choosing the checkmark or trying it again with the microphone. A denied or unavailable microphone receives a clear spoken error; it does not become a wrong answer.
 
@@ -57,10 +57,10 @@ One encounter has the following sequence:
 
 1. **Present the word or number.** Show the text, earned trophies, applicable rule chips, and two mastery-confirmation dots. The child can hear the whole answer or tap sound groups before speaking.
 2. **Record the first attempt.** The child holds the existing large mic button and speaks; release stops capture. The existing tap-to-start/tap-to-stop accommodation remains available. During microphone warm-up, the button remains able to receive the held pointer's release; releasing early cancels that unfinished capture.
-3. **Speak the answer and question.** After a valid capture, say exactly “[answer]. Did you get it?” Controls wait for the utterance's successful completion. If playback fails, show a parent-readable error and Hear it to replay the same question. The spoken reveal and its playback retries do not count as help used before the first attempt.
+3. **Speak the answer and question.** After a valid capture, pause for 0.5 seconds, then say exactly “[answer]. Got it?” Controls wait for the utterance's successful completion. If playback fails, show a parent-readable error and Hear it to replay the same question. The spoken reveal and its playback retries do not count as help used before the first attempt.
 4. **Let the child choose.** Show the large checkmark button labelled Yes alongside the same mic button. Hide Hear it during this choice. The short question is also visible for a nearby grown-up.
    - **Yes:** Commit the child's confirmation of the first attempt, award any qualifying progress, give spoken and visual feedback, and advance.
-   - **Mic:** Record one helped repeat of the same word or number. After a valid capture, assume the repeat succeeded, give feedback, and advance without another question or confirmation button.
+   - **Mic:** Record one helped repeat of the same word or number. After a valid capture, pause for 0.5 seconds, assume the repeat succeeded, give feedback, and advance without another question or confirmation button.
 
 An ordinary completed encounter therefore contains one first attempt or a first attempt followed by one helped repeat. A helped repeat never returns to the self-check question. Recording failures remain at the unfinished recording stage.
 
@@ -129,7 +129,7 @@ Commit item progress only when the encounter resolves through Yes or a valid hel
 ## Acceptance Criteria
 
 - The child can use every practice control through icons and spoken prompts.
-- A valid first recording always leads to the correct answer followed by “Did you get it?”
+- A valid first recording always leads to the correct answer followed by “Got it?”
 - Yes becomes available only after the spoken question completes successfully. Playback failure retains the first recording and offers Hear it to retry that question.
 - Yes resolves only that first attempt and cannot be committed twice for one encounter.
 - The same mic records the one helped repeat. A valid repeat completes the encounter without a second self-check.

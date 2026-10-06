@@ -1339,19 +1339,24 @@ function finishSpokenAttempt() {
     recoverSpokenCapture('That recording did not finish. Please record it again.');
     return;
   }
-  spokenAttemptGeneration++;
-  if (encounter.phase === 'repeat-recording') {
-    commitSelfCheckedAnswer('helped-repeat');
-    return;
-  }
-  if (encounter.phase !== 'first-recording') throw new Error('A first recording must belong to the current word.');
-  askSpokenSelfCheck(encounter);
+  const helpedRepeat = encounter.phase === 'repeat-recording';
+  if (!helpedRepeat && encounter.phase !== 'first-recording') throw new Error('A recording must belong to the current word.');
+  const recordingGeneration = ++spokenAttemptGeneration;
+  const recordedPhase = helpedRepeat ? 'repeat-recorded' : 'first-recorded';
+  encounter.phase = recordedPhase;
+  setMicState('waiting');
+  setTimeout(() => {
+    if (gs.spokenWordEncounter !== encounter || spokenAttemptGeneration !== recordingGeneration ||
+        encounter.committed || encounter.phase !== recordedPhase) return;
+    if (helpedRepeat) commitSelfCheckedAnswer('helped-repeat');
+    else askSpokenSelfCheck(encounter);
+  }, 500);
 }
 
 function askSpokenSelfCheck(encounter) {
   if (gs.spokenWordEncounter !== encounter || encounter.committed) return;
   encounter.phase = 'question';
-  const question = `${gs.currentItem.display}. Did you get it?`;
+  const question = `${gs.currentItem.display}. Got it?`;
   document.getElementById('self-check-question').textContent = question;
   setMicState('waiting');
   speak(question, stored.settings.speechRate, how => {
@@ -1849,7 +1854,7 @@ function commitSelfCheckedAnswer(outcome) {
   if (!encounter || encounter.committed) return;
   const helpedRepeat = outcome === 'helped-repeat';
   if (outcome !== 'confirmed-first' && !helpedRepeat) throw new Error('Unknown self-check outcome.');
-  if (encounter.phase !== (helpedRepeat ? 'repeat-recording' : 'confirming')) return;
+  if (encounter.phase !== (helpedRepeat ? 'repeat-recorded' : 'confirming')) return;
   const assistance = encounter.firstAttemptAssistance;
   if (!assistance || encounter.itemId !== gs.currentItem?.id) throw new Error('The self-check must belong to its recorded word.');
   encounter.committed = true;
@@ -1973,7 +1978,7 @@ function recoverSpokenCapture(message) {
   const encounter = gs.spokenWordEncounter;
   closeMicStream();
   if (!encounter || encounter.committed) return;
-  const helpedRepeat = encounter.phase === 'repeat-recording' || encounter.phase === 'repeat-ready';
+  const helpedRepeat = encounter.phase === 'repeat-recording' || encounter.phase === 'repeat-ready' || encounter.phase === 'repeat-recorded';
   encounter.phase = helpedRepeat ? 'repeat-ready' : 'first-ready';
   setMicState(helpedRepeat ? 'repeat-ready' : 'ready');
   document.getElementById('mic-status').textContent = message;
@@ -3060,7 +3065,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v42 — child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v43 — child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed

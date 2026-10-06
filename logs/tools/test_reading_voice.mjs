@@ -184,7 +184,10 @@ function createReadingVoiceHarness(options = {}) {
     DBG: (...message) => observations.auditMessages.push(message),
     setTimeout(callback, milliseconds) {
       const timerId = nextTimerId++;
-      timerCallbacks.set(timerId, { callback, milliseconds, cancelled: false });
+      timerCallbacks.set(timerId, {
+        callback, milliseconds, scheduledForTimestamp: currentTime + milliseconds,
+        cancelled: false, fired: false,
+      });
       return timerId;
     },
     clearTimeout(timerId) {
@@ -224,7 +227,19 @@ function createReadingVoiceHarness(options = {}) {
     dispatchMicrophoneEvent: eventName => pageElement('mic-button').dispatch(eventName),
     microphoneStatusText: () => pageElement('mic-status').textContent,
     element: pageElement,
-    advanceTime: milliseconds => { currentTime += milliseconds; },
+    advanceTime(milliseconds) {
+      const advancedTimestamp = currentTime + milliseconds;
+      while (true) {
+        const nextDueTimer = [...timerCallbacks]
+          .filter(([, timer]) => !timer.cancelled && !timer.fired && timer.scheduledForTimestamp <= advancedTimestamp)
+          .sort(([, first], [, second]) => first.scheduledForTimestamp - second.scheduledForTimestamp)[0];
+        if (!nextDueTimer) break;
+        const [timerId, timer] = nextDueTimer;
+        currentTime = timer.scheduledForTimestamp;
+        this.fireTimer(timerId);
+      }
+      currentTime = advancedTimestamp;
+    },
     async finishSpeech(index = observations.speech.length - 1, how = 'onend') {
       observations.speech[index]?.finished?.(how);
       await Promise.resolve();
@@ -250,15 +265,19 @@ function createReadingVoiceHarness(options = {}) {
       processor.onaudioprocess({ inputBuffer: audioBuffer });
       return audioBuffer;
     },
-    release() { run('finishSpokenAttempt()'); },
+    release({ leavePausePending = false } = {}) {
+      run('finishSpokenAttempt()');
+      if (!leavePausePending) this.advanceTime(500);
+    },
     fireTimer(timerId) {
       const timer = timerCallbacks.get(timerId);
       assert.ok(timer, `Timer ${timerId} must exist`);
       // Call even after cancellation to simulate a callback already queued by the browser.
+      timer.fired = true;
       timer.callback();
     },
     activeTimersWithDelay(milliseconds) {
-      return [...timerCallbacks].filter(([, timer]) => !timer.cancelled && timer.milliseconds === milliseconds)
+      return [...timerCallbacks].filter(([, timer]) => !timer.cancelled && !timer.fired && timer.milliseconds === milliseconds)
         .map(([timerId]) => timerId);
     },
   };
@@ -418,22 +437,45 @@ async function askSelfCheck(app) {
   assert.equal(app.run('micState'), 'confirming');
 }
 
-async function testPhysicalCapturePromptsImmediatelyWithoutSpeechRecognition() {
+async function testPhysicalCaptureAsksAfterPauseWithoutSpeechRecognition() {
   const app = createReadingVoiceHarness({ localRecognizerLibraryMissing: true });
   await app.prepare();
   await app.beginAttempt();
   assert.equal(app.run('micState'), 'listening');
   assert.ok(app.observations.contexts.some(context => context.resumeCount > 0));
   app.deliverAudio();
-  app.release();
+  app.release({ leavePausePending: true });
   assert.equal(app.observations.recognizers.length, 0, 'Practice must never create a recognition worker');
   assert.equal(app.observations.browserRecognizerStarts, 0);
   assert.equal(app.word.totalAttempts, 0, 'Finishing physical capture must not score the answer');
+  assert.equal(app.observations.speech.length, 0, 'Releasing the microphone must begin a silent pause');
+  assert.equal(app.practice.spokenWordEncounter.phase, 'first-recorded');
+  assert.equal(app.run('micState'), 'waiting');
+  assert.equal(app.element('mic-button').disabled, true);
+  assert.equal(app.element('mic-button').classList.contains('listening'), false);
+  assert.equal(app.element('mic-button').classList.contains('waiting'), true);
+  assert.equal(app.element('hear-button').disabled, true);
+  assert.equal(app.element('self-check-yes').classList.contains('hidden'), true);
+  assert.equal(app.element('self-check-question').classList.contains('hidden'), true);
+  const capturedSamplesAfterRelease = app.run('capturedMicrophoneSampleCount');
+  app.deliverAudio();
+  assert.equal(app.run('capturedMicrophoneSampleCount'), capturedSamplesAfterRelease,
+    'Audio arriving during the pause must not extend the completed recording');
+  app.release({ leavePausePending: true });
+  assert.equal(app.activeTimersWithDelay(500).length, 1, 'Repeated release must keep one pending question');
+  const questionPauseTimer = app.activeTimersWithDelay(500)[0];
+  app.advanceTime(499);
+  assert.equal(app.observations.speech.length, 0, 'The comparison question must wait the full 500 ms');
+  assert.equal(app.word.totalAttempts, 0);
+  app.advanceTime(1);
   assert.equal(app.practice.spokenWordEncounter.phase, 'question');
-  assert.match(app.observations.speech.at(-1).text, /^mat\. Did you get it\?$/);
+  assert.equal(app.observations.speech.length, 1, 'The completed pause must ask the question once');
+  assert.match(app.observations.speech.at(-1).text, /^mat\. Got it\?$/);
+  app.fireTimer(questionPauseTimer);
+  assert.equal(app.observations.speech.length, 1, 'A queued duplicate pause callback must not replay the question');
   assert.equal(app.element('self-check-question').classList.contains('hidden'), false);
   assert.equal(app.element('self-check-yes').disabled, true);
-  assert.equal(app.activeTimersWithDelay(10000).length, 0, 'No recognition timeout may delay the question');
+  assert.equal(app.activeTimersWithDelay(10000).length, 0, 'Released capture must not retain its recording deadline');
   app.run('confirmFirstSpokenAttempt()');
   assert.equal(app.word.totalAttempts, 0, 'Yes must wait for the spoken question to finish');
   await app.finishSpeech();
@@ -450,6 +492,89 @@ async function testPhysicalCapturePromptsImmediatelyWithoutSpeechRecognition() {
   assert.deepEqual(app.observations.displayedTranscripts, [], 'Practice must never display an ASR transcript');
 }
 
+async function testHelpedRepeatWaitsForPauseBeforeScoringAndFeedback() {
+  const app = createReadingVoiceHarness();
+  await app.prepare(); await askSelfCheck(app);
+  await app.beginAttempt(); app.deliverAudio();
+  const speechCountBeforeRelease = app.observations.speech.length;
+  app.release({ leavePausePending: true });
+  assert.equal(app.practice.spokenWordEncounter.phase, 'repeat-recorded');
+  assert.equal(app.run('micState'), 'waiting');
+  assert.equal(app.element('mic-button').disabled, true);
+  assert.equal(app.element('mic-button').classList.contains('listening'), false);
+  assert.equal(app.element('hear-button').disabled, true);
+  assert.equal(app.element('self-check-yes').classList.contains('hidden'), true);
+  const capturedSamplesAfterRelease = app.run('capturedMicrophoneSampleCount');
+  app.deliverAudio();
+  assert.equal(app.run('capturedMicrophoneSampleCount'), capturedSamplesAfterRelease,
+    'The completed helped repeat must stop accepting microphone samples');
+  app.release({ leavePausePending: true });
+  app.run('confirmFirstSpokenAttempt()');
+  assert.equal(app.activeTimersWithDelay(500).length, 1, 'Duplicate release must keep one pending helped completion');
+  const repeatPauseTimer = app.activeTimersWithDelay(500)[0];
+  app.advanceTime(499);
+  assert.equal(app.observations.speech.length, speechCountBeforeRelease,
+    'Helped-repeat feedback must wait the full 500 ms');
+  assert.equal(app.word.totalAttempts, 0);
+  assert.equal(app.word.totalCorrect, 0);
+  assert.equal(app.practice.roundCorrect, 0);
+  assert.equal(app.practice.completedCount, 0);
+  assert.equal(app.observations.savedProgress, 0);
+  app.advanceTime(1);
+  assert.equal(app.practice.spokenWordEncounter.phase, 'completed');
+  assert.equal(app.word.totalAttempts, 2);
+  assert.equal(app.word.totalCorrect, 1);
+  assert.equal(app.word.lastResult, 'helped');
+  assert.equal(app.practice.roundCorrect, 1);
+  assert.equal(app.practice.completedCount, 1);
+  assert.equal(app.observations.savedProgress, 1);
+  assert.equal(app.observations.speech.length, speechCountBeforeRelease + 1);
+  assert.equal(app.observations.speech.at(-1).text, 'Nice practice!');
+  app.fireTimer(repeatPauseTimer);
+  app.release(); app.run('confirmFirstSpokenAttempt()');
+  assert.equal(app.word.totalAttempts, 2, 'Queued duplicate completion must not score the helped repeat twice');
+  assert.equal(app.observations.savedProgress, 1);
+  assert.equal(app.observations.speech.length, speechCountBeforeRelease + 1,
+    'The helped repeat must speak its existing feedback exactly once');
+  await app.finishSpeech();
+  assert.equal(app.observations.nextWordCount, 1);
+}
+
+async function testLeavingPracticeAndNewEncountersInvalidatePendingReleasePauses() {
+  for (const repeat of [false, true]) for (const transition of ['picker', 'grownup', 'new-encounter']) {
+    const app = createReadingVoiceHarness();
+    await app.prepare();
+    if (repeat) await askSelfCheck(app);
+    await app.beginAttempt(); app.deliverAudio(); app.release({ leavePausePending: true });
+    const obsoletePauseTimer = app.activeTimersWithDelay(500)[0];
+    assert.ok(obsoletePauseTimer, 'Healthy release must leave a pending feedback pause');
+    const speechCountBeforeTransition = app.observations.speech.length;
+    if (transition === 'new-encounter') {
+      app.beginEncounter(); await app.beginAttempt();
+    } else app.run(`showScreen('${transition}')`);
+    const microphoneStateAfterTransition = app.run('micState');
+    app.fireTimer(obsoletePauseTimer);
+    app.advanceTime(500);
+    assert.equal(app.run('micState'), microphoneStateAfterTransition,
+      `${transition}: old first/repeat feedback must not change the current microphone`);
+    assert.equal(app.observations.speech.length, speechCountBeforeTransition,
+      `${transition}: old first/repeat feedback must not speak`);
+    assert.equal(app.word.totalAttempts, 0, `${transition}: old first/repeat feedback must not score`);
+    assert.equal(app.word.totalCorrect, 0);
+    assert.equal(app.observations.savedProgress, 0);
+    if (transition === 'new-encounter') {
+      app.deliverAudio(); app.release({ leavePausePending: true });
+      app.advanceTime(499);
+      assert.equal(app.observations.speech.length, speechCountBeforeTransition);
+      app.advanceTime(1);
+      assert.equal(app.observations.speech.length, speechCountBeforeTransition + 1,
+        'The next encounter must retain its own release pause and question');
+      assert.equal(app.observations.speech.at(-1).text, 'mat. Got it?');
+      assert.equal(app.word.totalAttempts, 0);
+    }
+  }
+}
+
 async function testSilenceIsValidCaptureButMissingOrEndedCaptureIsUnscored() {
   for (const captureFailure of ['no-samples', 'ended-track', 'suspended-context']) {
     const app = createReadingVoiceHarness();
@@ -462,7 +587,7 @@ async function testSilenceIsValidCaptureButMissingOrEndedCaptureIsUnscored() {
     assert.equal(app.word.totalCorrect, 0, captureFailure);
     assert.equal(app.run('micState'), 'ready', captureFailure);
     assert.equal(app.practice.spokenWordEncounter.phase, 'first-ready', captureFailure);
-    assert.equal(app.observations.speech.some(utterance => /Did you get it\?/.test(utterance.text)), false,
+    assert.equal(app.observations.speech.some(utterance => /Got it\?/.test(utterance.text)), false,
       'Missing physical audio must never create a self-check question');
   }
   const silent = createReadingVoiceHarness();
@@ -529,13 +654,14 @@ async function testSameMicrophoneRepeatCompletesAsHelpedAndPreservesEarnedDots()
   await app.prepare(); await askSelfCheck(app); app.run('confirmFirstSpokenAttempt()');
   app.beginEncounter(); app.practice.ruleIds = [app.word.id];
   await askSelfCheck(app);
-  const questionsBeforeRepeat = app.observations.speech.filter(utterance => /Did you get it\?/.test(utterance.text)).length;
+  const questionsBeforeRepeat = app.observations.speech.filter(utterance => /Got it\?/.test(utterance.text)).length;
   app.dispatchMicrophoneEvent('pointerdown');
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(app.practice.spokenWordEncounter.phase, 'repeat-recording', 'The existing microphone must start the helped repeat');
   assert.equal(app.run('micState'), 'listening');
   assert.equal(app.word.totalAttempts, 1, 'Selecting repeat must wait for physical capture before committing');
   app.deliverAudio(); app.advanceTime(500); app.dispatchMicrophoneEvent('pointerup');
+  app.advanceTime(500);
   assert.equal(app.practice.spokenWordEncounter.phase, 'completed');
   assert.equal(app.word.totalAttempts, 3, 'A declined first answer plus its helped repeat are two attempts');
   assert.equal(app.word.totalCorrect, 2);
@@ -546,7 +672,7 @@ async function testSameMicrophoneRepeatCompletesAsHelpedAndPreservesEarnedDots()
   assert.equal(app.word.flawless, false);
   assert.equal(app.practice.ruleMissed, true);
   assert.equal(app.practice.completedCount, 2);
-  assert.equal(app.observations.speech.filter(utterance => /Did you get it\?/.test(utterance.text)).length, questionsBeforeRepeat,
+  assert.equal(app.observations.speech.filter(utterance => /Got it\?/.test(utterance.text)).length, questionsBeforeRepeat,
     'The repeat must finish without a second Yes question');
   app.release(); app.run('confirmFirstSpokenAttempt()');
   assert.equal(app.word.totalAttempts, 3, 'Repeated release and Yes cannot commit the helped answer twice');
@@ -766,7 +892,7 @@ async function testFailedComparisonSpeechRequiresHearingTheQuestionBeforeYes() {
     const microphoneRequestCount = app.observations.microphoneRequests.length;
     app.element('hear-button').dispatch('click');
     assert.equal(app.practice.spokenWordEncounter.phase, 'question');
-    assert.match(app.observations.speech.at(-1).text, /^mat\. Did you get it\?$/);
+    assert.match(app.observations.speech.at(-1).text, /^mat\. Got it\?$/);
     assert.equal(app.observations.microphoneRequests.length, microphoneRequestCount,
       'Retrying comparison speech must reuse the already recorded first answer');
     assert.equal(app.practice.spokenWordEncounter.firstAttemptAssistance, originalAssistance);
@@ -985,7 +1111,9 @@ async function testSpeechWatchdogStopsVoiceBeforeCallbackAndCannotStopANewerUtte
 }
 
 const readingVoiceChecks = [
-  testPhysicalCapturePromptsImmediatelyWithoutSpeechRecognition,
+  testPhysicalCaptureAsksAfterPauseWithoutSpeechRecognition,
+  testHelpedRepeatWaitsForPauseBeforeScoringAndFeedback,
+  testLeavingPracticeAndNewEncountersInvalidatePendingReleasePauses,
   testSilenceIsValidCaptureButMissingOrEndedCaptureIsUnscored,
   testSecondEncounterEarnsGoldAndPurpleWithoutDuplicateConfirmations,
   testHelpUsageIsFrozenBeforeFeedbackAndCountsDistinctTrophyRequirements,
