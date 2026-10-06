@@ -39,9 +39,11 @@ Practice captures microphone audio locally. No practice recognizer, transcript d
 
 The bundled on-device Vosk engine remains available for grown-up audition and tuning only. Its model loads only when the grown-up opens tuning; child startup and practice are independent of model loading or model failure. The tuning screen shows whether the engine is loading, ready, or unavailable. Its model and vocabulary matching do not grade child practice. The separate recording evaluator, its stored recordings, and cloud-model comparisons remain separate tools.
 
-The answer and “Got it?” play as separate utterances. The self-check choice becomes available as soon as the answer reports a successful `onend`, before “Got it?” starts. Choosing Yes or recording a repeat stops any remaining question speech immediately. The question's completion does not change the available choices or score the answer.
+The answer and “Got it?” play as separate utterances. Yes and the repeat mic become available near the audible end of the answer, before any trailing silence in the voice's `onend` callback. An estimate starts only when actual speech starts and scales with the answer's approximate syllables, consonants, and the utterance's speaking rate. Numbers use their English names for that estimate. A reported boundary beyond the answer text, or successful native completion, can open the choices earlier. A word-start boundary does not prove the word has finished.
 
-An answer playback failure enters the explicit `answer-error` phase: Yes stays hidden or disabled, the mic cannot begin another recording, and parent-readable text explains the problem. The same Hear it button retries the answer followed by “Got it?”. This retry preserves the first recording and its help counts; it does not submit another answer or select an alternative verdict.
+The estimate changes button timing only; it does not stop the answer or start the question. Native answer completion starts “Got it?” if the child has not responded. Choosing Yes or recording a repeat stops any remaining answer or question immediately. The question's completion does not change the available choices or score the answer. This timing is an approximation, not an acoustic measurement, and may be a little early or late for a particular voice.
+
+An answer playback failure before the child responds enters the explicit `answer-error` phase, including when the estimate has already opened the choices. Yes stays hidden or disabled, the mic cannot begin another recording, and parent-readable text explains the problem. The same Hear it button retries the answer followed by “Got it?”. This retry preserves the first recording and its help counts; it does not submit another answer or select an alternative verdict. Each playback owns its timer and revision; responses, retries, and navigation invalidate older timing events.
 
 Onboarding is spoken once per saved progress record. It introduces saying the word, hearing the answer, and choosing the checkmark or trying it again with the microphone. A denied or unavailable microphone receives a clear spoken error; it does not become a wrong answer.
 
@@ -59,8 +61,8 @@ One encounter has the following sequence:
 
 1. **Present the word or number.** Show the text, earned trophies, applicable rule chips, and two mastery-confirmation dots. The child can hear the whole answer or tap sound groups before speaking.
 2. **Record the first attempt.** The child holds the existing large mic button and speaks; release stops capture. The existing tap-to-start/tap-to-stop accommodation remains available. During microphone warm-up, the button remains able to receive the held pointer's release; releasing early cancels that unfinished capture.
-3. **Speak the answer and question.** After a valid capture, pause for 0.5 seconds, then speak the answer. When the answer finishes successfully, enable Yes and the repeat mic, then say “Got it?”. If the answer cannot play, show a parent-readable error and Hear it to replay the answer and question. The spoken reveal and its playback retries do not count as help used before the first attempt.
-4. **Let the child choose.** Show the large checkmark button labelled Yes alongside the same mic button. Hide Hear it during this choice. The short question is also visible for a nearby grown-up. The child can choose while “Got it?” is playing; either choice stops the question immediately.
+3. **Speak the answer and question.** After a valid capture, pause for 0.5 seconds, then speak the answer. Enable Yes and the repeat mic near its estimated audible ending; leave the answer playing. Native completion then speaks “Got it?” if the child has not responded. If the answer cannot play, show a parent-readable error and Hear it to replay the answer and question. The spoken reveal and its playback retries do not count as help used before the first attempt.
+4. **Let the child choose.** Show the large checkmark button labelled Yes alongside the same mic button. Hide Hear it during this choice. The short question is also visible for a nearby grown-up. The child can choose during the answer's trailing pause or while “Got it?” is playing; either choice stops the remaining speech immediately.
    - **Yes:** Commit the child's confirmation of the first attempt, award any qualifying progress, give spoken and visual feedback, and advance.
    - **Mic:** Record one helped repeat of the same word or number. After a valid capture, pause for 0.5 seconds, assume the repeat succeeded, give feedback, and advance without another question or confirmation button.
 
@@ -107,8 +109,8 @@ The all-done screen retains spoken praise, reward visuals, and the tomorrow send
 - Hear it and the mic are available for the initial attempt. During self-check, Yes and the same mic are the two choices.
 - Yes has a checkmark, a large friendly circular control, and a footprint matching the mic. Choosing the repeat route has no failure mark or punishing presentation.
 - Round-progress dots, mastery-confirmation dots, and earned trophies remain visually distinct.
-- Yes and Hear it use real disabled attributes while unavailable. The mic is disabled while waiting or while the answer has a playback error, and remains able to receive release during warm-up. The child cannot commit Yes while the answer is speaking or capture is active.
-- Failed answer playback exposes Hear it for replaying the answer and question, with parent-readable error text. Yes and a new recording remain unavailable until the answer completes successfully. Both choices remain available while “Got it?” plays.
+- Yes and Hear it use real disabled attributes while unavailable. The mic is disabled while waiting or while the answer has a playback error, and remains able to receive release during warm-up. Yes cannot commit before the estimated answer ending or while capture is active.
+- Failed answer playback exposes Hear it for replaying the answer and question, with parent-readable error text. Choices stay disabled until the replay reaches its audible-end estimate or reported completion. Both choices remain available while “Got it?” plays.
 - Controls have accessible names and visible keyboard focus. Filled confirmation dots differ in fill as well as color.
 - Phone, tablet, and desktop layouts keep the word, question, and touch controls on screen with generous spacing.
 
@@ -131,8 +133,8 @@ Commit item progress only when the encounter resolves through Yes or a valid hel
 ## Acceptance Criteria
 
 - The child can use every practice control through icons and spoken prompts.
-- A valid first recording always leads to the correct answer followed by “Got it?”
-- Yes and the repeat mic become available after the spoken answer completes successfully, before “Got it?” starts. Either choice stops the question immediately. Answer playback failure retains the first recording and offers Hear it to retry the answer and question.
+- A valid first recording leads to the correct answer followed by “Got it?”, unless the child has already responded.
+- Yes and the repeat mic become available near the answer's audible end, using a rate-scaled duration estimate from actual speech start. The estimate never starts the question or interrupts the answer. Either choice stops the remaining speech immediately. Answer playback failure retains the first recording and offers Hear it to retry the answer and question.
 - Yes resolves only that first attempt and cannot be committed twice for one encounter.
 - The same mic records the one helped repeat. A valid repeat completes the encounter without a second self-check.
 - A failed capture awards no progress and leaves the unfinished stage available.

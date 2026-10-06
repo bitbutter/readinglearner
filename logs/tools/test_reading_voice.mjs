@@ -15,6 +15,7 @@ function readingAppSection(startMarker, endMarker) {
 }
 
 const testedReadingAppSource = [
+  readingAppSection('function numberToWords(n)', '// Isolated phonetic letter sounds'),
   readingAppSection('// MICROPHONE CAPTURE AND TUNING RECOGNITION', '// AUDITION (grown-up tuning)'),
   readingAppSection('async function armAudition(itemId)', '// ROUND BUILDING'),
   readingAppSection('async function openTuning()', 'function setTuneTab(tab)'),
@@ -276,6 +277,16 @@ function createReadingVoiceHarness(options = {}) {
         else utterance.onerror?.({ error: how.replace(/^onerror:/, '') });
       } else spokenLine?.finished?.(how);
       await Promise.resolve();
+    },
+    startSpeech(index = observations.speech.length - 1) {
+      const utterance = observations.speech[index]?.utterance;
+      assert.ok(utterance, 'Native speech playback must exist before its start event');
+      utterance.onstart?.({});
+    },
+    speechBoundary(index, charIndex, charLength = 0) {
+      const utterance = observations.speech[index]?.utterance;
+      assert.ok(utterance, 'Native speech playback must exist before its boundary event');
+      utterance.onboundary?.({ charIndex, charLength, name: 'word' });
     },
     beginEncounter() {
       practice.awaitingResult = false;
@@ -982,6 +993,240 @@ async function testQuestionEndErrorAndWatchdogLeaveChoicesAvailable() {
   }
 }
 
+async function testEstimatedAnswerEndStartsFromPlaybackAndPrecedesNativeCompletion() {
+  const app = createReadingVoiceHarness({ useRealSpeechCompletion: true });
+  app.run('stored.settings.speechRate = 0.9');
+  await app.prepare(); await app.beginAttempt(); app.deliverAudio(); app.release();
+  const answerUtterance = app.activeUtterance;
+  const answerEstimateMs = app.run("estimateAnswerSpeechDurationMs('mat', 0.9)");
+  assert.ok(answerEstimateMs >= 250 && answerEstimateMs <= 500,
+    'A short word at the usual reading rate must have a short audible-end estimate');
+  app.advanceTime(600);
+  assert.equal(app.practice.spokenWordEncounter.phase, 'answer',
+    'Submitting speech must not begin the audible-end countdown before playback starts');
+  assert.equal(app.element('self-check-yes').disabled, true);
+  app.run('stored.settings.speechRate = 0.45');
+  app.startSpeech();
+  app.advanceTime(100);
+  app.startSpeech();
+  app.advanceTime(answerEstimateMs - 101);
+  assert.equal(app.practice.spokenWordEncounter.phase, 'answer');
+  assert.equal(app.element('self-check-yes').disabled, true);
+  assert.equal(app.element('mic-button').disabled, true);
+  app.element('self-check-yes').dispatch('click'); await app.beginAttempt();
+  assert.equal(app.word.totalAttempts, 0, 'Neither choice may act before the audible-end estimate');
+  app.advanceTime(1);
+  assert.equal(app.practice.spokenWordEncounter.phase, 'confirming',
+    'The estimate must use the utterance rate and the first actual playback start');
+  assert.equal(app.element('self-check-yes').disabled, false);
+  assert.equal(app.element('mic-button').disabled, false);
+  assert.equal(app.activeUtterance, answerUtterance);
+  assert.equal(answerUtterance.active, true, 'Opening choices must keep the spoken word playing');
+  assert.equal(app.observations.speech.length, 1, 'Got it? must wait for native word completion');
+  assert.equal(app.word.totalAttempts, 0);
+  await app.finishSpeech(0);
+  assert.equal(app.observations.speech.length, 2);
+  assert.equal(app.activeUtterance.text, 'Got it?');
+  assert.equal(app.element('self-check-yes').disabled, false);
+  await app.finishSpeech(0);
+  assert.equal(app.observations.speech.length, 2, 'Duplicate native word completion must ask once');
+}
+
+async function testTerminalAnswerBoundaryOpensChoicesWithoutInterruptingTheWord() {
+  const app = createReadingVoiceHarness({ useRealSpeechCompletion: true });
+  await app.prepare(); await app.beginAttempt(); app.deliverAudio(); app.release();
+  const answerUtterance = app.activeUtterance;
+  app.startSpeech(0);
+  app.speechBoundary(0, 0, app.word.display.length);
+  assert.equal(app.practice.spokenWordEncounter.phase, 'answer',
+    'The word-start boundary must not enable choices even when charLength covers the word');
+  app.speechBoundary(0, 1, app.word.display.length - 1);
+  assert.equal(app.element('self-check-yes').disabled, true,
+    'Character coverage must not be mistaken for a terminal speech boundary');
+  app.speechBoundary(0, app.word.display.length);
+  assert.equal(app.practice.spokenWordEncounter.phase, 'confirming');
+  assert.equal(app.element('self-check-yes').disabled, false);
+  assert.equal(app.element('mic-button').disabled, false);
+  assert.equal(app.activeUtterance, answerUtterance);
+  assert.equal(answerUtterance.active, true);
+  assert.equal(app.observations.speech.length, 1);
+  app.speechBoundary(0, app.word.display.length + 1);
+  assert.equal(app.observations.speech.length, 1, 'Repeated terminal boundaries must not start Got it?');
+  await app.finishSpeech(0);
+  assert.equal(app.activeUtterance.text, 'Got it?');
+}
+
+async function testYesAtEstimatedAnswerEndCancelsSafelyBeforeNativeCompletion() {
+  for (const reward of ['ordinary', 'trophy']) for (const cancelDispatchesError of [true, false]) {
+    const app = createReadingVoiceHarness({ useRealSpeechCompletion: true, cancelDispatchesError });
+    await app.prepare();
+    if (reward === 'trophy') {
+      app.word.masteryConfirmationCount = 1;
+      app.word.flawlessConfirmationCount = 1;
+    }
+    await app.beginAttempt(); app.deliverAudio(); app.release(); app.startSpeech(0);
+    const answerUtterance = app.activeUtterance;
+    const answerEstimateMs = app.run("estimateAnswerSpeechDurationMs('mat', 0.9)");
+    const answerEstimateTimer = app.activeTimersWithDelay(answerEstimateMs)[0];
+    const answerWatchdogTimer = app.activeTimersWithDelay(4000)[0];
+    app.advanceTime(answerEstimateMs);
+    app.element('self-check-yes').dispatch('click');
+    assert.equal(answerUtterance.active, false, 'Yes must stop the still-active answer immediately');
+    assert.equal(app.practice.spokenWordEncounter.phase, 'completed');
+    assert.equal(app.word.totalAttempts, 1);
+    if (reward === 'trophy') {
+      assert.equal(app.activeUtterance, null, 'The trophy pause must start with the answer already stopped');
+      app.advanceTime(800);
+    }
+    const feedbackUtterance = app.activeUtterance;
+    app.startSpeech(0); app.speechBoundary(0, app.word.display.length);
+    app.fireTimer(answerEstimateTimer);
+    await app.finishSpeech(0); await app.finishSpeech(0, 'onerror:late-synthesis-error');
+    app.fireTimer(answerWatchdogTimer);
+    app.element('self-check-yes').dispatch('click');
+    assert.equal(app.activeUtterance, feedbackUtterance,
+      'Late answer events must preserve the newer reward feedback');
+    assert.equal(feedbackUtterance.active, true);
+    assert.equal(app.observations.speech.length, 2);
+    assert.equal(app.observations.speech.some(line => line.text === 'Got it?'), false,
+      'A confirmed answer must never start a late question');
+    assert.equal(app.word.totalAttempts, 1);
+    assert.equal(app.observations.savedProgress, 1);
+  }
+}
+
+async function testRepeatAtEstimatedAnswerEndCancelsBeforeCaptureAndRejectsLateSpeech() {
+  for (const cancelDispatchesError of [true, false]) {
+    const app = createReadingVoiceHarness({ useRealSpeechCompletion: true, cancelDispatchesError });
+    await app.prepare(); await app.beginAttempt(); app.deliverAudio(); app.release(); app.startSpeech(0);
+    const answerUtterance = app.activeUtterance;
+    const answerEstimateMs = app.run("estimateAnswerSpeechDurationMs('mat', 0.9)");
+    const answerEstimateTimer = app.activeTimersWithDelay(answerEstimateMs)[0];
+    const answerWatchdogTimer = app.activeTimersWithDelay(4000)[0];
+    app.advanceTime(answerEstimateMs);
+    const pendingRepeatCapture = app.beginAttempt();
+    assert.equal(answerUtterance.active, false, 'Repeat must stop the answer before asynchronous microphone setup');
+    await pendingRepeatCapture;
+    assert.equal(app.practice.spokenWordEncounter.phase, 'repeat-recording');
+    assert.equal(app.run('micState'), 'listening');
+    app.startSpeech(0); app.speechBoundary(0, app.word.display.length);
+    app.fireTimer(answerEstimateTimer);
+    await app.finishSpeech(0); await app.finishSpeech(0, 'onerror:late-synthesis-error');
+    app.fireTimer(answerWatchdogTimer);
+    assert.equal(app.practice.spokenWordEncounter.phase, 'repeat-recording');
+    assert.equal(app.run('micState'), 'listening');
+    assert.equal(app.observations.speech.length, 1);
+    assert.equal(app.word.totalAttempts, 0);
+    app.deliverAudio(); app.release();
+    assert.equal(app.word.totalAttempts, 2);
+    assert.equal(app.observations.speech.at(-1).text, 'Nice practice!');
+    assert.equal(app.observations.speech.some(line => line.text === 'Got it?'), false);
+  }
+}
+
+async function testGenuineAnswerFailureAfterEstimatedEndRevokesChoices() {
+  for (const failure of ['onerror:synthesis-failed', 'WATCHDOG']) {
+    const app = createReadingVoiceHarness({ useRealSpeechCompletion: true });
+    await app.prepare(); await app.beginAttempt(); app.deliverAudio(); app.release(); app.startSpeech(0);
+    const answerEstimateMs = app.run("estimateAnswerSpeechDurationMs('mat', 0.9)");
+    const answerEstimateTimer = app.activeTimersWithDelay(answerEstimateMs)[0];
+    app.advanceTime(answerEstimateMs);
+    assert.equal(app.element('self-check-yes').disabled, false);
+    if (failure === 'WATCHDOG') app.fireTimer(app.activeTimersWithDelay(4000)[0]);
+    else await app.finishSpeech(0, failure);
+    assert.equal(app.practice.spokenWordEncounter.phase, 'answer-error', failure);
+    assert.equal(app.run('micState'), 'answer-error');
+    assert.equal(app.element('self-check-yes').classList.contains('hidden'), true);
+    assert.equal(app.element('mic-button').disabled, true);
+    assert.equal(app.element('hear-button').disabled, false);
+    app.startSpeech(0); app.speechBoundary(0, app.word.display.length); app.fireTimer(answerEstimateTimer);
+    await app.finishSpeech(0);
+    app.element('self-check-yes').dispatch('click'); await app.beginAttempt();
+    assert.equal(app.practice.spokenWordEncounter.phase, 'answer-error');
+    assert.equal(app.word.totalAttempts, 0);
+    assert.equal(app.observations.savedProgress, 0);
+    assert.equal(app.observations.speech.length, 1, 'A failed answer must not start Got it?');
+  }
+}
+
+async function testAnswerWithoutPlaybackStartStaysDisabledUntilSuccessfulNativeEnd() {
+  const app = createReadingVoiceHarness({ useRealSpeechCompletion: true });
+  await app.prepare(); await app.beginAttempt(); app.deliverAudio(); app.release();
+  app.advanceTime(1000);
+  assert.equal(app.practice.spokenWordEncounter.phase, 'answer');
+  assert.equal(app.element('self-check-yes').disabled, true);
+  assert.equal(app.element('mic-button').disabled, true);
+  app.element('self-check-yes').dispatch('click'); await app.beginAttempt();
+  assert.equal(app.word.totalAttempts, 0, 'An unstarted answer must remain unscored');
+  await app.finishSpeech(0);
+  assert.equal(app.practice.spokenWordEncounter.phase, 'confirming');
+  assert.equal(app.element('self-check-yes').disabled, false);
+  assert.equal(app.activeUtterance.text, 'Got it?');
+}
+
+async function testStaleAnswerEstimateAndPlaybackEventsCannotOpenAnotherAnswer() {
+  for (const transition of ['picker', 'grownup', 'new-encounter', 'retry']) {
+    const app = createReadingVoiceHarness({ useRealSpeechCompletion: true, cancelDispatchesError: false });
+    await app.prepare(); await app.beginAttempt(); app.deliverAudio(); app.release(); app.startSpeech(0);
+    const answerEstimateMs = app.run("estimateAnswerSpeechDurationMs('mat', 0.9)");
+    const obsoleteEstimateTimer = app.activeTimersWithDelay(answerEstimateMs)[0];
+    if (transition === 'retry') {
+      await app.finishSpeech(0, 'onerror:synthesis-failed');
+      app.element('hear-button').dispatch('click');
+    } else if (transition === 'new-encounter') {
+      app.beginEncounter(); await app.beginAttempt(); app.deliverAudio(); app.release();
+    } else app.run(`showScreen('${transition}')`);
+    const microphoneStateAfterTransition = app.run('micState');
+    const speechCountAfterTransition = app.observations.speech.length;
+    const currentUtterance = app.activeUtterance;
+    app.startSpeech(0); app.speechBoundary(0, app.word.display.length);
+    app.fireTimer(obsoleteEstimateTimer);
+    await app.finishSpeech(0); await app.finishSpeech(0, 'onerror:late-synthesis-error');
+    app.advanceTime(answerEstimateMs);
+    assert.equal(app.run('micState'), microphoneStateAfterTransition,
+      `${transition}: obsolete estimate/start/boundary/completion must not expose choices`);
+    assert.equal(app.observations.speech.length, speechCountAfterTransition,
+      `${transition}: obsolete answer must not start Got it?`);
+    assert.equal(app.word.totalAttempts, 0);
+    if (transition === 'retry' || transition === 'new-encounter') {
+      assert.equal(app.activeUtterance, currentUtterance);
+      assert.equal(app.element('self-check-yes').disabled, true);
+      app.startSpeech(1); app.advanceTime(answerEstimateMs);
+      assert.equal(app.practice.spokenWordEncounter.phase, 'confirming',
+        'The current answer playback must retain its own audible-end estimate');
+      await app.finishSpeech(1);
+      assert.equal(app.activeUtterance.text, 'Got it?');
+    }
+  }
+}
+
+async function testAnswerEstimateAccountsForNumbersLongerWordsAndSlowerPlayback() {
+  const estimates = createReadingVoiceHarness({ useRealSpeechCompletion: true });
+  const shortWordMs = estimates.run("estimateAnswerSpeechDurationMs('mat', 0.9)");
+  const longerWordMs = estimates.run("estimateAnswerSpeechDurationMs('elephant', 0.9)");
+  const phraseMs = estimates.run("estimateAnswerSpeechDurationMs('red and blue', 0.9)");
+  const oneMs = estimates.run("estimateAnswerSpeechDurationMs('1', 0.9)");
+  const twentyOneMs = estimates.run("estimateAnswerSpeechDurationMs('21', 0.9)");
+  const slowWordMs = estimates.run("estimateAnswerSpeechDurationMs('mat', 0.45)");
+  assert.ok(longerWordMs > shortWordMs, 'A longer spoken word must keep choices disabled longer');
+  assert.ok(phraseMs > shortWordMs, 'A spoken phrase must include all its words in the estimate');
+  assert.ok(twentyOneMs > oneMs, 'Twenty-one must be estimated from its spoken name, beyond its two displayed digits');
+  assert.ok(Math.abs(slowWordMs / shortWordMs - 2) < 0.01, 'Half-rate speech must approximately double the estimate');
+  for (const [display, rate, estimateMs] of [['21', 0.9, twentyOneMs], ['mat', 0.45, slowWordMs]]) {
+    const app = createReadingVoiceHarness({ useRealSpeechCompletion: true });
+    app.word.display = display; app.run(`stored.settings.speechRate = ${rate}`);
+    await app.prepare(); await app.beginAttempt(); app.deliverAudio(); app.release(); app.startSpeech(0);
+    app.advanceTime(estimateMs - 1);
+    assert.equal(app.element('self-check-yes').disabled, true, `${display}/${rate}: estimate must not finish early`);
+    app.advanceTime(1);
+    assert.equal(app.element('self-check-yes').disabled, false, `${display}/${rate}: estimate must open choices`);
+    assert.equal(app.activeUtterance.text, display);
+    assert.equal(app.activeUtterance.active, true);
+    assert.equal(app.observations.speech.length, 1);
+    assert.equal(app.word.totalAttempts, 0);
+  }
+}
+
 async function testRecapFirstConfirmationAndHelpedRepeatAreFeedbackOnly() {
   for (const repeat of [false, true]) {
     const app = createReadingVoiceHarness();
@@ -1280,6 +1525,14 @@ const readingVoiceChecks = [
   testYesDuringQuestionStopsVoiceAndPreservesOrdinaryAndTrophyFeedback,
   testRepeatDuringQuestionStopsVoiceBeforeMicrophoneResumeAndSamples,
   testQuestionEndErrorAndWatchdogLeaveChoicesAvailable,
+  testEstimatedAnswerEndStartsFromPlaybackAndPrecedesNativeCompletion,
+  testTerminalAnswerBoundaryOpensChoicesWithoutInterruptingTheWord,
+  testYesAtEstimatedAnswerEndCancelsSafelyBeforeNativeCompletion,
+  testRepeatAtEstimatedAnswerEndCancelsBeforeCaptureAndRejectsLateSpeech,
+  testGenuineAnswerFailureAfterEstimatedEndRevokesChoices,
+  testAnswerWithoutPlaybackStartStaysDisabledUntilSuccessfulNativeEnd,
+  testStaleAnswerEstimateAndPlaybackEventsCannotOpenAnotherAnswer,
+  testAnswerEstimateAccountsForNumbersLongerWordsAndSlowerPlayback,
   testRecapFirstConfirmationAndHelpedRepeatAreFeedbackOnly,
   testLevelAdvancesOnlyAfterSecondQualifyingFirstConfirmation,
   testSelfCheckUiKeepsTheSameMicrophoneAndControlsYesVisibility,

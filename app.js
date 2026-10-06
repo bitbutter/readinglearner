@@ -1098,7 +1098,7 @@ function getVoice() {
 
 let currentUtterance = null;
 
-function speak(text, rate, onEnd) {
+function speak(text, rate, onEnd, playbackEvents = {}) {
   const snippet = text.length > 24 ? text.slice(0, 24) + '…' : text;
   if (!window.speechSynthesis) { DBG('speak', 'NO speechSynthesis'); onEnd?.('unavailable'); return; }
   speechSynthesis.cancel();
@@ -1123,12 +1123,18 @@ function speak(text, rate, onEnd) {
   };
   utt.onend   = () => finish('onend');
   utt.onerror = (ev) => finish('onerror:' + (ev.error || '?'));
+  utt.onstart = (event) => {
+    if (!done && currentUtterance === utt) playbackEvents.onStart?.(event, utt.rate);
+  };
+  utt.onboundary = (event) => {
+    if (!done && currentUtterance === utt) playbackEvents.onBoundary?.(event);
+  };
   const watchdog = setTimeout(() => finish('WATCHDOG'), Math.max(4000, text.length * 100 + 2000));
 
   speechSynthesis.speak(utt);
 }
 
-const speakWord   = (w, cb) => speak(w, stored.settings.speechRate, cb);
+const speakWord = (w, cb, playbackEvents) => speak(w, stored.settings.speechRate, cb, playbackEvents);
 
 // ============================================================
 // MICROPHONE CAPTURE AND TUNING RECOGNITION
@@ -1298,6 +1304,8 @@ async function startListening() {
   if (!encounter || encounter.committed) return;
   if (micState === 'confirming' && encounter.phase === 'confirming') {
     encounter.phase = 'repeat-ready';
+    clearTimeout(encounter.answerChoiceActivationTimer);
+    encounter.answerChoiceActivationTimer = null;
     speechSynthesis.cancel();
   }
   const helpedRepeat = encounter.phase === 'repeat-ready';
@@ -1354,23 +1362,73 @@ function finishSpokenAttempt() {
   }, 500);
 }
 
+// Speech engines may finish their utterance after a trailing silence. Estimate
+// the audible answer length; this changes button timing, never speech playback.
+function estimateAnswerSpeechDurationMs(display, speechRate) {
+  if (!Number.isFinite(speechRate) || speechRate <= 0) throw new Error('Answer speech needs a positive speaking rate.');
+  const spokenAnswer = /^\d+$/.test(display) ? numberToWords(Number(display)) : display;
+  const spokenWords = spokenAnswer.toLowerCase().match(/[a-z]+/g);
+  if (!spokenWords?.length) throw new Error('The spoken answer needs words for its timing estimate.');
+  let syllableCount = 0;
+  let consonantCount = 0;
+  for (const word of spokenWords) {
+    const syllableSpelling = word.length > 3 && !/[^aeiouy]le$/.test(word) ? word.replace(/e$/, '') : word;
+    syllableCount += Math.max(1, (syllableSpelling.match(/[aeiouy]+/g) || []).length);
+    consonantCount += (word.match(/[^aeiouy]/g) || []).length;
+  }
+  return Math.round((260 + 180 * (syllableCount - 1) + 30 * consonantCount + 40 * (spokenWords.length - 1)) / speechRate);
+}
+
 function askSpokenSelfCheck(encounter) {
   if (gs.spokenWordEncounter !== encounter || encounter.committed) return;
+  clearTimeout(encounter.answerChoiceActivationTimer);
+  encounter.answerChoiceActivationTimer = null;
+  const answerPlaybackSequence = ++encounter.answerPlaybackSequence;
+  const answerDisplay = gs.currentItem.display;
+  let answerSpeechStarted = false;
+  const answerPlaybackIsCurrent = () => gs.spokenWordEncounter === encounter && !encounter.committed &&
+    encounter.answerPlaybackSequence === answerPlaybackSequence &&
+    (encounter.phase === 'answer' || encounter.phase === 'confirming');
+  const enableAnswerChoices = () => {
+    if (!answerPlaybackIsCurrent() || encounter.phase !== 'answer') return;
+    encounter.phase = 'confirming';
+    setMicState('confirming');
+  };
   encounter.phase = 'answer';
-  const question = `${gs.currentItem.display}. Got it?`;
+  const question = `${answerDisplay}. Got it?`;
   document.getElementById('self-check-question').textContent = question;
   setMicState('waiting');
-  speakWord(gs.currentItem.display, how => {
-    if (gs.spokenWordEncounter !== encounter || encounter.phase !== 'answer') return;
+  speakWord(answerDisplay, how => {
+    if (!answerPlaybackIsCurrent()) return;
+    clearTimeout(encounter.answerChoiceActivationTimer);
+    encounter.answerChoiceActivationTimer = null;
     if (how !== 'onend') {
       encounter.phase = 'answer-error';
       document.getElementById('self-check-question').textContent = 'The word could not play. Check sound, then tap Hear it to try again.';
       setMicState('answer-error');
       return;
     }
-    encounter.phase = 'confirming';
-    setMicState('confirming');
+    enableAnswerChoices();
     speak('Got it?', stored.settings.speechRate);
+  }, {
+    onStart: (_event, speechRate) => {
+      if (!answerPlaybackIsCurrent() || encounter.phase !== 'answer' || answerSpeechStarted) return;
+      answerSpeechStarted = true;
+      const estimatedDurationMs = estimateAnswerSpeechDurationMs(answerDisplay, speechRate);
+      DBG('answer buttons estimated ending', { answer: answerDisplay, durationMs: estimatedDurationMs, speechRate });
+      encounter.answerChoiceActivationTimer = setTimeout(() => {
+        if (!answerPlaybackIsCurrent() || encounter.phase !== 'answer') return;
+        encounter.answerChoiceActivationTimer = null;
+        enableAnswerChoices();
+      }, estimatedDurationMs);
+    },
+    onBoundary: event => {
+      // charLength describes text still to be spoken, not the word's ending.
+      if (!answerPlaybackIsCurrent() || !Number.isInteger(event.charIndex) || event.charIndex < answerDisplay.length) return;
+      clearTimeout(encounter.answerChoiceActivationTimer);
+      encounter.answerChoiceActivationTimer = null;
+      enableAnswerChoices();
+    },
   });
 }
 
@@ -1833,6 +1891,8 @@ function beginWordEncounter(item) {
     itemId: item.id,
     phase: 'first-ready',
     firstAttemptAssistance: null,
+    answerPlaybackSequence: 0,
+    answerChoiceActivationTimer: null,
     committed: false,
   };
 }
@@ -1842,6 +1902,7 @@ function cancelWordEncounter() {
   spokenAttemptGeneration++;
   clearTimeout(maxListenTimer);
   cancelUnblock();
+  clearTimeout(gs.spokenWordEncounter?.answerChoiceActivationTimer);
   gs.spokenWordEncounter = null;
   gs.awaitingResult = false;
 }
@@ -1861,6 +1922,8 @@ function commitSelfCheckedAnswer(outcome) {
   if (!assistance || encounter.itemId !== gs.currentItem?.id) throw new Error('The self-check must belong to its recorded word.');
   encounter.committed = true;
   encounter.phase = 'completed';
+  clearTimeout(encounter.answerChoiceActivationTimer);
+  encounter.answerChoiceActivationTimer = null;
   if (!helpedRepeat) speechSynthesis.cancel();
   gs.awaitingResult = true;
   setMicState('waiting');
@@ -3068,7 +3131,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v44 — child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v45 — child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed
