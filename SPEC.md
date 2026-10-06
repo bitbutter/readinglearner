@@ -20,11 +20,11 @@ The practice app is a static browser application served from GitHub Pages. It us
 ## Product Decisions
 
 OLD: Ten word levels mix several unfamiliar spelling patterns and choose a teaching family within each round.
-CHANGES_TO: A cumulative course has 41 small levels with 240 focus words. Each level teaches one focus and each round uses three familiar words, four focus encounters, then three familiar words.
+CHANGES_TO: A cumulative course has 41 small levels with 240 focus words. Each level teaches one focus and each round uses three different easy words, four focus encounters, then three different easy words.
 REASON: The child gets familiar practice around one new pattern at a time.
 
 OLD: Every eligible word assigned to a numeric level determines completion.
-CHANGES_TO: Only the declared focus bank completes a word level. Earlier mastered course words and explicitly parent-confirmed starter words provide familiar practice.
+CHANGES_TO: Only the declared focus bank completes a word level. Earlier mastered course words and explicitly parent-confirmed starter words provide familiar practice; Level 1 words complete the easy pool when it is too small.
 REASON: Familiar words can support later levels without gaining new completion requirements.
 
 OLD: A recognizer transcript determined whether an attempt was correct and whether the child retried.
@@ -113,11 +113,11 @@ Gold mastery, silver, and purple trophies remain earned permanently. Loading an 
 
 ## Rounds and Recaps
 
-A word round has ten ordinary encounters in a fixed order: three familiar words, four encounters from the current focus bank, then three familiar words. The four focus slots rotate through the bank over successive rounds; a level's entire bank need not fit in one round. The number-round size remains configurable, default 10. Numbers favor unmastered items, with previous helped items and new items ahead of other practice items.
+A word round has ten ordinary encounters in a fixed order: three different easy words, four encounters from the current focus bank, then three different easy words. Opening and closing sections select without replacement within each section. No two consecutive encounters show the same word, including either boundary with the focus section. The four focus slots rotate through the bank over successive rounds; a level's entire bank need not fit in one round. The number-round size remains configurable, default 10. Numbers favor unmastered items, with previous helped items and new items ahead of other practice items.
 
-Familiar selection uses gold-mastered focus words at or before the current word level, including mastered words in the current bank, and declared starter words explicitly confirmed by a grown-up. The starter choices are mat, dad and hat. A grown-up confirms only words the child already reads independently. Repeating a familiar word is allowed. Future-bank, parked and custom words are outside automatic familiar selection. Candidate review words in the course guide are examples, not guarantees that the child knows them.
+Familiar selection uses gold-mastered focus words at or before the current word level, including mastered words in the current bank, and declared starter words explicitly confirmed by a grown-up. The starter choices are mat, dad and hat. A grown-up confirms only words the child already reads independently. An easy word may recur later in the round, separated by other words. Future-bank, parked and custom words are outside known-word selection. Candidate review words in the course guide are examples, not guarantees that the child knows them.
 
-If no eligible familiar word is available, word practice gives a clear setup message and directs the grown-up to confirm familiar starters. It does not substitute an unseen word. The course assumes ordinary consonant sounds and an attempt at simple consonant-vowel-consonant blending; the grown-up checks these starting skills before practice.
+When fewer than three eligible familiar words are available, the opening and closing pool also includes the declared Level 1 focus words. This is the approved easy-word default for a fresh or lightly practised session, and requires no setup step. Selection preserves actual mastery and confirmation counts; it does not declare those Level 1 words already known. The course assumes ordinary consonant sounds and an attempt at simple consonant-vowel-consonant blending; the grown-up checks these starting skills before practice.
 
 A word level completes when every word in its declared focus bank has permanent gold mastery. Familiar opening and closing words add no completion requirements. Existing mastery and confirmation counters retain their credit. Number levels retain completion over their eligible number items. Familiar word encounters use the normal confirmation and trophy mechanics. Feedback-only recaps remain exclusive to number rounds. Earned progress does not move backwards.
 
@@ -170,8 +170,8 @@ Commit item progress only when the encounter resolves through Yes or a valid hel
 - A helped repeat, Hear it, or a nonqualifying answer never resets confirmation progress or removes an earned trophy.
 - Older saves retain all earned trophies and levels, with new counters initialized to zero.
 - The active word course has the reviewed 41 focus banks and 240 focus words, with one focus per level.
-- Every ordinary word round follows three familiar words, four focus encounters and three familiar words. Number-round size and its ten-level progression remain independent.
-- Familiar words are mastered course words at or before the current level or explicitly confirmed declared starters. Missing familiar words expose setup rather than an invented easy word.
+- Every ordinary word round follows three different easy words, four focus encounters and three different easy words, without immediate word repeats. Number-round size and its ten-level progression remain independent.
+- Familiar words are mastered course words at or before the current level or explicitly confirmed declared starters. With fewer than three familiar words, the declared Level 1 bank also supplies opening and closing words. This leaves their actual progress unchanged and requires no setup step.
 - Only the active focus bank determines word-level completion. Parked and custom terms retain tuning and progress without entering course completion.
 - The word-course migration preserves trophies, confirmations, tuning records and old round history, selects the first unfinished focus bank once, and preserves later level overrides across refresh.
 - Every level has a distinct assigned picture; photograph source and licence credits are available from practice.

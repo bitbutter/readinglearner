@@ -79,28 +79,45 @@ function wordFamiliarItems(level, progress = stored) {
   }).filter(item => item.mastered || confirmedStarters.has(item.id));
 }
 
+function wordOpeningClosingItems(level, progress = stored) {
+  const familiar = wordFamiliarItems(level, progress);
+  const sectionSize = Math.max(WORD_COURSE.roundRecipe.openingCount, WORD_COURSE.roundRecipe.closingCount);
+  if (familiar.length >= sectionSize) return familiar;
+  // Level 1 supplies the approved easy-word default; this does not grant mastery.
+  const familiarIds = new Set(familiar.map(item => item.id));
+  return familiar.concat(wordFocusItems(1, progress).filter(item => !familiarIds.has(item.id)));
+}
+
 function buildWordRound(level) {
   const focus = wordCourseLevel(level);
-  const familiar = wordFamiliarItems(level);
-  if (!familiar.length) {
-    const error = new Error('Choose at least one word he already reads in the familiar starter settings.');
-    error.code = 'known_word_bank_required';
-    throw error;
+  const openingClosingItems = wordOpeningClosingItems(level);
+  const { openingCount, focusCount, closingCount } = WORD_COURSE.roundRecipe;
+  if (openingClosingItems.length < Math.max(openingCount, closingCount)) {
+    throw new Error('The declared easy-word bank cannot fill distinct opening and closing sections.');
   }
   const focusItems = wordFocusItems(level);
   const offset = stored.wordCourse.focusBankOffsets[focus.id] ?? 0;
   if (!Number.isInteger(offset) || offset < 0 || offset >= focusItems.length) throw new Error('Invalid focus-word rotation.');
   const rotated = focusItems.slice(offset).concat(focusItems.slice(0, offset));
   const selectedFocus = rotated.filter(item => !item.mastered)
-    .concat(rotated.filter(item => item.mastered)).slice(0, WORD_COURSE.roundRecipe.focusCount);
-  if (selectedFocus.length !== WORD_COURSE.roundRecipe.focusCount) throw new Error('The focus bank cannot fill the reviewed round.');
-  const shuffledFamiliar = shuffle(familiar);
-  const familiarEncounter = index => ({ item: shuffledFamiliar[index % shuffledFamiliar.length], role: 'familiar' });
+    .concat(rotated.filter(item => item.mastered)).slice(0, focusCount);
+  if (selectedFocus.length !== focusCount) throw new Error('The focus bank cannot fill the reviewed round.');
+  const shuffledEasyWords = shuffle(openingClosingItems);
+  const openingWords = shuffledEasyWords.slice(0, openingCount);
+  const closingWords = Array.from({ length: closingCount }, (_, index) => shuffledEasyWords[(index + openingCount) % shuffledEasyWords.length]);
+  // A mastered focus word can also be eligible for an easy section.
+  // Move that section's boundary word, leaving the focus rotation unchanged.
+  if (openingWords.at(-1).id === selectedFocus[0].id) {
+    [openingWords[0], openingWords[openingCount - 1]] = [openingWords[openingCount - 1], openingWords[0]];
+  }
+  if (closingWords[0].id === selectedFocus.at(-1).id) {
+    [closingWords[0], closingWords[closingCount - 1]] = [closingWords[closingCount - 1], closingWords[0]];
+  }
   const encounters = [
-    ...Array.from({ length: WORD_COURSE.roundRecipe.openingCount }, (_, index) => familiarEncounter(index)),
+    ...openingWords.map(item => ({ item, role: 'familiar' })),
     ...selectedFocus.map(item => ({ item, role: 'focus' })),
-    ...Array.from({ length: WORD_COURSE.roundRecipe.closingCount }, (_, index) => familiarEncounter(index + WORD_COURSE.roundRecipe.openingCount)),
+    ...closingWords.map(item => ({ item, role: 'familiar' })),
   ];
-  stored.wordCourse.focusBankOffsets[focus.id] = (offset + WORD_COURSE.roundRecipe.focusCount) % focusItems.length;
+  stored.wordCourse.focusBankOffsets[focus.id] = (offset + focusCount) % focusItems.length;
   return { encounters, ruleFocusId: focus.id, ruleIds: selectedFocus.map(item => item.id) };
 }

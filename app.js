@@ -1553,9 +1553,13 @@ function needsMorePractice(item) {
 }
 
 function buildRound(set, level) {
-  roundNumber++;
-  if (set === 'words') return buildWordRound(level);
+  if (set === 'words') {
+    const built = buildWordRound(level);
+    roundNumber++;
+    return built;
+  }
   if (set !== 'numbers') throw new Error('Unknown practice set.');
+  roundNumber++;
   const levelItems = Object.values(stored.items).filter(item => item.kind === 'number' && item.level === level);
   return { encounters: buildNumberRound(levelItems).map(item => ({ item, role: 'practice' })), ruleFocusId: null, ruleIds: [] };
 }
@@ -1627,15 +1631,7 @@ const gs = {
 let spokenWordEncounterSequence = 0;
 
 function startRound(set, level) {
-  let built;
-  try { built = buildRound(set, level); }
-  catch (error) {
-    if (error.code !== 'known_word_bank_required') throw error;
-    openGrownUp();
-    document.getElementById('s-familiar-word-status').textContent = error.message;
-    speak('A grown-up needs to choose a word you already read.', 0.9);
-    return;
-  }
+  const built = buildRound(set, level);
   gs.currentSet          = set;
   gs.currentLevel        = level;
   gs.queue               = [...built.encounters];
@@ -2938,9 +2934,10 @@ function renderKnownStarterWords() {
     host.appendChild(label);
   }
   const familiar = wordFamiliarItems(stored.settings.wordLevel);
-  document.getElementById('s-familiar-word-status').textContent = familiar.length
+  const requiredKnownWords = Math.max(WORD_COURSE.roundRecipe.openingCount, WORD_COURSE.roundRecipe.closingCount);
+  document.getElementById('s-familiar-word-status').textContent = familiar.length >= requiredKnownWords
     ? familiar.length + ' known words available for familiar practice at this level.'
-    : 'Select at least one word he already reads before starting Words.';
+    : familiar.length + ' known words available. Level 1 words will provide variety in the opening and closing sections.';
 }
 
 function saveSettings() {
@@ -3178,7 +3175,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v48 — 41 word focuses, familiar/focus/familiar rounds and recorded rule sounds; child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v49 — 41 word focuses, distinct easy/focus/easy sections and recorded rule sounds; child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed

@@ -99,6 +99,7 @@ function compareWordCoverage(course, originalCatalog) {
 }
 
 function validateCourse(course) {
+  requireText(course.roundRecipe.easyWordDefault, 'easy-word default');
   requireCondition(course.status === 'active', 'this renderer requires the active course.');
   requireTextList(course.startingWordSuggestions, 'starting word suggestions');
   requireCondition(Array.isArray(course.levels) && course.levels.length > 0, 'levels are missing.');
@@ -177,13 +178,13 @@ function renderCourseGuide(course, coverage) {
 <p class="scope">${e(course.scope)}</p></header>
 <p><a href="word-level-artwork.html">See the artwork for all 41 levels</a></p>
 <section aria-labelledby="practice-heading"><h2 id="practice-heading">A practice round</h2><div class="round">
-<div><strong>${course.roundRecipe.openingCount} familiar words</strong>${e(course.roundRecipe.opening)}</div>
+<div><strong>${course.roundRecipe.openingCount} easy words</strong>${e(course.roundRecipe.opening)}</div>
 <div><strong>${course.roundRecipe.focusCount} focus encounters</strong>${e(course.roundRecipe.focus)}</div>
-<div><strong>${course.roundRecipe.closingCount} familiar words</strong>${e(course.roundRecipe.closing)}</div></div>
+<div><strong>${course.roundRecipe.closingCount} easy words</strong>${e(course.roundRecipe.closing)}</div></div>
 <p>${e(course.completion.description)}</p><p>${e(course.completion.familiarWords)} ${e(course.completion.earnedProgress)}</p></section>
 <section class="panel"><h2>Check the starting point</h2>${list(course.startingSkills)}
 <p>Starter choices for a grown-up to confirm: <b>${course.startingWordSuggestions.map(e).join(', ')}</b>.</p><p>${e(course.startingWordsNote)}</p>
-<details><summary>If these starting skills are not ready</summary><p>${e(course.roundRecipe.noKnownWords)}</p></details></section>
+<details><summary>When fewer than three words are known</summary><p>${e(course.roundRecipe.easyWordDefault)}</p></details></section>
 <section aria-labelledby="levels-heading"><h2 id="levels-heading">The word levels</h2><p>${e(course.prerequisitesNote)}</p>
 <p>Bold words practise the level’s focus. Familiar-word candidates are optional; use them only after he knows them.</p>
 <p>${e(course.rulePlaybackNote)}</p>

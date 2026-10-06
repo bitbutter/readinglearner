@@ -1411,11 +1411,29 @@ async function testHelpedAnswersReturnToNumberPracticeAndTheActiveFocusBank() {
     'The active word course must keep its familiar/focus/familiar sequence');
   assert.ok(wordRound.ruleIds.includes('word:cat'), 'A helped focus word remains unmastered and returns for practice');
   assert.equal(wordRound.ruleFocusId, 'short-a');
-  assert.ok(wordRound.encounters.filter(encounter => encounter.role === 'familiar').every(encounter => encounter.item.id === 'word:mat'),
-    'A declared known starter supplies the familiar encounters independently of the focus bank');
+  const openingClosingWordIds = new Set(run('wordOpeningClosingItems(1).map(item => item.id)'));
+  assert.ok(wordRound.encounters.filter(encounter => encounter.role === 'familiar').every(encounter => openingClosingWordIds.has(encounter.item.id)),
+    'The easy sections draw from known words and the authorized level-one supplement');
+  const openingCount = run('WORD_COURSE.roundRecipe.openingCount');
+  const closingCount = run('WORD_COURSE.roundRecipe.closingCount');
+  assert.equal(new Set(wordRound.encounters.slice(0, openingCount).map(encounter => encounter.item.id)).size, openingCount,
+    'Each opening word must be selected without replacement');
+  assert.equal(new Set(wordRound.encounters.slice(-closingCount).map(encounter => encounter.item.id)).size, closingCount,
+    'Each closing word must be selected without replacement');
+  assert.ok(wordRound.encounters.every((encounter, index, encounters) => !index || encounter.item.id !== encounters[index - 1].item.id),
+    'Easy-section boundaries must not repeat the neighboring focus word');
   const laterFocusWords = run('buildRound("words", 1).ruleIds');
   assert.ok(laterFocusWords.includes('word:bag') && laterFocusWords.includes('word:jam'),
     'The next round rotates through the remaining declared focus words');
+  run('stored.settings.knownStarterWordIds = []');
+  const freshRound = run('buildRound("words", 1)');
+  const levelOneWordIds = new Set(run('wordCourseLevel(1).focusWordIds'));
+  assert.equal(freshRound.encounters.length, expectedRoles.length, 'Fresh setup starts a complete word round without a starter-choice gate');
+  assert.ok(freshRound.encounters.filter(encounter => encounter.role === 'familiar').every(encounter => levelOneWordIds.has(encounter.item.id)),
+    'Fresh setup uses only the declared level-one words for its easy sections');
+  assert.equal(new Set(freshRound.encounters.slice(0, openingCount).map(encounter => encounter.item.id)).size, openingCount);
+  assert.equal(new Set(freshRound.encounters.slice(-closingCount).map(encounter => encounter.item.id)).size, closingCount);
+  assert.ok(freshRound.encounters.every((encounter, index, encounters) => !index || encounter.item.id !== encounters[index - 1].item.id));
   assert.equal(run("needsMorePractice({ lastResult: 'miss' })"), true, 'Historical misses must retain their priority');
   assert.equal(run("needsMorePractice({ lastResult: 'helped' })"), true);
   assert.equal(run("needsMorePractice({ lastResult: 'correct' })"), false);

@@ -22,11 +22,11 @@
     "openingCount": 3,
     "focusCount": 4,
     "closingCount": 3,
-    "opening": "Three familiar words from mastered focus words at or before the current level, or starter words explicitly confirmed by a grown-up.",
+    "opening": "Three different easy words, selected from known words. If fewer than three are available, Level 1 words join the pool.",
     "focus": "Four encounters from the current level's focus bank. Rotate the bank across rounds; the whole level need not fit in one round.",
-    "closing": "Three familiar words again. Repeats of known words are allowed.",
-    "reviewSelection": "The lists below are examples of earlier words. Automatic selection uses mastered focus words at or before the current level and explicitly confirmed starter words. There is no requirement to use every candidate.",
-    "noKnownWords": "Word practice requires at least one mastered focus word at or before the current level, or an explicitly confirmed starter word. If neither is available, a grown-up confirms familiar starters in settings or addresses the starting skills before practice."
+    "closing": "Three different easy words again. A word can recur later in the round, with other words between repeats.",
+    "reviewSelection": "The lists below are examples of earlier words. Selection prefers a sufficient bank of mastered current/earlier focus words and confirmed starters; if fewer than three qualify, Level 1 focus words join the pool. Each section uses distinct words and avoids immediate repeats at the focus boundaries.",
+    "easyWordDefault": "A fresh or lightly practised session uses the Level 1 focus words when fewer than three known words qualify. This does not award mastery or confirmations and requires no setup step."
   },
   "completion": {
     "focusWordsOnly": true,

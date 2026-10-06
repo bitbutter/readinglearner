@@ -42,7 +42,7 @@ function harness(savedProgress) {
     showAllDone = completion => { globalThis.lastRoundCompletion = completion; };
     globalThis.wordCourseTest = {
       course: WORD_COURSE, freshState, makeItem, loadStored, saveStored,
-      wordCourseLevel, wordFocusItems, wordFamiliarItems, wordCourseFocusComplete,
+      wordCourseLevel, wordFocusItems, wordFamiliarItems, wordOpeningClosingItems, wordCourseFocusComplete,
       firstUnfinishedWordLevel, migrateWordCourseProgress, buildRound, startRound,
       checkLevelComplete, endRound, levelFromHash,
       get progress() { return stored; }, set progress(value) { stored = value; },
@@ -70,6 +70,30 @@ function masterFocusBank(app, level, progress = app.progress) {
 
 function confirmStarterBank(app, progress = app.progress) {
   progress.settings.knownStarterWordIds = [...app.course.startingWordIds];
+}
+
+function verifyDistinctOpeningClosingWords(encounters) {
+  assert.equal(encounters.length, 10);
+  for (const sectionStart of [0, 7]) {
+    const section = encounters.slice(sectionStart, sectionStart + 3);
+    assert.ok(section.every(encounter => encounter.role === 'familiar'));
+    assert.equal(new Set(section.map(encounter => encounter.item.id)).size, 3,
+      'Each opening and closing section must contain three distinct words.');
+  }
+  assert.notEqual(encounters[2].item.id, encounters[3].item.id, 'The opening cannot immediately repeat the first focus word.');
+  assert.notEqual(encounters[6].item.id, encounters[7].item.id, 'The closing cannot immediately repeat the last focus word.');
+}
+
+function useDeterministicFamiliarShuffle(app, wordIds) {
+  app.context.deterministicFamiliarWordIds = [...wordIds];
+  app.run(`shuffle = words => {
+    if (words.length !== deterministicFamiliarWordIds.length) throw new Error('The test shuffle must describe the complete easy-word pool.');
+    return deterministicFamiliarWordIds.map(id => {
+      const word = words.find(candidate => candidate.id === id);
+      if (!word) throw new Error('The test shuffle contains a word outside the easy-word pool: ' + id);
+      return word;
+    });
+  };`);
 }
 
 function legacyFixture(app, { oldMigrationFlags = true } = {}) {
@@ -271,11 +295,123 @@ check('Only mastered current/earlier focus words and demonstrated starters enter
   assert.ok(app.wordFamiliarItems(1).some(item => item.id === starter), 'Earned starter mastery also proves familiarity.');
 });
 
-check('An unknown familiar bank fails explicitly without substituting unseen easy words', () => {
+check('A new session with no known words starts naturally with the authorized Level 1 word bank', () => {
   const app = harness(); app.fresh();
-  assert.throws(() => app.buildRound('words', 1), /familiar|known|starter/i);
+  const wordRecordsBefore = plain(app.progress.items);
+  assert.equal(app.wordFamiliarItems(1).length, 0, 'The default cannot declare an unseen word familiar.');
+  app.startRound('words', 1);
+  assert.equal(app.practice.currentSet, 'words');
+  assert.equal(app.practice.currentLevel, 1);
+  verifyDistinctOpeningClosingWords(app.practice.queue);
+  const levelOneWordIds = new Set(app.course.levels[0].focusWordIds);
+  assert.ok(app.practice.queue.every(encounter => levelOneWordIds.has(encounter.item.id)));
   assert.equal(app.progress.rounds.length, 0);
-  assert.ok(app.wordFocusItems(1).every(item => !item.mastered && item.totalAttempts === 0));
+  assert.deepEqual(plain(app.progress.items), wordRecordsBefore, 'Starting default practice cannot award attempts, confirmations, or trophies.');
+  assert.equal(app.run('roundNumber'), 1);
+});
+
+check('The observed singleton cat bank gains distinct Level 1 words without invented mastery', () => {
+  const app = harness(); app.fresh();
+  const cat = app.progress.items['word:cat'];
+  Object.assign(cat, { mastered: true, totalAttempts: 2, totalCorrect: 2, masteryConfirmationCount: 2 });
+  const wordRecordsBefore = plain(app.progress.items);
+  assert.deepEqual(plain(app.wordFamiliarItems(1).map(word => word.id)), ['word:cat']);
+  assert.deepEqual(new Set(app.wordOpeningClosingItems(1).map(word => word.id)), new Set(app.course.levels[0].focusWordIds));
+  for (let round = 0; round < 6; round++) {
+    const built = app.buildRound('words', 1);
+    verifyDistinctOpeningClosingWords(built.encounters);
+    assert.ok(built.encounters.slice(0, 3).some(encounter => encounter.item.id !== cat.id), 'The opening cannot be cat/cat/cat.');
+  }
+  assert.deepEqual(plain(app.progress.items), wordRecordsBefore);
+  assert.deepEqual(plain(app.progress.settings.knownStarterWordIds), [], 'The default cannot fabricate parent confirmations.');
+});
+
+check('Zero, one, and two known-word pools add every missing Level 1 candidate and no other unknown words', () => {
+  for (const knownWordCount of [0, 1, 2]) {
+    for (const level of [1, 12]) {
+      const app = harness(); app.fresh();
+      app.progress.settings.knownStarterWordIds = [...app.course.startingWordIds.slice(0, knownWordCount)];
+      const knownWordIds = new Set(app.wordFamiliarItems(level).map(word => word.id));
+      assert.equal(knownWordIds.size, knownWordCount);
+      const allowedWordIds = new Set([...knownWordIds, ...app.course.levels[0].focusWordIds]);
+      const wordRecordsBefore = plain(app.progress.items);
+      const candidateWordIds = app.wordOpeningClosingItems(level).map(word => word.id);
+      assert.equal(candidateWordIds.length, allowedWordIds.size, 'Append all missing Level 1 records, not only enough to reach three.');
+      assert.deepEqual(new Set(candidateWordIds), allowedWordIds);
+      const built = app.buildRound('words', level);
+      verifyDistinctOpeningClosingWords(built.encounters);
+      assert.ok(built.encounters.filter(encounter => encounter.role === 'familiar').every(encounter => allowedWordIds.has(encounter.item.id)));
+      assert.deepEqual(plain(app.progress.items), wordRecordsBefore);
+      assert.equal(app.wordFamiliarItems(level).length, knownWordCount, 'Selection leaves demonstrated familiarity unchanged.');
+    }
+  }
+});
+
+check('Exactly three known words remain the whole easy-word pool and fill each section without replacement', () => {
+  const app = harness(); app.fresh(); confirmStarterBank(app);
+  const knownWordIds = [...app.course.startingWordIds];
+  const wordRecordsBefore = plain(app.progress.items);
+  assert.deepEqual(new Set(app.wordOpeningClosingItems(1).map(word => word.id)), new Set(knownWordIds));
+  useDeterministicFamiliarShuffle(app, knownWordIds);
+  const built = app.buildRound('words', 1);
+  verifyDistinctOpeningClosingWords(built.encounters);
+  for (const sectionStart of [0, 7]) {
+    assert.deepEqual(new Set(built.encounters.slice(sectionStart, sectionStart + 3).map(encounter => encounter.item.id)), new Set(knownWordIds));
+  }
+  assert.deepEqual(plain(app.progress.items), wordRecordsBefore);
+});
+
+check('Larger known banks select distinct sections without adding unknown words or changing earned progress', () => {
+  const app = harness(); app.fresh(); masterFocusBank(app, 1); confirmStarterBank(app);
+  const knownWordIds = app.wordFamiliarItems(2).map(word => word.id);
+  assert.ok(knownWordIds.length > 6);
+  assert.deepEqual(new Set(app.wordOpeningClosingItems(2).map(word => word.id)), new Set(knownWordIds));
+  const wordRecordsBefore = plain(app.progress.items);
+  useDeterministicFamiliarShuffle(app, [...knownWordIds].reverse());
+  for (let round = 0; round < 3; round++) {
+    const built = app.buildRound('words', 2);
+    verifyDistinctOpeningClosingWords(built.encounters);
+    assert.ok(built.encounters.filter(encounter => encounter.role === 'familiar').every(encounter => knownWordIds.includes(encounter.item.id)));
+  }
+  assert.deepEqual(plain(app.progress.items), wordRecordsBefore);
+});
+
+check('Deterministic opening and closing collisions move easy words while preserving the focus selection', () => {
+  const shuffledWordOrders = [
+    ['word:map', 'word:tap', 'word:cat', 'word:sad', 'word:bag', 'word:jam'],
+    ['word:map', 'word:tap', 'word:cat', 'word:bag', 'word:sad', 'word:jam'],
+    ['word:cat', 'word:map', 'word:tap', 'word:sad', 'word:bag', 'word:jam'],
+  ];
+  for (const wordOrder of shuffledWordOrders) {
+    const app = harness(); app.fresh(); masterFocusBank(app, 1);
+    const expectedFocusWordIds = [...app.course.levels[0].focusWordIds.slice(0, 4)];
+    assert.ok(wordOrder[2] === expectedFocusWordIds[0] || wordOrder[3] === expectedFocusWordIds[3],
+      'The fixture must cause an immediate focus-boundary repeat before the correction.');
+    const wordRecordsBefore = plain(app.progress.items);
+    useDeterministicFamiliarShuffle(app, wordOrder);
+    const built = app.buildRound('words', 1);
+    verifyDistinctOpeningClosingWords(built.encounters);
+    assert.deepEqual(plain(built.encounters.filter(encounter => encounter.role === 'focus').map(encounter => encounter.item.id)), expectedFocusWordIds,
+      'Boundary ordering cannot change which focus words are being practised.');
+    assert.deepEqual(plain(app.progress.items), wordRecordsBefore);
+  }
+});
+
+check('Missing Level 1 default records and failed assembly remain explicit and do not consume a round number', () => {
+  const app = harness(); app.fresh();
+  const missingWordId = app.course.levels[0].focusWordIds[0];
+  const missingWordRecord = app.progress.items[missingWordId];
+  delete app.progress.items[missingWordId];
+  const wordRecordsBefore = plain(app.progress.items);
+  app.run('roundNumber = 14');
+  assert.throws(() => app.wordOpeningClosingItems(12), /missing|word|record/i);
+  assert.throws(() => app.startRound('words', 12), /missing|word|record/i);
+  assert.equal(app.run('roundNumber'), 14);
+  assert.equal(app.practice.currentSet, null);
+  assert.deepEqual(plain(app.progress.items), wordRecordsBefore);
+  app.progress.items[missingWordId] = missingWordRecord;
+  app.startRound('words', 1);
+  assert.equal(app.run('roundNumber'), 15, 'Only the successfully assembled round consumes its sequence number.');
 });
 
 check('Every level assembles ten word encounters with 3 familiar, 4 focus, 3 familiar and full bank rotation', () => {
@@ -301,8 +437,9 @@ check('Every level assembles ten word encounters with 3 familiar, 4 focus, 3 fam
         seenFocusIds.add(encounter.item.id);
       }
       assert.deepEqual(new Set(built.ruleIds), new Set(focusEncounters.map(encounter => encounter.item.id)));
-      const familiarIds = new Set(app.wordFamiliarItems(level).map(item => item.id));
+      const familiarIds = new Set(app.wordOpeningClosingItems(level).map(item => item.id));
       assert.ok(built.encounters.filter(encounter => encounter.role === 'familiar').every(encounter => familiarIds.has(encounter.item.id)));
+      verifyDistinctOpeningClosingWords(built.encounters);
     }
     assert.equal(seenFocusIds.size, focusIds.size, `Level ${level} eventually encounters its entire focus bank.`);
     assert.ok(app.wordFocusItems(level).every(item => !item.mastered && item.totalAttempts === 0),
