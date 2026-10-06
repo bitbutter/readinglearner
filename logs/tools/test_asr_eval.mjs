@@ -90,31 +90,6 @@ function progressWithoutMatSpellings(progress) {
   return progressSnapshot;
 }
 
-function exerciseAppNoTranscript({ heldMilliseconds, awaitingResult = false }) {
-  const currentWord = {
-    id: 'word:mat', display: 'mat', totalCorrect: 17, totalAttempts: 23,
-    successStreak: 4, unaidedStreak: 3, decoded: true, mastered: true, flawless: true,
-  };
-  const originalWordProgress = structuredClone(currentWord);
-  const acceptedAnswers = [];
-  const displayedTranscripts = [];
-  const microphoneStatuses = [];
-  const spokenRetries = [];
-  const context = vm.createContext({
-    gs: { currentItem: currentWord, awaitingResult },
-    micHoldStart: 10000 - heldMilliseconds, Date: { now: () => 10000 },
-    DBG() {},
-    handleAnswer: correct => acceptedAnswers.push(correct),
-    setHeardDisplay: transcript => displayedTranscripts.push(transcript),
-    setMicState: status => microphoneStatuses.push(status),
-    speak: text => spokenRetries.push(text),
-  });
-  vm.runInContext(extractAppSection('function handleNoTranscript()', 'function normText(s)'), context,
-    { filename: 'app.js empty recognition attempt', timeout: 1000 });
-  vm.runInContext('handleNoTranscript()', context, { timeout: 1000 });
-  return { currentWord, originalWordProgress, acceptedAnswers, displayedTranscripts, microphoneStatuses, spokenRetries };
-}
-
 function deferred() {
   let resolve, reject;
   const promise = new Promise((fulfill, fail) => { resolve = fulfill; reject = fail; });
@@ -688,14 +663,32 @@ const browserBehaviorTests = [
     assert.deepEqual(progressWithoutMatSpellings(restored), progressWithoutMatSpellings(expected));
     assert.equal(app.matchMat('Matthew'), false); app.save(); assert.deepEqual(app.restore(), restored);
   }],
-  ['Empty main-app recognition never fabricates correctness or a transcript at any hold duration', async () => {
-    for (const heldMilliseconds of [0, 500, 5000]) {
-      const attempt = exerciseAppNoTranscript({ heldMilliseconds });
-      assert.deepEqual(attempt.acceptedAnswers, []); assert.deepEqual(attempt.displayedTranscripts, []);
-      assert.deepEqual(attempt.currentWord, attempt.originalWordProgress);
-      assert.deepEqual(attempt.microphoneStatuses, ['ready']); assert.equal(attempt.spokenRetries.length, 1);
+  ['Legacy recognition totals preserve earned trophies without seeding self-confirmation counts', async () => {
+    const app = createAppWordRestoration(), original = existingChildProgress(app);
+    for (const item of Object.values(original.items)) {
+      delete item.masteryConfirmationCount;
+      delete item.flawlessConfirmationCount;
     }
-    assert.deepEqual(exerciseAppNoTranscript({ heldMilliseconds: 5000, awaitingResult: true }).spokenRetries, []);
+    const restored = app.restore(original);
+    const legacyMat = original.items['word:mat'], restoredMat = restored.items['word:mat'];
+    assert.equal(restoredMat.masteryConfirmationCount, 0);
+    assert.equal(restoredMat.flawlessConfirmationCount, 0);
+    for (const name of ['decoded', 'mastered', 'flawless', 'totalAttempts', 'totalCorrect', 'silentCorrect']) {
+      assert.equal(restoredMat[name], legacyMat[name], `Legacy ${name} must survive migration`);
+    }
+    app.save(); assert.deepEqual(app.restore(), restored, 'Migration must be idempotent after saving');
+  }],
+  ['Saved self-confirmation counts survive restoration and retain partially earned progress', async () => {
+    const app = createAppWordRestoration(), original = existingChildProgress(app);
+    Object.assign(original.items['word:mat'], {
+      mastered: false, flawless: false, masteryConfirmationCount: 1, flawlessConfirmationCount: 1,
+    });
+    const restored = app.restore(original);
+    assert.equal(restored.items['word:mat'].masteryConfirmationCount, 1);
+    assert.equal(restored.items['word:mat'].flawlessConfirmationCount, 1);
+    assert.equal(restored.items['word:mat'].mastered, false);
+    assert.equal(restored.items['word:mat'].flawless, false);
+    app.save(); assert.deepEqual(app.restore(), restored);
   }],
   ['Brave records without reading any browser speech constructor and supports native MIME lifecycle', async () => {
     const page = createPage(); await page.idle();

@@ -890,7 +890,6 @@ const STORAGE_KEY = 'readingLearner.v1';
 
 const DEFAULT_SETTINGS = {
   roundSize: 10,
-  retryCap: 2,
   wordLevel: 1,
   numberLevel: 1,
   voiceName: null,
@@ -909,11 +908,13 @@ function makeItem(c, kind) {
     successStreak: 0,
     unaidedStreak: 0,
     silentCorrect: 0,
+    masteryConfirmationCount: 0,
+    flawlessConfirmationCount: 0,
     totalCorrect: 0,
     totalAttempts: 0,
     decoded: false,   // silver: sounded out with letter taps, no Hear it
-    mastered: false,  // gold: read with at most one letter tap, no Hear it
-    flawless: false,  // purple: read with no letter taps and no Hear it
+    mastered: false,  // gold: two first-attempt Yeses with at most one sound tap
+    flawless: false,  // purple: two first-attempt Yeses without sound taps
     lastSeenRound: null,
     lastRecapRound: null,  // last round number this item was surfaced as a recap
     lastResult: null,
@@ -955,12 +956,22 @@ function loadStored() {
     for (const k of Object.keys(DEFAULT_SETTINGS)) {
       if (parsed.settings[k] === undefined) parsed.settings[k] = DEFAULT_SETTINGS[k];
     }
+    delete parsed.settings.retryCap;
     for (const item of Object.values(parsed.items)) {
       if (!item.kind) item.kind = item.id.startsWith('num:') ? 'number' : 'word';
       if (item.level === undefined) item.level = 1;
       if (item.unaidedStreak === undefined) item.unaidedStreak = item.silentCorrect || 0;
       if (item.decoded === undefined)  item.decoded  = false;
       if (item.flawless === undefined) item.flawless = false;
+      // Historic recognizer scores are not self-confirmations. Earned trophies
+      // remain permanent, but these new counts start at zero on older saves.
+      if (item.masteryConfirmationCount === undefined) item.masteryConfirmationCount = 0;
+      if (item.flawlessConfirmationCount === undefined) item.flawlessConfirmationCount = 0;
+      for (const countName of ['masteryConfirmationCount', 'flawlessConfirmationCount']) {
+        if (!Number.isInteger(item[countName]) || item[countName] < 0 || item[countName] > 2) {
+          throw new Error('Invalid confirmation count for ' + item.display + '.');
+        }
+      }
       if (!item.auditionConfs) item.auditionConfs = [];
     }
     applyAcceptedOverrides(parsed.items);
@@ -1089,7 +1100,7 @@ let currentUtterance = null;
 
 function speak(text, rate, onEnd) {
   const snippet = text.length > 24 ? text.slice(0, 24) + '…' : text;
-  if (!window.speechSynthesis) { DBG('speak', 'NO speechSynthesis'); onEnd?.(); return; }
+  if (!window.speechSynthesis) { DBG('speak', 'NO speechSynthesis'); onEnd?.('unavailable'); return; }
   speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(text);
   currentUtterance = utt;
@@ -1105,9 +1116,10 @@ function speak(text, rate, onEnd) {
     if (done) return;
     done = true;
     clearTimeout(watchdog);
+    if (how === 'WATCHDOG' && currentUtterance === utt) speechSynthesis.cancel();
     if (currentUtterance === utt) currentUtterance = null;
     DBG('speak.end', { text: snippet, how });
-    onEnd?.();
+    onEnd?.(how);
   };
   utt.onend   = () => finish('onend');
   utt.onerror = (ev) => finish('onerror:' + (ev.error || '?'));
@@ -1117,33 +1129,27 @@ function speak(text, rate, onEnd) {
 }
 
 const speakWord   = (w, cb) => speak(w, stored.settings.speechRate, cb);
-const speakPraise = (cb)    => speak(PRAISE[Math.random() * PRAISE.length | 0], 1.1, cb);
-const speakCorrect = (w, cb) => speak(`Good try! This says ${w}. Now you try.`, 0.85, cb);
 
 // ============================================================
-// VOSK SPEECH RECOGNITION
+// MICROPHONE CAPTURE AND TUNING RECOGNITION
 // ============================================================
 
 let voskModel       = null;
-let voskRecognizer  = null;
 let micStream       = null;
 let audioCtx        = null;
 let scriptProc      = null;
 let voskReady       = false;
+let tuningModelOpeningPromise = null;
 let microphoneOpeningPromise = null;
 let microphoneStreamGeneration = 0;
 let spokenAttemptGeneration = 0;
 
-let heardTranscripts  = [];
-let listenEvaluated   = false;
-let micHoldStart      = 0;   // set when startListening fires; read in no-result path
-
-let settleTimer       = null;
+let capturedMicrophoneSampleCount = 0;
 let maxListenTimer    = null;
 let unblockTimer      = null;
 let sessionMicBlocked = false;
 
-// 'waiting' | 'ready' | 'warming' | 'listening' | 'evaluating'
+// 'waiting' | 'ready' | 'warming' | 'listening' | 'confirming' | 'repeat-ready'
 let micState = 'waiting';
 
 // ── Audition (grown-up tuning screen) — open-vocabulary recognizer ──
@@ -1158,71 +1164,29 @@ let auditionSettleTimer = null;
 let auditionAttemptGeneration = 0;
 
 async function initVosk() {
+  if (voskReady) return;
+  if (tuningModelOpeningPromise) return tuningModelOpeningPromise;
   if (!window.Vosk) throw new Error('The bundled speech engine did not load.');
-  try {
+  tuningModelOpeningPromise = (async () => {
     DBG('vosk', 'loading model…');
     const modelUrl = new URL('./model.tar.gz', window.location.href).href;
     voskModel = await Vosk.createModel(modelUrl);
     voskModel.setLogLevel(-1);
     voskReady = true;
     DBG('vosk', 'model ready');
+  })();
+  try {
+    await tuningModelOpeningPromise;
   } catch (e) {
     DBG('vosk', 'load FAILED: ' + String(e));
     throw e;
+  } finally {
+    tuningModelOpeningPromise = null;
   }
-}
-
-function buildGrammar(set) {
-  const kind = kindForSet(set);
-  const tokens = new Set(['[unk]']);
-  for (const item of Object.values(stored.items)) {
-    if (item.kind !== kind) continue;
-    for (const acc of item.accepted) {
-      for (const token of acc.toLowerCase().split(/\s+/)) {
-        if (token && /^[a-z]+$/.test(token)) tokens.add(token);
-      }
-    }
-  }
-  return JSON.stringify([...tokens]);
-}
-
-function createRoundRecognizer(set) {
-  if (voskRecognizer) { try { voskRecognizer.remove(); } catch (_) {} voskRecognizer = null; }
-  if (!voskReady) return;
-
-  const grammar = buildGrammar(set);
-  DBG('vosk', 'grammar tokens: ' + JSON.parse(grammar).length);
-  voskRecognizer = new voskModel.KaldiRecognizer(16000, grammar);
-  const roundRecognizer = voskRecognizer;
-
-  const collectTranscript = (msg) => {
-    if (roundRecognizer !== voskRecognizer) return;
-    const text = (msg.result.text || '').trim();
-    DBG('vosk.result', { text, micState });
-    if (micState !== 'listening' && micState !== 'evaluating') return;
-    if (text && text !== '[unk]' && !heardTranscripts.includes(text)) {
-      heardTranscripts.push(text);
-    }
-  };
-  voskRecognizer.on('result', collectTranscript);
-  voskRecognizer.on('finalresult', msg => {
-    if (roundRecognizer !== voskRecognizer || micState !== 'evaluating' || listenEvaluated) return;
-    collectTranscript(msg);
-    evaluateVosk();
-  });
-  voskRecognizer.on('error', msg => {
-    if (roundRecognizer === voskRecognizer) onSpeechEngineError(msg.error);
-  });
-
-  voskRecognizer.on('partialresult', (msg) => {
-    if (roundRecognizer !== voskRecognizer) return;
-    DBG('vosk.partial', (msg.result.partial || ''));
-  });
 }
 
 // Open-vocabulary recognizer (no grammar) used only on the tuning screen, so
-// the grown-up hears what Vosk *actually* detects — including mishearings that
-// aren't yet in any accepted list and so can't appear under the practice grammar.
+// the grown-up hears what Vosk detects. Practice uses the child's self-check.
 function createAuditionRecognizer() {
   if (auditionRecognizer) { try { auditionRecognizer.remove(); } catch (_) {} auditionRecognizer = null; }
   if (!voskReady) return;
@@ -1278,11 +1242,15 @@ function openMicStream() {
         try {
           if (auditionState === 'listening' && auditionRecognizer) {
             auditionRecognizer.acceptWaveform(event.inputBuffer);
-          } else if (micState === 'listening' && voskRecognizer) {
-            voskRecognizer.acceptWaveform(event.inputBuffer);
+          } else if (micState === 'listening') {
+            if (!Number.isInteger(event.inputBuffer.length) || event.inputBuffer.length <= 0) {
+              throw new Error('The microphone did not provide audio samples.');
+            }
+            capturedMicrophoneSampleCount += event.inputBuffer.length;
           }
         } catch (error) {
-          onSpeechEngineError(error.message);
+          if (auditionState !== 'idle') onSpeechEngineError(error.message);
+          else recoverSpokenCapture(error.message);
         }
       };
       source.connect(processor);
@@ -1313,96 +1281,95 @@ function closeMicStream() {
   spokenAttemptGeneration++;
   auditionAttemptGeneration++;
   microphoneOpeningPromise = null;
-  clearTimeout(settleTimer);
   clearTimeout(maxListenTimer);
   clearTimeout(auditionMaxTimer);
   clearTimeout(auditionSettleTimer);
   cancelUnblock();
-  listenEvaluated = true;
+  capturedMicrophoneSampleCount = 0;
   if (scriptProc) { try { scriptProc.disconnect(); } catch (_) {} scriptProc = null; }
   if (audioCtx)   { try { audioCtx.close(); } catch (_) {} audioCtx = null; }
   if (micStream)  { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-  if (voskRecognizer) { try { voskRecognizer.remove(); } catch (_) {} voskRecognizer = null; }
   if (auditionRecognizer) { try { auditionRecognizer.remove(); } catch (_) {} auditionRecognizer = null; }
   DBG('mic', 'closed');
 }
 
 async function startListening() {
-  DBG('startListening', { sessionMicBlocked, voskReady });
+  const encounter = gs.spokenWordEncounter;
+  if (!encounter || encounter.committed) return;
+  if (micState === 'confirming' && encounter.phase === 'confirming') {
+    encounter.phase = 'repeat-ready';
+  }
+  const helpedRepeat = encounter.phase === 'repeat-ready';
+  if (!helpedRepeat && encounter.phase !== 'first-ready') return;
+  DBG('startListening', { sessionMicBlocked, helpedRepeat });
   if (sessionMicBlocked) { onMicDenied(); return; }
-  if (!voskReady) { onMicUnavailable(); return; }
   const attemptGeneration = ++spokenAttemptGeneration;
   setMicState('warming');
   if (!await openMicStream()) return;
-  if (attemptGeneration !== spokenAttemptGeneration) return;
+  if (attemptGeneration !== spokenAttemptGeneration || gs.spokenWordEncounter !== encounter) return;
   try {
     await audioCtx.resume();
   } catch (error) {
-    if (attemptGeneration !== spokenAttemptGeneration) return;
+    if (attemptGeneration !== spokenAttemptGeneration || gs.spokenWordEncounter !== encounter) return;
     DBG('mic', 'audio capture could not resume: ' + error.message);
     onMicUnavailable();
     return;
   }
-  if (attemptGeneration !== spokenAttemptGeneration) return;
-  // A fresh recognizer prevents a late result from the previous word from
-  // being counted as the new word. The loaded model is reused.
-  try {
-    createRoundRecognizer(gs.currentSet);
-  } catch (error) {
-    onSpeechEngineError(error.message);
-    return;
+  if (attemptGeneration !== spokenAttemptGeneration || gs.spokenWordEncounter !== encounter) return;
+  if (!helpedRepeat) {
+    encounter.firstAttemptAssistance = Object.freeze({ hearPressed: gs.hearPressed, letterTaps: gs.letterTaps });
   }
-  micHoldStart     = Date.now();
-  heardTranscripts = [];
-  listenEvaluated  = false;
+  encounter.phase = helpedRepeat ? 'repeat-recording' : 'first-recording';
+  capturedMicrophoneSampleCount = 0;
   setMicState('listening');
   maxListenTimer = setTimeout(() => {
-    if (attemptGeneration === spokenAttemptGeneration) requestStopAndEvaluate();
+    if (attemptGeneration === spokenAttemptGeneration) finishSpokenAttempt();
   }, 10000);
 }
 
-function requestStopAndEvaluate() {
-  DBG('requestStopAndEvaluate', { micState });
+function finishSpokenAttempt() {
+  DBG('finishSpokenAttempt', { micState, capturedMicrophoneSampleCount });
   if (micState !== 'listening') return;
   clearTimeout(maxListenTimer);
-  setMicState('evaluating');
-  const attemptGeneration = spokenAttemptGeneration;
-  settleTimer = setTimeout(() => {
-    if (attemptGeneration === spokenAttemptGeneration) onSpeechEngineError('The spoken answer did not finish processing.');
-  }, 10000);
-  try { voskRecognizer.retrieveFinalResult(); }
-  catch (error) { onSpeechEngineError(error.message); }
+  const encounter = gs.spokenWordEncounter;
+  if (!encounter || encounter.committed) return;
+  const healthyCapture = audioCtx?.state === 'running' && micStream &&
+    micStream.getTracks().every(track => track.readyState === 'live') && capturedMicrophoneSampleCount > 0;
+  if (!healthyCapture) {
+    recoverSpokenCapture('That recording did not finish. Please record it again.');
+    return;
+  }
+  spokenAttemptGeneration++;
+  if (encounter.phase === 'repeat-recording') {
+    commitSelfCheckedAnswer('helped-repeat');
+    return;
+  }
+  if (encounter.phase !== 'first-recording') throw new Error('A first recording must belong to the current word.');
+  askSpokenSelfCheck(encounter);
 }
 
-function evaluateVosk() {
-  DBG('evaluateVosk', { listenEvaluated, heard: heardTranscripts.slice() });
-  if (listenEvaluated) return;
-  if (micState !== 'evaluating' && micState !== 'listening') return;
-  listenEvaluated = true;
-  clearTimeout(settleTimer);
-  clearTimeout(maxListenTimer);
-
-  if (heardTranscripts.length) {
-    setMicState('waiting');
-    onRecognitionResult([...heardTranscripts]);
-  } else {
-    handleNoTranscript();
-  }
+function askSpokenSelfCheck(encounter) {
+  if (gs.spokenWordEncounter !== encounter || encounter.committed) return;
+  encounter.phase = 'question';
+  const question = `${gs.currentItem.display}. Did you get it?`;
+  document.getElementById('self-check-question').textContent = question;
+  setMicState('waiting');
+  speak(question, stored.settings.speechRate, how => {
+    if (gs.spokenWordEncounter !== encounter || encounter.phase !== 'question') return;
+    if (how !== 'onend') {
+      encounter.phase = 'question-error';
+      document.getElementById('self-check-question').textContent = 'The word could not play. Check sound, then tap Hear it to try again.';
+      setMicState('question-error');
+      return;
+    }
+    encounter.phase = 'confirming';
+    setMicState('confirming');
+  });
 }
 
 // ============================================================
 // ANSWER MATCHING
 // ============================================================
-
-// An empty recognition result gives no evidence that the displayed word was
-// spoken correctly. Retry without changing the child's progress.
-function handleNoTranscript() {
-  const item = gs.currentItem;
-  const held = Date.now() - micHoldStart;
-  DBG('noTranscript', { held, display: item?.display });
-  setMicState('ready');
-  if (item && !gs.awaitingResult) speak("I didn't hear you. Try again!", 1.0);
-}
 
 function normText(s) {
   return s.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
@@ -1576,6 +1543,10 @@ function famsOf(item) {
   return (item.kind === 'word' && SOUND_FIXES[item.display.toLowerCase()] && SOUND_FIXES[item.display.toLowerCase()].fams) || [];
 }
 
+function needsMorePractice(item) {
+  return item.lastResult === 'helped' || item.lastResult === 'miss';
+}
+
 function buildRound(set, level) {
   roundNumber++;
   const kind = kindForSet(set);
@@ -1589,10 +1560,10 @@ function buildNumberRound(levelItems) {
   const unmastered = levelItems.filter(i => !i.mastered);
   const size = Math.min(stored.settings.roundSize, levelItems.length);
 
-  const missed   = shuffle(unmastered.filter(i => i.lastResult === 'miss'));
+  const needsRepeat = shuffle(unmastered.filter(needsMorePractice));
   const newItems = shuffle(unmastered.filter(i => i.totalAttempts === 0));
-  const rest     = shuffle(unmastered.filter(i => i.totalAttempts > 0 && i.lastResult !== 'miss'));
-  const round    = [...missed, ...newItems, ...rest].slice(0, size);
+  const rest     = shuffle(unmastered.filter(i => i.totalAttempts > 0 && !needsMorePractice(i)));
+  const round    = [...needsRepeat, ...newItems, ...rest].slice(0, size);
 
   // Top the round up with already-mastered words from the same level so a
   // round is always full-size; they get a "you know this one" reminder when
@@ -1630,10 +1601,10 @@ function buildWordRound(levelItems) {
   let block = [];
   if (fam) {
     const famItems = unmastered.filter(i => famsOf(i).some(fe => fe.fam === fam));
-    const missed = shuffle(famItems.filter(i => i.lastResult === 'miss'));
+    const needsRepeat = shuffle(famItems.filter(needsMorePractice));
     const fresh  = shuffle(famItems.filter(i => i.totalAttempts === 0));
-    const rest   = shuffle(famItems.filter(i => i.totalAttempts > 0 && i.lastResult !== 'miss'));
-    block = [...missed, ...fresh, ...rest].slice(0, Math.max(1, Math.min(4, Math.ceil(size * 0.4))));
+    const rest   = shuffle(famItems.filter(i => i.totalAttempts > 0 && !needsMorePractice(i)));
+    block = [...needsRepeat, ...fresh, ...rest].slice(0, Math.max(1, Math.min(4, Math.ceil(size * 0.4))));
   }
   const blockIds = new Set(block.map(i => i.id));
 
@@ -1680,8 +1651,7 @@ const gs = {
   roundCorrect:        0,
   roundSilentCorrect:  0,
   currentItem:         null,
-  retryCount:          0,
-  recycled:            new Set(),
+  spokenWordEncounter: null,
   awaitingResult:      false,
   recapId:             null,
   hearPressed:         false,
@@ -1691,6 +1661,7 @@ const gs = {
   ruleIds:            [],      // ids of the rule-block items
   ruleMissed:         false,   // any miss in the rule block cancels the rule praise
 };
+let spokenWordEncounterSequence = 0;
 
 function startRound(set, level) {
   const built = buildRound(set, level);
@@ -1703,8 +1674,7 @@ function startRound(set, level) {
   gs.roundCorrect        = 0;
   gs.roundSilentCorrect  = 0;
   gs.currentItem         = null;
-  gs.retryCount          = 0;
-  gs.recycled            = new Set();
+  cancelWordEncounter();
   gs.awaitingResult      = false;
   gs.recapId             = null;
   gs.hearPressed         = false;
@@ -1725,14 +1695,23 @@ function startRound(set, level) {
   showScreen('practice');
   openMicStream();
 
-  // Announce the level at the start of the session
-  speak(`Level ${level}!`, 1.1, () => nextItem());
+  const roundEncounterSequence = spokenWordEncounterSequence;
+  const instructions = stored.selfCheckInstructionsHeard ? '' :
+    ' Say the word. Then tap Yes if you got it, or use the microphone to say it again.';
+  speak(`Level ${level}!${instructions}`, 1.1, how => {
+    if (roundEncounterSequence !== spokenWordEncounterSequence) return;
+    if (how === 'onend') {
+      stored.selfCheckInstructionsHeard = true;
+      saveStored();
+    }
+    nextItem();
+  });
 }
 
 function nextItem() {
   if (gs.queue.length === 0) { endRound(); return; }
   gs.currentItem        = gs.queue.shift();
-  gs.retryCount         = 0;
+  beginWordEncounter(gs.currentItem);
   gs.hearPressed        = false;
   gs.currentItem.lastSeenRound = roundNumber;
   gs.awaitingResult = false;
@@ -1763,9 +1742,18 @@ function presentItem(item) {
   renderTrophyRow(item);
   renderRuleChips(item);
 
-  clearHeardDisplay();
+  renderConfirmationProgress(item);
   DBG('presentItem', { id: item.id });
-  setMicState('ready'); // mic and hear button ready immediately — child controls pacing
+  setMicState('ready');
+  const encounter = gs.spokenWordEncounter;
+  const speakGuidance = (line, rate, completed) => {
+    setMicState('waiting');
+    speak(line, rate, how => {
+      if (gs.spokenWordEncounter !== encounter || encounter.phase !== 'first-ready') return;
+      if (how === 'onend') completed?.();
+      setMicState('ready');
+    });
+  };
 
   document.getElementById('recap-banner').classList.toggle('hidden', !isRecap);
 
@@ -1774,17 +1762,18 @@ function presentItem(item) {
   // teaching family, its rule line is spoken once — the chip under the word
   // is the standing, always-tappable version.
   if (isRecap) {
-    speak('Recap! You learned this one before.', 1.0);
+    speakGuidance('Recap! You learned this one before.', 1.0);
   } else {
     const fam = (gs.ruleIds && gs.ruleIds.includes(item.id) ? [gs.ruleFam] : [])
       .concat(famsOf(item).map(fe => fe.fam))
       .find(f => f && PATTERN_META[f] && !stored.rulesHeard[f]);
     if (fam) {
-      stored.rulesHeard[fam] = true;
-      saveStored();
-      speak(ruleLineFor(fam, item.display), 0.95);
+      speakGuidance(ruleLineFor(fam, item.display), 0.95, () => {
+        stored.rulesHeard[fam] = true;
+        saveStored();
+      });
     } else if (item.mastered) {
-      speak('You know this one!', 1.0);
+      speakGuidance('You know this one!', 1.0);
     }
   }
 }
@@ -1818,125 +1807,131 @@ function renderRuleChips(item) {
     chip.innerHTML = '<span class="rule-chip-label">' + label +
                      '</span><span class="rule-chip-icon" aria-hidden="true">🔊</span>';
     chip.setAttribute('aria-label', 'Hear the rule: ' + meta.nice);
-    chip.addEventListener('click', () => speak(ruleLineFor(fe.fam, item.display), 0.95));
+    chip.addEventListener('click', () => {
+      if (gs.currentItem !== item || gs.spokenWordEncounter?.phase !== 'first-ready' || micState !== 'ready') return;
+      const encounter = gs.spokenWordEncounter;
+      setMicState('waiting');
+      speak(ruleLineFor(fe.fam, item.display), 0.95, () => {
+        if (gs.spokenWordEncounter === encounter && encounter.phase === 'first-ready') setMicState('ready');
+      });
+    });
     host.appendChild(chip);
   }
 }
 
-function handleAnswer(correct) {
-  if (gs.awaitingResult) return;
-  gs.awaitingResult = true;
-  setMicState('waiting');
-
-  const item = gs.currentItem;
-  if (item.id === gs.recapId) return recapAnswer(item, correct);
-  item.totalAttempts++;
-
-  if (correct) {
-    item.totalCorrect++;
-    item.successStreak++;
-    item.lastResult = 'correct';
-
-    const firstTry = !gs.hearPressed && gs.retryCount === 0;
-    if (firstTry) {
-      item.unaidedStreak++;
-      item.silentCorrect++;
-      gs.roundSilentCorrect++;
-    }
-
-    // Trophies (all permanent until a full progress reset):
-    //   >=2 letter taps -> silver (genuinely sounded it out)
-    //   <=1 letter tap  -> gold/mastered (word leaves the rotation)
-    //   0 letter taps   -> purple too (read entirely without help)
-    // The highest newly-earned tier gets the celebration.
-    let newTrophy = null;
-    if (firstTry) {
-      if (gs.letterTaps >= 2 && !item.decoded)  { item.decoded  = true; newTrophy = 'silver'; }
-      if (gs.letterTaps <= 1 && !item.mastered) { item.mastered = true; newTrophy = 'gold'; }
-      if (gs.letterTaps === 0 && !item.flawless) { item.flawless = true; newTrophy = 'purple'; }
-    }
-
-    gs.roundCorrect++;
-    gs.completedCount++;
-    saveStored();
-    flashScreen(true);
-
-    if (newTrophy) {
-      gs.newTrophies++;
-      renderTrophyRow(item, newTrophy);
-      playTrophyChime(newTrophy);
-      burstStars(70, TROPHY_PALETTES[newTrophy]);
-      const praise = PRAISE[Math.random() * PRAISE.length | 0];
-      // "red" is deliberate: spoken-only text, and the TTS reads "read" as
-      // present-tense /reed/ where past-tense /red/ is meant.
-      const line =
-        newTrophy === 'purple' ? `Excellent! You red ${item.display} without any help!` :
-        newTrophy === 'gold'   ? `${praise} You know ${item.display} now!` :
-                                 `${praise} You sounded it out!`;
-      // Let the trophy arpeggio ring before the voice comes in.
-      setTimeout(() => speak(line, 1.05, () => {
-        gs.awaitingResult = false;
-        nextItem();
-      }), 800);
-    } else {
-      playPling();
-      burstStars();
-      speakPraise(() => {
-        gs.awaitingResult = false;
-        nextItem();
-      });
-    }
-
-  } else {
-    item.successStreak = 0;
-    item.unaidedStreak = 0;
-    item.lastResult    = 'miss';
-    if (gs.ruleIds && gs.ruleIds.includes(item.id)) gs.ruleMissed = true;
-
-    saveStored();
-    flashScreen(false);
-
-    if (gs.retryCount < stored.settings.retryCap) {
-      gs.retryCount++;
-      speakCorrect(item.display, () => {
-        gs.awaitingResult = false;
-        presentItem(item);
-      });
-    } else {
-      gs.completedCount++;
-      if (!gs.recycled.has(item.id)) {
-        gs.recycled.add(item.id);
-        gs.queue.push(item);
-      }
-      speak(`This says ${item.display}.`, 0.85, () => {
-        gs.awaitingResult = false;
-        nextItem();
-      });
-    }
-  }
-
-  renderDots();
+function beginWordEncounter(item) {
+  cancelWordEncounter();
+  gs.spokenWordEncounter = {
+    sequence: ++spokenWordEncounterSequence,
+    itemId: item.id,
+    phase: 'first-ready',
+    firstAttemptAssistance: null,
+    committed: false,
+  };
 }
 
-// Recap words are feedback-only: the usual praise/teaching sounds and flash,
-// but no retry/recycle, and no stats written anywhere — round score, dots and
-// per-item progress all skip them.
-function recapAnswer(item, correct) {
-  if (correct) {
-    flashScreen(true);
+function cancelWordEncounter() {
+  spokenWordEncounterSequence++;
+  spokenAttemptGeneration++;
+  clearTimeout(maxListenTimer);
+  cancelUnblock();
+  gs.spokenWordEncounter = null;
+  gs.awaitingResult = false;
+}
+
+function confirmFirstSpokenAttempt() {
+  if (micState !== 'confirming' || gs.spokenWordEncounter?.phase !== 'confirming') return;
+  commitSelfCheckedAnswer('confirmed-first');
+}
+
+function commitSelfCheckedAnswer(outcome) {
+  const encounter = gs.spokenWordEncounter;
+  if (!encounter || encounter.committed) return;
+  const helpedRepeat = outcome === 'helped-repeat';
+  if (outcome !== 'confirmed-first' && !helpedRepeat) throw new Error('Unknown self-check outcome.');
+  if (encounter.phase !== (helpedRepeat ? 'repeat-recording' : 'confirming')) return;
+  const assistance = encounter.firstAttemptAssistance;
+  if (!assistance || encounter.itemId !== gs.currentItem?.id) throw new Error('The self-check must belong to its recorded word.');
+  encounter.committed = true;
+  encounter.phase = 'completed';
+  gs.awaitingResult = true;
+  setMicState('waiting');
+  const item = gs.currentItem;
+  const finishFeedback = () => {
+    if (gs.spokenWordEncounter !== encounter || !encounter.committed) return;
+    gs.awaitingResult = false;
+    nextItem();
+  };
+  // Recaps remain feedback-only: neither capture nor confirmation changes
+  // attempts, trophies, confirmation counts, round score or level progress.
+  if (item.id === gs.recapId) {
+    playPling();
+    speak(helpedRepeat ? 'Nice practice!' : 'Well done!', 1.05, finishFeedback);
+    return;
+  }
+  item.totalAttempts += helpedRepeat ? 2 : 1;
+  item.totalCorrect++;
+  if (helpedRepeat) {
+    item.successStreak = 0;
+    item.unaidedStreak = 0;
+    if (gs.ruleIds && gs.ruleIds.includes(item.id)) gs.ruleMissed = true;
+  }
+  item.successStreak++;
+  item.lastResult = helpedRepeat ? 'helped' : 'correct';
+
+  const firstTry = !helpedRepeat && !assistance.hearPressed;
+  if (firstTry) {
+    item.unaidedStreak++;
+    item.silentCorrect++;
+    gs.roundSilentCorrect++;
+  }
+
+  // The assistance snapshot belongs to the submitted first answer.
+  // Hearing the automatic comparison afterward cannot change eligibility.
+  // Gold/purple each require two qualifying first-attempt Yeses. A helped
+  // repeat preserves earlier confirmations and cannot add another one.
+  let newTrophy = null;
+  if (firstTry) {
+    if (assistance.letterTaps >= 2 && !item.decoded) { item.decoded = true; newTrophy = 'silver'; }
+    if (assistance.letterTaps <= 1) {
+      item.masteryConfirmationCount = Math.min(2, item.masteryConfirmationCount + 1);
+      if (item.masteryConfirmationCount === 2 && !item.mastered) { item.mastered = true; newTrophy = 'gold'; }
+    }
+    if (assistance.letterTaps === 0) {
+      item.flawlessConfirmationCount = Math.min(2, item.flawlessConfirmationCount + 1);
+      if (item.flawlessConfirmationCount === 2 && !item.flawless) { item.flawless = true; newTrophy = 'purple'; }
+    }
+  }
+
+  gs.roundCorrect++;
+  gs.completedCount++;
+  saveStored();
+  flashScreen(true);
+  renderConfirmationProgress(item);
+
+  if (newTrophy) {
+    gs.newTrophies++;
+    renderTrophyRow(item, newTrophy);
+    playTrophyChime(newTrophy);
+    burstStars(70, TROPHY_PALETTES[newTrophy]);
+    const praise = PRAISE[Math.random() * PRAISE.length | 0];
+    // "red" is deliberate: spoken-only text, and the TTS reads "read" as
+    // present-tense /reed/ where past-tense /red/ is meant.
+    const line =
+      newTrophy === 'purple' ? `Excellent! You red ${item.display} without any help!` :
+      newTrophy === 'gold'   ? `${praise} You know ${item.display} now!` :
+                               `${praise} You sounded it out!`;
+    // Let the trophy arpeggio ring before the voice comes in.
+    setTimeout(() => {
+      if (gs.spokenWordEncounter !== encounter || !encounter.committed) return;
+      speak(line, 1.05, finishFeedback);
+    }, 800);
+  } else {
     playPling();
     burstStars();
-    speakPraise(() => {
-      gs.awaitingResult = false;
-      nextItem();
-    });
-  } else {
-    flashScreen(false);
-    speak(`This says ${item.display}.`, 0.85, () => {
-      gs.awaitingResult = false;
-      nextItem();
-    });
+    speak(helpedRepeat ? 'Nice practice!' : PRAISE[Math.random() * PRAISE.length | 0], 1.05, finishFeedback);
   }
+  renderDots();
 }
 
 function endRound() {
@@ -1971,72 +1966,81 @@ function checkLevelComplete() {
 }
 
 // ============================================================
-// RECOGNITION CALLBACKS
+// CAPTURE RECOVERY
 // ============================================================
 
-function onRecognitionResult(transcripts) {
-  const item = gs.currentItem;
-  const best = transcripts.find(t => t && t !== '[unk]') || '';
-
-  const matched = matchAnswer(transcripts, item);
-  DBG('judge', { expected: item?.display, heard: transcripts, matched, hearPressed: gs.hearPressed, retryCount: gs.retryCount });
-  setHeardDisplay(best);
-  handleAnswer(matched);
-}
-
-function onMicDenied() {
-  sessionMicBlocked = true;
-  setMicState('ready');
-  speak("Microphone not available. Please allow microphone access and try again.", 0.9);
-}
-
-function onMicUnavailable() {
-  setMicState('ready');
-  const message = 'Microphone could not start. Reload the app and try again.';
+function recoverSpokenCapture(message) {
+  const encounter = gs.spokenWordEncounter;
+  closeMicStream();
+  if (!encounter || encounter.committed) return;
+  const helpedRepeat = encounter.phase === 'repeat-recording' || encounter.phase === 'repeat-ready';
+  encounter.phase = helpedRepeat ? 'repeat-ready' : 'first-ready';
+  setMicState(helpedRepeat ? 'repeat-ready' : 'ready');
   document.getElementById('mic-status').textContent = message;
   speak(message, 0.9);
 }
 
-function onSpeechEngineError(error) {
-  DBG('speech engine could not check recording', error);
+function onMicDenied() {
+  sessionMicBlocked = true;
+  if (auditionState !== 'idle') {
+    failAuditionRecording('Microphone access was not allowed.');
+    return;
+  }
+  recoverSpokenCapture('Microphone not available. Please allow microphone access and try again.');
+}
+
+function onMicUnavailable() {
+  if (auditionState !== 'idle') {
+    failAuditionRecording('Microphone could not start.');
+    return;
+  }
+  recoverSpokenCapture('Microphone could not start. Reload the app and try again.');
+}
+
+function failAuditionRecording(message) {
   const tuningRowId = auditionState !== 'idle' ? auditionRowId : null;
   closeMicStream();
   auditionState = 'idle';
   auditionRowId = null;
   if (tuningRowId) {
     setRowListening(tuningRowId, false);
-    setRowResult(tuningRowId, 'miss', 'speech engine could not check recording');
-    return;
+    setRowResult(tuningRowId, 'miss', message);
   }
-  setMicState('ready');
-  const message = 'I could not check that recording. Please try again.';
-  document.getElementById('mic-status').textContent = message;
-  speak(message, 0.9);
+}
+
+function onSpeechEngineError(error) {
+  DBG('speech engine could not check tuning recording', error);
+  failAuditionRecording('Speech engine could not check recording: ' + String(error));
 }
 
 // ============================================================
 // UI
 // ============================================================
 
+let currentlyDisplayedScreenSequence = 0;
+let currentlyDisplayedScreenName = 'loading';
+
 function showScreen(name) {
+  currentlyDisplayedScreenSequence++;
+  currentlyDisplayedScreenName = name;
+  if (name !== 'practice') {
+    cancelWordEncounter();
+    closeMicStream();
+  }
   document.querySelectorAll('.screen').forEach(el =>
     el.classList.toggle('hidden', el.id !== 'screen-' + name)
   );
 }
 
-// ── Global unblock: absolute ceiling on how long the button can stay disabled ──
+// A microphone startup deadline reports an unscored capture error. It cannot
+// reset a completed first answer or erase a pending helped repeat.
 function armUnblock(ms) {
   clearTimeout(unblockTimer);
   const attemptGeneration = spokenAttemptGeneration;
   unblockTimer = setTimeout(() => {
     if (attemptGeneration !== spokenAttemptGeneration) return;
-    DBG('unblock', `forced recovery after ${ms}ms`);
-    spokenAttemptGeneration++;
-    clearTimeout(settleTimer);
-    clearTimeout(maxListenTimer);
-    listenEvaluated = true;
-    gs.awaitingResult = false;
-    if (micState !== 'ready') setMicState('ready');
+    if (micState !== 'warming') return;
+    recoverSpokenCapture('The microphone took too long to start. Please try again.');
   }, ms);
 }
 function cancelUnblock() { clearTimeout(unblockTimer); }
@@ -2045,36 +2049,46 @@ function setMicState(state) {
   DBG('micState', `${micState} -> ${state}`);
   micState = state;
   // Arm a hard deadline whenever we enter a non-interactive state.
-  if (state === 'warming' || state === 'evaluating') armUnblock(14000);
-  if (state !== 'warming' && state !== 'evaluating') cancelUnblock();
+  if (state === 'warming') armUnblock(14000);
+  else cancelUnblock();
   const btn     = document.getElementById('mic-button');
   const lbl     = document.getElementById('mic-status');
   const hearBtn = document.getElementById('hear-button');
+  const yesBtn = document.getElementById('self-check-yes');
+  const question = document.getElementById('self-check-question');
+  const encounter = gs.spokenWordEncounter;
+  const comparing = encounter?.phase === 'question' || encounter?.phase === 'confirming';
+  const playbackError = encounter?.phase === 'question-error';
+  if (yesBtn) {
+    yesBtn.classList.toggle('hidden', !comparing);
+    yesBtn.disabled = state !== 'confirming';
+  }
+  if (question) question.classList.toggle('hidden', !comparing && !playbackError);
+  if (hearBtn) {
+    hearBtn.classList.toggle('hidden', Boolean(encounter && encounter.phase !== 'first-ready' && encounter.phase !== 'first-recording' && !playbackError));
+    hearBtn.disabled = state !== 'ready' && !playbackError;
+    hearBtn.classList.toggle('disabled', hearBtn.disabled);
+  }
+  // Pointer release must still reach the mic while permission/resume is
+  // warming; disabling it there can strand a cancelled hold in real browsers.
+  btn.disabled = state === 'waiting' || playbackError;
+  btn.setAttribute('aria-label', state === 'confirming' || state === 'repeat-ready' ? 'Record the word again' : 'Say the word');
   btn.classList.remove('listening', 'waiting', 'warming');
-  if (hearBtn) hearBtn.classList.toggle('disabled', state !== 'ready');
   if (state === 'warming') {
     btn.classList.add('warming');
     lbl.textContent = 'Get ready…';
   } else if (state === 'listening') {
     btn.classList.add('listening');
     lbl.textContent = 'Speak now!';
-  } else if (state === 'evaluating') {
-    btn.classList.add('waiting');
-    lbl.textContent = '…';
   } else if (state === 'waiting') {
     btn.classList.add('waiting');
     lbl.textContent = '';
+  } else if (state === 'confirming' || state === 'repeat-ready') {
+    lbl.textContent = 'Say it again';
   } else {
     lbl.textContent = 'Hold and speak';
   }
 }
-
-function setHeardDisplay(text) {
-  const el = document.getElementById('heard-display');
-  if (!el) return;
-  el.textContent = text ? `Heard: "${text}"` : '';
-}
-function clearHeardDisplay() { setHeardDisplay(''); }
 
 function playPling() {
   try {
@@ -2155,6 +2169,21 @@ function renderTrophyRow(item, popTier) {
     s.textContent = '★';
     s.title       = label;
     el.appendChild(s);
+  }
+}
+
+function renderConfirmationProgress(item) {
+  const el = document.getElementById('confirmation-progress');
+  if (!el) return;
+  el.classList.toggle('hidden', !item || item.mastered || item.id === gs.recapId);
+  el.innerHTML = '';
+  if (!item || item.mastered || item.id === gs.recapId) return;
+  el.setAttribute('aria-label', `${item.masteryConfirmationCount} of 2 confirmations`);
+  for (let confirmation = 0; confirmation < 2; confirmation++) {
+    const dot = document.createElement('span');
+    dot.className = 'confirmation-dot' + (confirmation < item.masteryConfirmationCount ? ' filled' : '');
+    dot.setAttribute('aria-hidden', 'true');
+    el.appendChild(dot);
   }
 }
 
@@ -2294,7 +2323,11 @@ function showAllDone(levelResult) {
   }
 
   document.getElementById('alldone-score').textContent = scoreText;
-  setTimeout(() => speak(speakText, 0.85), 600);
+  const allDoneScreenSequence = currentlyDisplayedScreenSequence;
+  setTimeout(() => {
+    if (currentlyDisplayedScreenSequence !== allDoneScreenSequence || currentlyDisplayedScreenName !== 'alldone') return;
+    speak(speakText, 0.85);
+  }, 600);
 }
 
 function showLevelUp(result) {
@@ -2428,13 +2461,24 @@ function removeCustomItem(id) {
 let tuneTab    = 'words';
 let tuneSearch = '';
 
-function openTuning() {
+async function openTuning() {
   showScreen('tuning');
+  const tuningScreenSequence = currentlyDisplayedScreenSequence;
   tuneSearch = '';
   const search = document.getElementById('tune-search');
   if (search) search.value = '';
   renderTuneList();
-  openMicStream();
+  const status = document.getElementById('tune-engine-status');
+  status.textContent = 'Loading on-device speech engine…';
+  try {
+    await initVosk();
+    if (currentlyDisplayedScreenSequence !== tuningScreenSequence) return;
+    status.textContent = 'On-device audition is ready. Hold a word’s microphone to try it.';
+  } catch (error) {
+    if (currentlyDisplayedScreenSequence !== tuningScreenSequence) return;
+    status.textContent = 'Audition engine could not load. Check your connection, then reopen this screen.';
+    DBG('tuning engine startup failed', String(error));
+  }
 }
 
 function closeTuning() {
@@ -2778,7 +2822,6 @@ function populateVoiceSelect() {
 function renderSettings() {
   const s = stored.settings;
   document.getElementById('s-round-size').value        = s.roundSize;
-  document.getElementById('s-retry-cap').value         = s.retryCap;
   document.getElementById('s-speech-rate').value       = s.speechRate;
   document.getElementById('s-rate-value').textContent  = s.speechRate + '×';
 }
@@ -2786,7 +2829,6 @@ function renderSettings() {
 function saveSettings() {
   const s = stored.settings;
   s.roundSize         = Math.max(4,  parseInt(document.getElementById('s-round-size').value)        || 10);
-  s.retryCap          = Math.max(1,  parseInt(document.getElementById('s-retry-cap').value)         || 2);
   s.speechRate        = parseFloat(document.getElementById('s-speech-rate').value)                 || 0.9;
   s.voiceName         = document.getElementById('s-voice').value || null;
   saveStored();
@@ -2872,7 +2914,7 @@ function setupEvents() {
 
   // Letter taps/drags on the practice word and on the preview list.
   attachSoundUnitGestures(document.getElementById('word-display'), {
-    guard: () => !(gs.awaitingResult || micState === 'listening' || micState === 'evaluating'),
+    guard: () => !gs.awaitingResult && micState === 'ready' && gs.spokenWordEncounter?.phase === 'first-ready',
     onTrigger: (span) => { if (!span.dataset.silent) gs.letterTaps++; },
   });
   attachSoundUnitGestures(document.getElementById('soundpreview-list'));
@@ -2887,14 +2929,21 @@ function setupEvents() {
   // Hear button — tap to speak the current word/number
   const hearBtn = document.getElementById('hear-button');
   hearBtn.addEventListener('click', () => {
+    const encounter = gs.spokenWordEncounter;
+    if (encounter?.phase === 'question-error') {
+      askSpokenSelfCheck(encounter);
+      return;
+    }
     if (micState !== 'ready' || !gs.currentItem) return;
+    if (!encounter || encounter.phase !== 'first-ready') return;
     gs.hearPressed = true;
     setMicState('waiting');
     speakWord(gs.currentItem.display, () => {
-      if (gs.currentItem && !gs.awaitingResult) setMicState('ready');
+      if (gs.spokenWordEncounter === encounter && encounter.phase === 'first-ready') setMicState('ready');
     });
   });
 
+  document.getElementById('self-check-yes').addEventListener('click', confirmFirstSpokenAttempt);
   const micBtn = document.getElementById('mic-button');
   let holdStart = 0;
 
@@ -2902,11 +2951,11 @@ function setupEvents() {
     e.preventDefault();
     DBG('pointerdown', { micState, type: e.pointerType });
     try { micBtn.setPointerCapture(e.pointerId); } catch (_) {}
-    if (micState === 'ready') {
+    if (micState === 'ready' || micState === 'confirming' || micState === 'repeat-ready') {
       holdStart = Date.now();
       startListening();
     } else if (micState === 'listening') {
-      requestStopAndEvaluate();
+      finishSpokenAttempt();
     }
   });
 
@@ -2915,11 +2964,11 @@ function setupEvents() {
     DBG('pointerup', { micState, heldMs: held });
     if (micState === 'warming') {
       spokenAttemptGeneration++;
-      setMicState('ready');
+      setMicState(gs.spokenWordEncounter?.phase === 'repeat-ready' ? 'repeat-ready' : 'ready');
       return;
     }
     if (micState !== 'listening') return;
-    if (held >= 250) requestStopAndEvaluate();
+    if (held >= 250) finishSpokenAttempt();
     // quick tap stays green: child speaks, taps again to submit
   });
 
@@ -2927,10 +2976,16 @@ function setupEvents() {
     DBG('pointercancel', { micState });
     if (micState === 'warming') {
       spokenAttemptGeneration++;
-      setMicState('ready');
+      setMicState(gs.spokenWordEncounter?.phase === 'repeat-ready' ? 'repeat-ready' : 'ready');
       return;
     }
-    if (micState === 'listening') requestStopAndEvaluate();
+    if (micState === 'listening') {
+      spokenAttemptGeneration++;
+      clearTimeout(maxListenTimer);
+      const repeat = gs.spokenWordEncounter?.phase === 'repeat-recording';
+      if (gs.spokenWordEncounter) gs.spokenWordEncounter.phase = repeat ? 'repeat-ready' : 'first-ready';
+      setMicState(repeat ? 'repeat-ready' : 'ready');
+    }
   });
 
   document.getElementById('tomorrow-text').addEventListener('click', () => {
@@ -2953,7 +3008,7 @@ function setupEvents() {
     document.getElementById('s-rate-value').textContent = parseFloat(e.target.value).toFixed(1) + '×';
     saveSettings();
   });
-  for (const id of ['s-round-size','s-retry-cap']) {
+  for (const id of ['s-round-size']) {
     document.getElementById(id).addEventListener('change', saveSettings);
   }
   document.getElementById('s-voice').addEventListener('change', () => {
@@ -3005,7 +3060,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v41 — on-device Vosk answers; current sound rules, lessons and saved progress retained. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v42 — child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed
@@ -3037,11 +3092,11 @@ async function init() {
   showScreen('loading');
 
   try {
-    await Promise.all([initVosk(), loadImageManifest()]);
+    await loadImageManifest();
   } catch (error) {
     document.querySelector('#screen-loading .loading-spinner').classList.add('hidden');
-    document.getElementById('loading-sub').textContent = 'Speech engine could not load. Check your connection and reload the app.';
-    DBG('speech engine startup failed', String(error));
+    document.getElementById('loading-sub').textContent = 'Pictures could not load. Check your connection and reload the app.';
+    DBG('picture startup failed', String(error));
     return;
   }
 

@@ -35,7 +35,7 @@
   --warn:    var(--amber);
 
   --radius:   1.6rem;
-  --mic-size: min(220px, 42vmin);
+  --mic-size: min(220px, 42vmin, calc((100vw - 4rem) / 2));
 }
 
 html, body {
@@ -271,6 +271,10 @@ html, body {
    PRACTICE
    ============================================================ */
 
+#screen-practice {
+  gap: clamp(0.6rem, 2vh, 1.2rem);
+}
+
 .round-progress {
   display: flex;
   gap: 0.5rem;
@@ -410,6 +414,27 @@ html, body {
   min-height: 2rem;
 }
 
+.confirmation-progress {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 0.9rem;
+}
+
+.confirmation-dot {
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 2px solid var(--muted-hi);
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.confirmation-dot.filled {
+  border-color: var(--mint);
+  background: var(--mint);
+}
+
 .trophy {
   font-size: 1.7rem;
   line-height: 1;
@@ -451,28 +476,28 @@ html, body {
   }
 }
 
-.heard-display {
-  font-size: clamp(0.75rem, 2.2vmin, 0.95rem);
-  color: var(--muted);
-  text-align: center;
-  min-height: 1.2em;
-  font-weight: 600;
-  font-style: italic;
-  opacity: 0.75;
-}
-
 /* ── Practice buttons layout ── */
+
+.self-check-question {
+  font-size: clamp(1rem, 3vmin, 1.35rem);
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  max-width: 28rem;
+}
 
 .practice-buttons {
   display: flex;
-  gap: 1.6rem;
+  gap: clamp(0.5rem, 2vw, 1.6rem);
   align-items: center;
   justify-content: center;
+  width: 100%;
 }
 
-/* ── Hear Button ── */
+/* ── Hear and Yes buttons ── */
 
-.hear-button {
+.hear-button,
+.self-check-yes {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -493,30 +518,52 @@ html, body {
   transition: background 0.2s, box-shadow 0.2s, transform 0.12s, opacity 0.2s;
 }
 
-.hear-button:active {
+.self-check-yes {
+  width: var(--mic-size);
+  height: var(--mic-size);
+}
+
+.hear-button:active,
+.self-check-yes:active {
   transform: scale(0.91) translateY(2px);
   box-shadow: 0 3px 10px rgba(0,201,177,0.28), 0 2px 4px rgba(0,0,0,0.3), inset 0 3px 6px rgba(0,0,0,0.2);
 }
 
-.hear-button.disabled {
+.hear-button.disabled,
+.hear-button:disabled,
+.self-check-yes:disabled {
   opacity: 0.28;
   cursor: default;
   box-shadow: none;
 }
 
-.hear-button.disabled:active { transform: none; }
+.hear-button.disabled:active,
+.hear-button:disabled:active,
+.self-check-yes:disabled:active { transform: none; }
 
-.hear-icon {
+.hear-icon,
+.self-check-icon {
   font-size: clamp(2rem, 7vmin, 3.5rem);
   line-height: 1;
   pointer-events: none;
 }
 
-.hear-label {
+.hear-label,
+.self-check-label {
   font-size: clamp(0.7rem, 2vmin, 0.9rem);
   font-weight: 800;
   pointer-events: none;
   letter-spacing: 0.01em;
+}
+
+.self-check-icon { font-size: clamp(3rem, 10vmin, 5rem); }
+.self-check-label { font-size: clamp(0.9rem, 2.5vmin, 1.1rem); }
+
+.hear-button:focus-visible,
+.self-check-yes:focus-visible,
+.mic-button:focus-visible {
+  outline: 3px solid var(--text);
+  outline-offset: 6px;
 }
 
 /* ── Mic Button ── */
@@ -636,6 +683,9 @@ html, body {
   font-weight: 800;
   pointer-events: none;
   letter-spacing: 0.01em;
+  text-align: center;
+  line-height: 1.2;
+  padding: 0 0.4rem;
 }
 
 /* ── Screen flash ── */

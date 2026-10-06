@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#110f21">
   <title>Reading Learner</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎤</text></svg>">
-  <link rel="stylesheet" href="styles.css?v=26">
+  <link rel="stylesheet" href="styles.css?v=27">
 </head>
 <body>
 
@@ -15,7 +15,7 @@
   <div id="screen-loading" class="screen">
     <div class="loading-spinner"></div>
     <p class="loading-text">Getting ready…</p>
-    <p id="loading-sub" class="loading-sub">Loading speech engine</p>
+    <p id="loading-sub" class="loading-sub">Getting pictures ready</p>
   </div>
 
   <!-- Picker -->
@@ -32,13 +32,19 @@
   <div id="screen-practice" class="screen hidden">
     <div id="round-progress" class="round-progress" aria-label="Round progress"></div>
     <div id="trophy-row" class="trophy-row" aria-label="Trophies for this word"></div>
+    <div id="confirmation-progress" class="confirmation-progress hidden" role="img" aria-label="Mastery confirmations"></div>
     <div id="recap-banner" class="recap-banner hidden">⏪ Recap — you learned this one before!</div>
     <div id="word-display" class="word-display" aria-live="polite"></div>
     <div id="rule-chips" class="rule-chips hidden" aria-label="Sound rules for this word"></div>
+    <p id="self-check-question" class="self-check-question hidden" aria-live="polite"></p>
     <div class="practice-buttons">
       <button id="hear-button" class="hear-button" aria-label="Hear the word">
         <span class="hear-icon" aria-hidden="true">🔊</span>
         <span class="hear-label">Hear it</span>
+      </button>
+      <button id="self-check-yes" class="self-check-yes hidden" type="button" aria-label="Yes, I got it" aria-describedby="self-check-question">
+        <span class="self-check-icon" aria-hidden="true">✓</span>
+        <span class="self-check-label">Yes</span>
       </button>
       <button id="mic-button" class="mic-button" aria-label="Say the word">
         <div class="mic-ripple" aria-hidden="true"></div>
@@ -46,8 +52,6 @@
         <span class="mic-status" id="mic-status">Hold and speak</span>
       </button>
     </div>
-    <p id="heard-display" class="heard-display"></p>
-
   </div>
 
   <!-- All Done -->
@@ -71,10 +75,6 @@
           <label class="setting-row">
             <span>Items per round</span>
             <input type="number" id="s-round-size" min="4" max="20">
-          </label>
-          <label class="setting-row">
-            <span>Retry limit on a miss</span>
-            <input type="number" id="s-retry-cap" min="1" max="5">
           </label>
         </section>
 
@@ -140,6 +140,7 @@
         </div>
         <input type="search" id="tune-search" class="tune-search" placeholder="Search…" autocomplete="off" spellcheck="false">
       </div>
+      <p id="tune-engine-status" class="settings-blurb" role="status">Loading on-device speech engine…</p>
       <p class="tune-hint">Hold 🎤 and say the item to hear what the on-device recognizer detects. Tap <b>Add</b> on a miss, or ✕ to drop a term. Add only genuine homophones.</p>
       <div id="tune-list" class="tune-list"></div>
     </div>
@@ -167,6 +168,6 @@
   <!-- Flash overlay (appended by JS) -->
 
   <script src="vosk/vosk.js?v=2"></script>
-  <script src="app.js?v=41"></script>
+  <script src="app.js?v=42"></script>
 </body>
 </html>
