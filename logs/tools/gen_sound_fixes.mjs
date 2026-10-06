@@ -11,7 +11,7 @@ const CHIP_FAMS = new Set([
   'open-syllable', 'final-y', 'y-long-i', 's-says-z', 'voiced-th',
   'ea-team', 'ea-short-e', 'all-family', 'aw-team', 'ow-team', 'ow-says-oh',
   'soft-c', 'soft-g', 'old-family', 'ind-family', 'r-controlled',
-  'wa-family', 'ear-near',
+  'wa-family', 'ear-near', 'o-says-oh', 'a-says-aw',
 ]);
 
 const fixes = {};

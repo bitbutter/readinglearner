@@ -53,7 +53,11 @@ The child chooses Words or Numbers. Existing lesson lists and levels remain in u
 
 The word or number is shown in large type. Words retain their tappable sound groups, drag-to-sound-out interaction, highlighted compound sounds, and silent-letter treatment. Hear it speaks the whole answer before recording when the child requests help.
 
-Rule chips remain visible for the teaching families attached to a word. Tapping a chip speaks that rule aloud, and the first encounter with a family can introduce its rule. The self-check change does not alter phonics clips, segmentation, lesson content, or rule-chip behavior.
+Rule chips remain visible for the teaching families attached to a word. A chip and the first introduction use the same lesson: short ordinary-English guidance, each relevant letter name spoken separately, the recorded isolated sound, then a whole-word example. The U-name demonstration intentionally speaks the real word “you”; no `ue.mp3` exists. Rule speech and praise do not spell isolated sounds as invented syllables for the synthetic voice.
+
+The lesson owns its speech, sound clip, and deadline. Navigation, a new word, a rule replay, or competing sound/whole-word help cancels the entire old lesson. Only successful playback of every step marks that rule as heard. A spoken-guidance or recorded-sound failure displays an explicit retry message and does not mark the rule as heard or substitute a synthetic sound. The microphone stays unavailable during the lesson; rule chips, letter taps, and Hear it can interrupt it. Existing individual-letter sound help retains its prior audio/TTS behavior.
+
+Word-specific teaching labels distinguish the long O in both from O before L, and the British water vowel from the short wash vowel. Shall uses its ordinary short A; music ends with the ordinary C sound. Current lesson lists, progression, and self-check scoring remain unchanged.
 
 ## Core Loop
 

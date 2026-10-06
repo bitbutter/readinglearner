@@ -1,7 +1,9 @@
 # Sound Audit — every word where a letter doesn't make its default sound
 
 Date: 2026-10-30
-Status: Audit complete, no code changed yet. Data lives in `logs/tools/sound_audit_data.mjs`, validated by `logs/tools/validate_sound_audit.mjs` (run: `node logs/tools/validate_sound_audit.mjs`).
+Status: The sound corrections are implemented. Original inventory figures and audit findings below are a snapshot, not the current runtime specification. Current data lives in `logs/tools/sound_audit_data.mjs`, validated by `logs/tools/validate_sound_audit.mjs` (run: `node logs/tools/validate_sound_audit.mjs`).
+
+Rule explanations now use ordinary speech, recorded sound demonstrations and whole-word examples. The U-name demonstration intentionally speaks the real word **you**; there is no `ue.mp3`. The tables below incorporate the corrections for **both**, **shall**, **water** and **music**. Playback and scoring behavior are specified in `SPEC.md`.
 
 ## Why
 
@@ -21,7 +23,8 @@ The kid can't tell when a letter makes a non-standard sound (o as in *do* / *so*
 |---|---|---|---|
 | so, no, go, goes, only | /oʊ/ (oh) | open syllable — vowel at the end says its name | `o` → `oa.mp3`, same tint treatment as magic-e |
 | do, to | /uː/ (oo) | true exception | `o` → `oo.mp3`, tricky marker |
-| cold, hold, both | /oʊ/ (oh) | -old/-oth family | `o` → `oa.mp3` |
+| cold, hold | /oʊ/ (oh) | O before L in these words | `o` → `oa.mp3` |
+| both | /oʊ/ (oh) | word-specific long O; no L is present | `o` → `oa.mp3` |
 | down, found, sound | part of ow /aʊ/ | ow team | re-segment to `ow` unit, new clip |
 | was, wash | /ɒ/ | wa- family (a after w) | `a` → `o.mp3` |
 | does, done | /ʌ/ (u) | true exception | `o` → `u.mp3` |
@@ -31,7 +34,9 @@ The kid can't tell when a letter makes a non-standard sound (o as in *do* / *so*
 
 So *so* vs *do* — the exact confusion that started this — is a pattern vs exception split: the marker design below treats them differently on purpose.
 
-## Bugs in the current handling (found during the audit)
+## Original audit findings
+
+These are historical findings. The current canonical sound definitions and runtime tests determine which corrections are implemented.
 
 1. **`gave` and `came` are wrongly in `NOT_MAGIC_E`.** Both are regular magic-e words (/ɡeɪv/, /keɪm/); as listed, their final e is silent but the vowel never gets the long clip. Remove both from the set.
 2. **`isCVCEShape` misses three shapes.** It requires exactly 4 segments ending in `e`, so: `write` and `place` (CCVCe, 5 segments) never get the long-vowel clip and their final e plays /ɛ/; `use` (VCe, 3 segments) same; `are`, `more`, `horse` (r-team + e) same — the e should be silent.
@@ -51,15 +56,17 @@ These follow a teachable rule — recommend the magic-e style treatment (team ti
 | s says z | /z/ | is, was, always, because, does, goes, these, those, use, music — s→z |
 | voiced th | /ð/ | the, their, these, those, together, mother, father, brother, weather — th→**NEW thv** |
 | ea team | /iː/ | read, tea, beat, clean, sea, teacher — ea→ee (needs `ea` as a team unit) |
-| -all / aw | /ɔː/ | always, call, fall, shall, small, wall (a→**NEW aw**); draw (aw unit→**NEW aw**) |
+| -all / aw | /ɔː/ | always, call, fall, small, wall (a→aw); draw (aw unit→aw). **shall uses ordinary short A.** |
 | ow says ow | /aʊ/ | down, around, found, about, mountain, sound — ou/ow unit→**NEW ow** |
 | ow says oh | /oʊ/ | grow, own, show, window — o→oa, w silent |
-| soft c | /s/ | place, face, music, city, pencil — c→s |
+| soft c | /s/ | place, face, city, pencil — c→s. **music ends with ordinary /k/.** |
 | soft g | /dʒ/ | page — g→j |
-| -old/-oth | /oʊ/ | both, cold, hold — o→oa |
+| O before L | /oʊ/ | cold, hold — o→oa |
+| word-specific long O | /oʊ/ | both — o→oa |
 | -ind | /aɪ/ | kind — i→igh |
 | r-controlled ur | /ɜːr/ | turn, hurt, burn — ur unit→er |
-| wa- | /ɒ/ | was, wash (a→o); water (a→**NEW aw**) |
+| wa- in these words | /ɒ/ | was, wash (a→o) |
+| word-specific A | /ɔː/ | water (a→aw) |
 | magic-e (missed by shape rule) | — | write.i→igh (+w silent), place.a→ay (+soft c) |
 | schwa /ə/ | unstressed vowel | around, about, today, together, mountain, because, before — →u/i clip (approximation, fine for phonics) |
 
@@ -100,7 +107,7 @@ True exceptions: no rule reaches them, the marker + correct clip is the only hel
 | clip key | IPA | words covered | generator input |
 |---|---|---|---|
 | `thv` | /ð/ | the, their, these, those, together, mother, father, brother, weather (9) | voiced dental fricative, existing pipeline |
-| `aw` | /ɔː/ | always, call, fall, shall, small, wall, draw, warm, water (9) | open-mid back rounded |
+| `aw` | /ɔː/ | always, call, fall, small, wall, draw, warm, water (8) | open-mid back rounded |
 | `ow` | /aʊ/ | down, around, found, about, mountain, sound (6) | diphthong as in "now" |
 | `ooshort` | /ʊ/ | book, pull, full, would (4) | near-close back rounded |
 | `earnear` | /ɪər/ | year (1) | optional — TTS "ear" fallback already works |

@@ -44,7 +44,7 @@
       "id": "short-a",
       "phase": "Short vowels",
       "focus": "Short a, as in cat",
-      "spokenRule": "In these words, a makes the short vowel sound in cat.",
+      "spokenRule": "The letter A makes the middle sound in cat. Listen.",
       "focusWords": [
         "cat",
         "map",
@@ -60,14 +60,28 @@
         "hat"
       ],
       "notes": [],
-      "artwork": "images/l1_lonemarine.jpg"
+      "artwork": "images/l1_lonemarine.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letter A makes the middle sound in cat. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "a"
+        },
+        {
+          "kind": "speech",
+          "text": "cat. map."
+        }
+      ]
     },
     {
       "level": 2,
       "id": "short-e",
       "phase": "Short vowels",
       "focus": "Short e, as in bed",
-      "spokenRule": "In these words, e makes the short vowel sound in bed.",
+      "spokenRule": "The letter E makes the middle sound in bed. Listen.",
       "focusWords": [
         "bed",
         "red",
@@ -83,14 +97,28 @@
         "tap"
       ],
       "notes": [],
-      "artwork": "images/l1_lonemarine.jpg"
+      "artwork": "images/word-course/tank-01-m1-abrams.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letter E makes the middle sound in bed. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "e"
+        },
+        {
+          "kind": "speech",
+          "text": "bed. red."
+        }
+      ]
     },
     {
       "level": 3,
       "id": "short-i",
       "phase": "Short vowels",
       "focus": "Short i, as in pig",
-      "spokenRule": "In these words, i makes the short vowel sound in pig.",
+      "spokenRule": "The letter I makes the middle sound in pig. Listen.",
       "focusWords": [
         "pig",
         "sit",
@@ -109,14 +137,28 @@
         "hen"
       ],
       "notes": [],
-      "artwork": "images/l1_lonemarine.jpg"
+      "artwork": "images/word-course/tank-02-leopard-2.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letter I makes the middle sound in pig. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "i"
+        },
+        {
+          "kind": "speech",
+          "text": "pig. sit."
+        }
+      ]
     },
     {
       "level": 4,
       "id": "short-o",
       "phase": "Short vowels",
       "focus": "Short o, as in dog",
-      "spokenRule": "In these words, o makes the short vowel sound in dog.",
+      "spokenRule": "The letter O makes the middle sound in dog. Listen.",
       "focusWords": [
         "dog",
         "log",
@@ -135,14 +177,28 @@
         "pin"
       ],
       "notes": [],
-      "artwork": "images/l1_lonemarine.jpg"
+      "artwork": "images/word-course/tank-03-challenger-2.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letter O makes the middle sound in dog. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "o"
+        },
+        {
+          "kind": "speech",
+          "text": "dog. log."
+        }
+      ]
     },
     {
       "level": 5,
       "id": "short-u",
       "phase": "Short vowels",
       "focus": "Short u, as in sun",
-      "spokenRule": "In these words, u makes the vowel sound in sun.",
+      "spokenRule": "The letter U makes the middle sound in sun. Listen.",
       "focusWords": [
         "sun",
         "cup",
@@ -163,14 +219,28 @@
       "notes": [
         "Use the child's home pronunciation. A Yorkshire u in cup is not an error."
       ],
-      "artwork": "images/l1_lonemarine.jpg"
+      "artwork": "images/l2_cathedralknight.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letter U makes the middle sound in sun. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "u"
+        },
+        {
+          "kind": "speech",
+          "text": "sun. cup."
+        }
+      ]
     },
     {
       "level": 6,
       "id": "initial-blends",
       "phase": "Blending and doubled letters",
       "focus": "Blend known consonant sounds at the start",
-      "spokenRule": "Say the consonant sounds together at the start.",
+      "spokenRule": "In clap, keep the two starting consonant sounds together. Listen to each sound.",
       "focusWords": [
         "clap",
         "flag",
@@ -196,14 +266,32 @@
       "notes": [
         "This is a blending skill using already known consonant sounds. No new digraph is introduced. The core examples use two adjacent consonant sounds."
       ],
-      "artwork": "images/l2_cathedralknight.jpg"
+      "artwork": "images/word-course/tank-04-leclerc.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In clap, keep the two starting consonant sounds together. Listen to each sound."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "c"
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "l"
+        },
+        {
+          "kind": "speech",
+          "text": "clap."
+        }
+      ]
     },
     {
       "level": 7,
       "id": "final-blends",
       "phase": "Blending and doubled letters",
       "focus": "Blend known consonant sounds at the end",
-      "spokenRule": "Say the consonant sounds together at the end.",
+      "spokenRule": "In hand, keep the two ending consonant sounds together. Listen to each sound.",
       "focusWords": [
         "hand",
         "tent",
@@ -230,14 +318,32 @@
       "notes": [
         "This is a blending skill using already known consonant sounds. The core examples use two adjacent consonant sounds."
       ],
-      "artwork": "images/l2_cathedralknight.jpg"
+      "artwork": "images/word-course/tank-05-merkava.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In hand, keep the two ending consonant sounds together. Listen to each sound."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "n"
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "d"
+        },
+        {
+          "kind": "speech",
+          "text": "hand."
+        }
+      ]
     },
     {
       "level": 8,
       "id": "ck",
       "phase": "Blending and doubled letters",
       "focus": "ck says k",
-      "spokenRule": "c and k together say k.",
+      "spokenRule": "The letters C and K work together to make one sound. Listen.",
       "focusWords": [
         "back",
         "neck",
@@ -262,14 +368,28 @@
         "lamp"
       ],
       "notes": [],
-      "artwork": "images/l2_cathedralknight.jpg"
+      "artwork": "images/word-course/tank-06-k2-black-panther.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letters C and K work together to make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ck"
+        },
+        {
+          "kind": "speech",
+          "text": "back. neck."
+        }
+      ]
     },
     {
       "level": 9,
       "id": "ff",
       "phase": "Blending and doubled letters",
       "focus": "ff says f",
-      "spokenRule": "Two f letters make one f sound.",
+      "spokenRule": "Two F letters make one sound. Listen.",
       "focusWords": [
         "off",
         "puff",
@@ -295,14 +415,28 @@
       "notes": [
         "Introduce the meaning of cuff if it is unfamiliar."
       ],
-      "artwork": "images/l3_helmet.jpg"
+      "artwork": "images/l3_helmet.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "Two F letters make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "f"
+        },
+        {
+          "kind": "speech",
+          "text": "off. puff."
+        }
+      ]
     },
     {
       "level": 10,
       "id": "ll",
       "phase": "Blending and doubled letters",
       "focus": "ll says l",
-      "spokenRule": "Two l letters make one l sound.",
+      "spokenRule": "Two L letters make one sound. Listen.",
       "focusWords": [
         "bell",
         "hill",
@@ -325,14 +459,28 @@
         "huff"
       ],
       "notes": [],
-      "artwork": "images/l3_helmet.jpg"
+      "artwork": "images/word-course/tank-07-type-10.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "Two L letters make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ll"
+        },
+        {
+          "kind": "speech",
+          "text": "bell. hill."
+        }
+      ]
     },
     {
       "level": 11,
       "id": "ss",
       "phase": "Blending and doubled letters",
       "focus": "ss says s",
-      "spokenRule": "Two s letters make one s sound.",
+      "spokenRule": "Two S letters make one sound. Listen.",
       "focusWords": [
         "miss",
         "kiss",
@@ -356,14 +504,28 @@
         "doll"
       ],
       "notes": [],
-      "artwork": "images/l3_helmet.jpg"
+      "artwork": "images/word-course/tank-08-type-90.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "Two S letters make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ss"
+        },
+        {
+          "kind": "speech",
+          "text": "miss. kiss."
+        }
+      ]
     },
     {
       "level": 12,
       "id": "zz",
       "phase": "Blending and doubled letters",
       "focus": "zz says z",
-      "spokenRule": "Two z letters make one z sound.",
+      "spokenRule": "Two Z letters make one sound. Listen.",
       "focusWords": [
         "buzz",
         "fuzz",
@@ -386,14 +548,28 @@
       "notes": [
         "Four focus words are enough; do not add an unfamiliar pattern merely to fill six slots."
       ],
-      "artwork": "images/l3_helmet.jpg"
+      "artwork": "images/word-course/tank-09-ariete.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "Two Z letters make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "z"
+        },
+        {
+          "kind": "speech",
+          "text": "buzz. fuzz."
+        }
+      ]
     },
     {
       "level": 13,
       "id": "sh",
       "phase": "Consonant teams",
       "focus": "sh, as in ship",
-      "spokenRule": "s and h together say sh.",
+      "spokenRule": "The letters S and H work together to make one sound. Listen.",
       "focusWords": [
         "ship",
         "shop",
@@ -417,14 +593,28 @@
         "fizz"
       ],
       "notes": [],
-      "artwork": "images/l4_hammerchampion.jpg"
+      "artwork": "images/l4_hammerchampion.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letters S and H work together to make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "sh"
+        },
+        {
+          "kind": "speech",
+          "text": "ship. shop."
+        }
+      ]
     },
     {
       "level": 14,
       "id": "ch",
       "phase": "Consonant teams",
       "focus": "ch, as in chip",
-      "spokenRule": "c and h together say ch.",
+      "spokenRule": "The letters C and H work together to make one sound. Listen.",
       "focusWords": [
         "chip",
         "chop",
@@ -448,14 +638,28 @@
         "shut"
       ],
       "notes": [],
-      "artwork": "images/l4_hammerchampion.jpg"
+      "artwork": "images/word-course/tank-10-t-90.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letters C and H work together to make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ch"
+        },
+        {
+          "kind": "speech",
+          "text": "chip. chop."
+        }
+      ]
     },
     {
       "level": 15,
       "id": "unvoiced-th",
       "phase": "Consonant teams",
       "focus": "Quiet th, as in thin",
-      "spokenRule": "t and h together say the quiet th in thin.",
+      "spokenRule": "The letters T and H make the quiet sound at the start of thin. Listen.",
       "focusWords": [
         "thin",
         "thick",
@@ -483,14 +687,28 @@
       "notes": [
         "thick uses earlier ck; cloth and thrush use earlier initial blending; thrush also uses earlier sh."
       ],
-      "artwork": "images/l4_hammerchampion.jpg"
+      "artwork": "images/word-course/tank-11-t-72.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letters T and H make the quiet sound at the start of thin. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "th"
+        },
+        {
+          "kind": "speech",
+          "text": "thin. thick."
+        }
+      ]
     },
     {
       "level": 16,
       "id": "voiced-th",
       "phase": "Consonant teams",
       "focus": "Buzzy th, as in this",
-      "spokenRule": "t and h together say the buzzy th in this.",
+      "spokenRule": "The letters T and H make the buzzy sound at the start of this. Listen.",
       "focusWords": [
         "this",
         "that",
@@ -515,14 +733,28 @@
       "notes": [
         "Use the clearly spoken, isolated forms of than and them, rather than their reduced forms in sentences. Five focus words are enough."
       ],
-      "artwork": "images/l4_hammerchampion.jpg"
+      "artwork": "images/word-course/tank-12-t-80.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letters T and H make the buzzy sound at the start of this. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "thv"
+        },
+        {
+          "kind": "speech",
+          "text": "this. that."
+        }
+      ]
     },
     {
       "level": 17,
       "id": "ng",
       "phase": "Consonant teams",
       "focus": "ng, as in ring",
-      "spokenRule": "n and g together say ng, as in ring.",
+      "spokenRule": "The letters N and G work together to make the sound at the end of ring. Listen.",
       "focusWords": [
         "bang",
         "hang",
@@ -544,14 +776,28 @@
         "them"
       ],
       "notes": [],
-      "artwork": "images/l4_hammerchampion.jpg"
+      "artwork": "images/l5_scouts.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letters N and G work together to make the sound at the end of ring. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ng"
+        },
+        {
+          "kind": "speech",
+          "text": "bang. hang."
+        }
+      ]
     },
     {
       "level": 18,
       "id": "qu",
       "phase": "Consonant teams",
       "focus": "qu says kw",
-      "spokenRule": "q and u together say kw.",
+      "spokenRule": "The letters Q and U work together to make the sound at the start of quit. Listen.",
       "focusWords": [
         "quit",
         "quiz",
@@ -580,14 +826,28 @@
         "quill uses earlier ll; quack and quick use earlier ck; quest uses earlier final blending.",
         "Introduce the meanings of quill and quest if they are unfamiliar."
       ],
-      "artwork": "images/l4_hammerchampion.jpg"
+      "artwork": "images/word-course/tank-13-t-64.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "The letters Q and U work together to make the sound at the start of quit. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "qu"
+        },
+        {
+          "kind": "speech",
+          "text": "quit. quiz."
+        }
+      ]
     },
     {
       "level": 19,
       "id": "a-e",
       "phase": "Silent final e",
       "focus": "a-e, as in cake",
-      "spokenRule": "In these words, a says its name and the final e is silent.",
+      "spokenRule": "In these words, A says its name and the final E is silent. Listen.",
       "focusWords": [
         "cake",
         "name",
@@ -606,14 +866,28 @@
         "quill"
       ],
       "notes": [],
-      "artwork": "images/l5_scouts.jpg"
+      "artwork": "images/word-course/tank-14-chieftain.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, A says its name and the final E is silent. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ay"
+        },
+        {
+          "kind": "speech",
+          "text": "cake. name."
+        }
+      ]
     },
     {
       "level": 20,
       "id": "i-e",
       "phase": "Silent final e",
       "focus": "i-e, as in bike",
-      "spokenRule": "In these words, i says its name and the final e is silent.",
+      "spokenRule": "In these words, I says its name and the final E is silent. Listen.",
       "focusWords": [
         "bike",
         "kite",
@@ -632,14 +906,28 @@
         "game"
       ],
       "notes": [],
-      "artwork": "images/l5_scouts.jpg"
+      "artwork": "images/word-course/tank-15-centurion.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, I says its name and the final E is silent. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "igh"
+        },
+        {
+          "kind": "speech",
+          "text": "bike. kite."
+        }
+      ]
     },
     {
       "level": 21,
       "id": "o-e",
       "phase": "Silent final e",
       "focus": "o-e, as in home",
-      "spokenRule": "In these words, o says its name and the final e is silent.",
+      "spokenRule": "In these words, O says its name and the final E is silent. Listen.",
       "focusWords": [
         "home",
         "hope",
@@ -658,14 +946,28 @@
         "time"
       ],
       "notes": [],
-      "artwork": "images/l5_scouts.jpg"
+      "artwork": "images/l6_muster.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, O says its name and the final E is silent. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "oa"
+        },
+        {
+          "kind": "speech",
+          "text": "home. hope."
+        }
+      ]
     },
     {
       "level": 22,
       "id": "u-e-yoo",
       "phase": "Silent final e",
       "focus": "u-e says yoo",
-      "spokenRule": "In these words, u says yoo and the final e is silent.",
+      "spokenRule": "In these words, U says its name and the final E is silent. Its name sounds like the word you.",
       "focusWords": [
         "cube",
         "cute",
@@ -686,14 +988,28 @@
         "Teach only the yoo pronunciation here. Reserve u-e as in rule and coalescing pronunciations such as tune for separate later work.",
         "Introduce the meaning of fume if it is unfamiliar. Five focus words are enough."
       ],
-      "artwork": "images/l5_scouts.jpg"
+      "artwork": "images/word-course/tank-16-m60.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, U says its name and the final E is silent. Its name sounds like the word you."
+        },
+        {
+          "kind": "speech",
+          "text": "You."
+        },
+        {
+          "kind": "speech",
+          "text": "cube. cute."
+        }
+      ]
     },
     {
       "level": 23,
       "id": "ee",
       "phase": "Vowel teams",
       "focus": "ee, as in feet",
-      "spokenRule": "In these words, e and e together say ee.",
+      "spokenRule": "In these words, the letters E and E make one sound. Listen.",
       "focusWords": [
         "bee",
         "see",
@@ -717,14 +1033,28 @@
       "notes": [
         "sheep uses earlier sh; green uses earlier initial blending."
       ],
-      "artwork": "images/l6_muster.jpg"
+      "artwork": "images/word-course/tank-17-m48-patton.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters E and E make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ee"
+        },
+        {
+          "kind": "speech",
+          "text": "bee. see."
+        }
+      ]
     },
     {
       "level": 24,
       "id": "ai",
       "phase": "Vowel teams",
       "focus": "ai, as in rain",
-      "spokenRule": "In these words, a and i together say ay.",
+      "spokenRule": "In these words, the letters A and I make one sound. Listen.",
       "focusWords": [
         "rain",
         "pain",
@@ -745,14 +1075,28 @@
         "feet"
       ],
       "notes": [],
-      "artwork": "images/l6_muster.jpg"
+      "artwork": "images/word-course/tank-18-m26-pershing.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters A and I make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ay"
+        },
+        {
+          "kind": "speech",
+          "text": "rain. pain."
+        }
+      ]
     },
     {
       "level": 25,
       "id": "ay",
       "phase": "Vowel teams",
       "focus": "ay, as in day",
-      "spokenRule": "In these words, a and y together say ay.",
+      "spokenRule": "In these words, the letters A and Y make one sound. Listen.",
       "focusWords": [
         "day",
         "pay",
@@ -773,14 +1117,28 @@
         "tail"
       ],
       "notes": [],
-      "artwork": "images/l6_muster.jpg"
+      "artwork": "images/l7_saint.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters A and Y make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ay"
+        },
+        {
+          "kind": "speech",
+          "text": "day. pay."
+        }
+      ]
     },
     {
       "level": 26,
       "id": "oa",
       "phase": "Vowel teams",
       "focus": "oa, as in boat",
-      "spokenRule": "In these words, o and a together say oh.",
+      "spokenRule": "In these words, the letters O and A make one sound. Listen.",
       "focusWords": [
         "boat",
         "coat",
@@ -799,14 +1157,28 @@
         "say"
       ],
       "notes": [],
-      "artwork": "images/l6_muster.jpg"
+      "artwork": "images/word-course/tank-19-sherman.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and A make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "oa"
+        },
+        {
+          "kind": "speech",
+          "text": "boat. coat."
+        }
+      ]
     },
     {
       "level": 27,
       "id": "long-oo",
       "phase": "Vowel teams",
       "focus": "oo, as in moon",
-      "spokenRule": "In these words, o and o together say the oo in moon.",
+      "spokenRule": "In these words, the letters O and O make the sound in moon. Listen.",
       "focusWords": [
         "moon",
         "food",
@@ -827,14 +1199,28 @@
         "goat"
       ],
       "notes": [],
-      "artwork": "images/l6_muster.jpg"
+      "artwork": "images/word-course/tank-20-churchill.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and O make the sound in moon. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "oo"
+        },
+        {
+          "kind": "speech",
+          "text": "moon. food."
+        }
+      ]
     },
     {
       "level": 28,
       "id": "short-oo",
       "phase": "Vowel teams",
       "focus": "oo, as in book",
-      "spokenRule": "In these words, o and o together say the oo in book.",
+      "spokenRule": "In these words, the letters O and O make the sound in book. Listen.",
       "focusWords": [
         "book",
         "cook",
@@ -858,14 +1244,28 @@
         "This is the second oo pronunciation. Contrast the selected examples with moon; do not claim one pronunciation covers every oo word.",
         "book is excluded from the old app's general practice bank; this proposal deliberately introduces it here."
       ],
-      "artwork": "images/l6_muster.jpg"
+      "artwork": "images/word-course/tank-21-cromwell.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and O make the sound in book. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ooshort"
+        },
+        {
+          "kind": "speech",
+          "text": "book. cook."
+        }
+      ]
     },
     {
       "level": 29,
       "id": "igh",
       "phase": "Vowel teams",
       "focus": "igh, as in night",
-      "spokenRule": "In these words, i, g and h together say eye.",
+      "spokenRule": "In these words, the letters I, G and H work together to make one sound. Listen.",
       "focusWords": [
         "high",
         "sigh",
@@ -884,14 +1284,28 @@
         "look"
       ],
       "notes": [],
-      "artwork": "images/l6_muster.jpg"
+      "artwork": "images/l8_battleship.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters I, G and H work together to make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "igh"
+        },
+        {
+          "kind": "speech",
+          "text": "high. sigh."
+        }
+      ]
     },
     {
       "level": 30,
       "id": "ow-cow",
       "phase": "More vowel teams",
       "focus": "ow, as in cow",
-      "spokenRule": "In these words, o and w together say ow, as in cow.",
+      "spokenRule": "In these words, the letters O and W make the sound in cow. Listen.",
       "focusWords": [
         "cow",
         "how",
@@ -914,14 +1328,28 @@
       "notes": [
         "The chosen words use the cow pronunciation. The snow pronunciation gets its own later level."
       ],
-      "artwork": "images/l7_saint.jpg"
+      "artwork": "images/word-course/tank-22-comet.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and W make the sound in cow. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ow"
+        },
+        {
+          "kind": "speech",
+          "text": "cow. how."
+        }
+      ]
     },
     {
       "level": 31,
       "id": "ou",
       "phase": "More vowel teams",
       "focus": "ou, as in out",
-      "spokenRule": "In these words, o and u together say ow, as in out.",
+      "spokenRule": "In these words, the letters O and U make the sound in out. Listen.",
       "focusWords": [
         "out",
         "shout",
@@ -944,14 +1372,28 @@
         "now"
       ],
       "notes": [],
-      "artwork": "images/l7_saint.jpg"
+      "artwork": "images/word-course/tank-23-valentine.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and U make the sound in out. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ow"
+        },
+        {
+          "kind": "speech",
+          "text": "out. shout."
+        }
+      ]
     },
     {
       "level": 32,
       "id": "ow-snow",
       "phase": "More vowel teams",
       "focus": "ow, as in snow",
-      "spokenRule": "In these words, o and w together say oh, as in snow.",
+      "spokenRule": "In these words, the letters O and W make the sound in snow. Listen.",
       "focusWords": [
         "low",
         "slow",
@@ -975,14 +1417,28 @@
       "notes": [
         "This is the second ow pronunciation. Earlier cow words remain valid; the spelling has more than one sound."
       ],
-      "artwork": "images/l7_saint.jpg"
+      "artwork": "images/word-course/tank-24-crusader.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and W make the sound in snow. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "oa"
+        },
+        {
+          "kind": "speech",
+          "text": "low. slow."
+        }
+      ]
     },
     {
       "level": 33,
       "id": "oi",
       "phase": "More vowel teams",
       "focus": "oi, as in coin",
-      "spokenRule": "In these words, o and i together say oy.",
+      "spokenRule": "In these words, the letters O and I make one sound. Listen.",
       "focusWords": [
         "oil",
         "boil",
@@ -1000,15 +1456,31 @@
         "slow",
         "snow"
       ],
-      "notes": ["Introduce the meaning of coil if it is unfamiliar."],
-      "artwork": "images/l7_saint.jpg"
+      "notes": [
+        "Introduce the meaning of coil if it is unfamiliar."
+      ],
+      "artwork": "images/word-course/tank-25-matilda.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and I make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "oi"
+        },
+        {
+          "kind": "speech",
+          "text": "oil. boil."
+        }
+      ]
     },
     {
       "level": 34,
       "id": "oy",
       "phase": "More vowel teams",
       "focus": "oy, as in toy",
-      "spokenRule": "In these words, o and y together say oy.",
+      "spokenRule": "In these words, the letters O and Y make one sound. Listen.",
       "focusWords": [
         "boy",
         "toy",
@@ -1027,14 +1499,28 @@
       "notes": [
         "Introduce the meaning of soy if it is unfamiliar. Four focus words are enough."
       ],
-      "artwork": "images/l7_saint.jpg"
+      "artwork": "images/word-course/tank-26-panther.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and Y make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "oy"
+        },
+        {
+          "kind": "speech",
+          "text": "boy. toy."
+        }
+      ]
     },
     {
       "level": 35,
       "id": "ar",
       "phase": "Vowels with r",
       "focus": "ar, as in car",
-      "spokenRule": "In these words, a and r together sound like ar in car.",
+      "spokenRule": "In these words, the letters A and R work together. Listen.",
       "focusWords": [
         "car",
         "far",
@@ -1058,14 +1544,28 @@
       "notes": [
         "Use the child's home accent for the presence or absence of a pronounced r. Do not require a southern model accent."
       ],
-      "artwork": "images/l8_battleship.jpg"
+      "artwork": "images/l9_titanparade.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters A and R work together. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ar"
+        },
+        {
+          "kind": "speech",
+          "text": "car. far."
+        }
+      ]
     },
     {
       "level": 36,
       "id": "or",
       "phase": "Vowels with r",
       "focus": "or, as in fork",
-      "spokenRule": "In these words, o and r together sound like or in fork.",
+      "spokenRule": "In these words, the letters O and R work together. Listen.",
       "focusWords": [
         "fork",
         "corn",
@@ -1090,14 +1590,28 @@
       "notes": [
         "Use the child's home accent for the presence or absence of a pronounced r."
       ],
-      "artwork": "images/l8_battleship.jpg"
+      "artwork": "images/word-course/tank-27-tiger.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters O and R work together. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "or"
+        },
+        {
+          "kind": "speech",
+          "text": "fork. corn."
+        }
+      ]
     },
     {
       "level": 37,
       "id": "ur",
       "phase": "Vowels with r",
       "focus": "ur, as in turn",
-      "spokenRule": "In these words, u and r together sound like ur in turn.",
+      "spokenRule": "In these words, the letters U and R work together. Listen.",
       "focusWords": [
         "fur",
         "burn",
@@ -1120,14 +1634,28 @@
       "notes": [
         "Use the child's home accent. ur, er and ir are taught as separate spellings even where their sounds coincide."
       ],
-      "artwork": "images/l8_battleship.jpg"
+      "artwork": "images/word-course/tank-28-panzer-iv.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters U and R work together. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "er"
+        },
+        {
+          "kind": "speech",
+          "text": "fur. burn."
+        }
+      ]
     },
     {
       "level": 38,
       "id": "er",
       "phase": "Vowels with r",
       "focus": "er, as in fern",
-      "spokenRule": "In these words, e and r together sound like er in fern.",
+      "spokenRule": "In these words, the letters E and R work together. Listen.",
       "focusWords": [
         "fern",
         "herd",
@@ -1152,14 +1680,28 @@
       "notes": [
         "Introduce the meanings of fern, term, verb, perch and stern if they are unfamiliar. Use full, isolated word pronunciations."
       ],
-      "artwork": "images/l9_titanparade.jpg"
+      "artwork": "images/word-course/tank-29-t-34.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters E and R work together. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "er"
+        },
+        {
+          "kind": "speech",
+          "text": "fern. herd."
+        }
+      ]
     },
     {
       "level": 39,
       "id": "ir",
       "phase": "Vowels with r",
       "focus": "ir, as in bird",
-      "spokenRule": "In these words, i and r together sound like ir in bird.",
+      "spokenRule": "In these words, the letters I and R work together. Listen.",
       "focusWords": [
         "bird",
         "girl",
@@ -1185,14 +1727,28 @@
         "third uses earlier quiet th.",
         "Introduce the meaning of firm if it is unfamiliar."
       ],
-      "artwork": "images/l9_titanparade.jpg"
+      "artwork": "images/word-course/tank-30-kv-1.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters I and R work together. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "ir"
+        },
+        {
+          "kind": "speech",
+          "text": "bird. girl."
+        }
+      ]
     },
     {
       "level": 40,
       "id": "aw",
       "phase": "aw spellings",
       "focus": "aw, as in saw",
-      "spokenRule": "In these words, a and w together sound like aw in saw.",
+      "spokenRule": "In these words, the letters A and W make one sound. Listen.",
       "focusWords": [
         "saw",
         "paw",
@@ -1215,14 +1771,28 @@
       "notes": [
         "draw replaces straw in the draft; the focus bank does not introduce a three-consonant onset."
       ],
-      "artwork": "images/l9_titanparade.jpg"
+      "artwork": "images/word-course/tank-31-renault-ft.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letters A and W make one sound. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "aw"
+        },
+        {
+          "kind": "speech",
+          "text": "saw. paw."
+        }
+      ]
     },
     {
       "level": 41,
       "id": "a-before-ll",
       "phase": "aw spellings",
       "focus": "a before ll, as in ball",
-      "spokenRule": "In these words, a before two l letters sounds like aw in ball.",
+      "spokenRule": "In these words, the letter A before two L letters makes the sound in ball. Listen.",
       "focusWords": [
         "all",
         "ball",
@@ -1246,7 +1816,21 @@
       "notes": [
         "This is a specific a-before-ll cohort. It is not a claim that all double consonants change a vowel in the same way."
       ],
-      "artwork": "images/l10_ringplanet.jpg"
+      "artwork": "images/l10_ringplanet.jpg",
+      "rulePlaybackSteps": [
+        {
+          "kind": "speech",
+          "text": "In these words, the letter A before two L letters makes the sound in ball. Listen."
+        },
+        {
+          "kind": "recorded-sound",
+          "clipKey": "aw"
+        },
+        {
+          "kind": "speech",
+          "text": "all. ball."
+        }
+      ]
     }
   ],
   "deferredPatterns": [
@@ -1306,8 +1890,8 @@
     },
     {
       "before": "Artwork is assigned only to the ten old word levels.",
-      "after": "Use the explicit artwork reuse map recorded for every proposed level.",
-      "reason": "Every proposed word level has a deliberate image assignment."
+      "after": "Use the explicit41-picture assignments recorded in this course, retaining source and licence credits for the real tank photographs.",
+      "reason": "Every proposed word level has a different, deliberate image assignment."
     },
     {
       "before": "Sound buttons and family tags cover the existing vocabulary.",
@@ -1321,8 +1905,8 @@
     },
     {
       "before": "Several existing rule tags are inconsistent, including both, shall, water and music.",
-      "after": "Resolve the already tracked sound and rule issues before importing their words into a future focus bank.",
-      "reason": "Known annotation errors must not become new teaching rules."
+      "after": "The current app now corrects those four annotations and demonstrates rules with recorded sounds and whole-word examples. Audit every new bank before course adoption.",
+      "reason": "Those known errors have been fixed; the new vocabulary still needs a complete pronunciation audit."
     }
   ],
   "sources": [
@@ -1342,5 +1926,7 @@
     "Every candidate still needs a child's-eye check for pronunciation and meaning. The word lists do not certify teaching quality.",
     "The focus labels describe these word cohorts, not universal rules for every English word.",
     "Review the starting assumptions and the first five banks before adopting the proposed course. No extra reference-audio recordings are required."
-  ]
+  ],
+  "rulePlaybackNote": "Rule playback uses an ordinary spoken explanation, the existing recorded phonics sound, then whole-word examples. The U-name demonstration intentionally speaks the real word you; it does not attempt a made-up phonetic spelling. Blending lessons play the separate consonant sounds before the whole word.",
+  "artworkNote": "Every planned word level has its own picture: ten existing space-knight pictures at milestones, with31real tank photographs between them. Sources and photo credits appear in the artwork gallery. The live ten-level artwork manifest stays separate until this course is adopted."
 }

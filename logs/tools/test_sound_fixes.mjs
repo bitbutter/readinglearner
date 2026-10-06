@@ -1,15 +1,18 @@
 // Verifies the SOUND_FIXES wiring in app.js end-to-end, without a browser:
 // extracts the pure table section from app.js, evals it with a minimal DOM
 // shim, then walks every vocabulary word and checks that segmentation,
-// clips, silents, tappable flags, chips and rule lines all resolve.
+// clips, silents, tappable flags, chips and rule lessons all resolve.
 //   node logs/tools/test_sound_fixes.mjs
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const src = readFileSync(new URL('../../app.js', import.meta.url), 'utf8');
 const start = src.indexOf('// Isolated phonetic letter sounds');
 const end = src.indexOf('function triggerSoundSpan');
 if (start < 0 || end < 0) throw new Error('extraction markers not found');
 const section = src.slice(start, end);
+const ruleLessonDefinition = src.slice(src.indexOf('function ruleLessonFor(fam, display)'), src.indexOf('let ruleLessonPlaybackSequence'));
 
 // Minimal DOM shim for buildSoundUnitSpans.
 function el(tag) {
@@ -32,11 +35,11 @@ const documentShim = {
   createDocumentFragment: () => el('fragment'),
 };
 
-const api = new Function('document', section + `
+const api = new Function('document', section + ruleLessonDefinition + `
   return { LETTER_SOUNDS, DIGRAPH_TTS, TTS_EXTENDED, EXCLUDED_WORDS, SOUND_FIXES,
            PATTERN_META, FAM_COLOUR, CLIP_NAME, SEGMENT_OVERRIDES, DIGIT_NAMES,
            MAGIC_E_CLIP, NOT_MAGIC_E, segmentDisplay, soundFallback,
-           isCVCEShape, buildSoundUnitSpans };`)(documentShim);
+           isCVCEShape, buildSoundUnitSpans, ruleLessonFor };`)(documentShim);
 
 const words = JSON.parse(readFileSync(new URL('./word_segments.json', import.meta.url), 'utf8'));
 const clips = new Set(readdirSync(new URL('../../audio/letters/', import.meta.url)).map(f => f.replace('.mp3', '')));
@@ -97,10 +100,29 @@ for (const w of words) {
     if (!api.PATTERN_META[fe.fam]) errs.push(`${lower}: fam "${fe.fam}" has no PATTERN_META`);
     if (!api.FAM_COLOUR[fe.fam]) errs.push(`${lower}: fam "${fe.fam}" has no FAM_COLOUR`);
     const meta = api.PATTERN_META[fe.fam];
-    if (meta && typeof meta.line(lower, fe.unit) !== 'string') errs.push(`${lower}: line() broken for ${fe.fam}`);
-    if (meta && !meta.line(lower, fe.unit)) errs.push(`${lower}: empty rule line for ${fe.fam}`);
+    if (meta) {
+      const lesson = api.ruleLessonFor(fe.fam, lower);
+      if (!lesson[0]?.text) errs.push(`${lower}: empty rule explanation for ${fe.fam}`);
+      for (const step of lesson) {
+        if (step.kind === 'recorded-sound' && !clips.has(step.clipKey))
+          errs.push(`${lower}: rule lesson clip "${step.clipKey}" has no audio file`);
+        if (step.kind === 'speech' && !step.text) errs.push(`${lower}: empty spoken lesson step`);
+      }
+      const demonstration = lesson.find(step => step.kind === 'recorded-sound' || step.text === 'you');
+      const expectedClip = fix.over?.[fe.unit];
+      if (expectedClip && (demonstration.clipKey || (demonstration.text === 'you' ? 'ue' : null)) !== expectedClip)
+        errs.push(`${lower}: rule sound contradicts its unit clip for ${fe.fam}`);
+    }
     if (meta && !meta.praise) errs.push(`${lower}: missing praise for ${fe.fam}`);
   }
+}
+
+// The app's generated table must remain identical to the canonical audit.
+const generatedTables = execFileSync(process.execPath, [fileURLToPath(new URL('./gen_sound_fixes.mjs', import.meta.url))], { encoding:'utf8' });
+for (const tableName of ['SOUND_FIXES', 'EXCLUDED_WORDS']) {
+  const definition = new RegExp(`^const ${tableName} = .*;$`, 'm');
+  if (src.match(definition)?.[0] !== generatedTables.match(definition)?.[0])
+    errs.push(`${tableName}: app table differs from the canonical sound audit generator`);
 }
 
 // Rule-block sanity: every level's eligible pool and its families.

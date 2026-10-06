@@ -39,9 +39,9 @@ function numberToWords(n) {
 }
 
 // Isolated phonetic letter sounds (phonics, not letter names — "sss" for s,
-// not "ess"). Primary source is the bespoke recordings in audio/letters/
-// (generated from IPA via logs/tools/generate_letter_sounds.ps1, so the sound
-// can't be "spelled out"). The strings below are only the TTS fallback if an
+// not "ess"). Primary source is the recorded audio in audio/letters/;
+// most clips were re-recorded in Dad's voice. The strings below are only
+// the existing TTS fallback for individual-letter help if an
 // audio file fails to load, and they may be mangled by some voices.
 const LETTER_SOUNDS = {
   a: 'ah',  b: 'buh', c: 'kuh', d: 'duh', e: 'eh',  f: 'fff',
@@ -90,67 +90,74 @@ const EXCLUDED_WORDS = new Set(["are","because","book","brother","buy","colour",
 //   silent: units that flash but play nothing
 //   fams:   [{ fam, unit }] teaching families this word belongs to (chips +
 //           rule-block clustering); drives PATTERN_META
-const SOUND_FIXES = {"the":{"over":{"th":"thv"},"fams":[{"fam":"voiced-th","unit":"th"}]},"down":{"seg":["d","ow","n"],"over":{"ow":"ow"},"fams":[{"fam":"ow-team","unit":"ow"}]},"baby":{"over":{"a":"ay","y":"ee"},"fams":[{"fam":"open-syllable","unit":"a"},{"fam":"final-y","unit":"y"}]},"he":{"over":{"e":"ee"},"fams":[{"fam":"open-syllable","unit":"e"}]},"she":{"over":{"e":"ee"},"fams":[{"fam":"open-syllable","unit":"e"}]},"be":{"over":{"e":"ee"},"fams":[{"fam":"open-syllable","unit":"e"}]},"we":{"over":{"e":"ee"},"fams":[{"fam":"open-syllable","unit":"e"}]},"so":{"over":{"o":"oa"},"fams":[{"fam":"open-syllable","unit":"o"}]},"no":{"over":{"o":"oa"},"fams":[{"fam":"open-syllable","unit":"o"}]},"tiger":{"over":{"i":"igh"},"fams":[{"fam":"open-syllable","unit":"i"}]},"turn":{"seg":["t","ur","n"],"over":{"ur":"er"},"fams":[{"fam":"r-controlled","unit":"ur"}]},"hurt":{"seg":["h","ur","t"],"over":{"ur":"er"},"fams":[{"fam":"r-controlled","unit":"ur"}]},"burn":{"seg":["b","ur","n"],"over":{"ur":"er"},"fams":[{"fam":"r-controlled","unit":"ur"}]},"more":{"silent":["e"]},"read":{"seg":["r","ea","d"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"tea":{"seg":["t","ea"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"beat":{"seg":["b","ea","t"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"is":{"over":{"s":"z"},"fams":[{"fam":"s-says-z","unit":"s"}]},"go":{"over":{"o":"oa"},"fams":[{"fam":"open-syllable","unit":"o"}]},"was":{"over":{"a":"o","s":"z"},"fams":[{"fam":"wa-family","unit":"a"},{"fam":"s-says-z","unit":"s"}]},"always":{"over":{"a":"aw","s":"z"},"fams":[{"fam":"all-family","unit":"a"},{"fam":"s-says-z","unit":"s"}]},"around":{"seg":["a","r","ou","n","d"],"over":{"a":"u","ou":"ow"},"fams":[{"fam":"ow-team","unit":"ou"}]},"before":{"over":{"e#1":"i"},"silent":["e#2"]},"both":{"over":{"o":"oa"},"fams":[{"fam":"old-family","unit":"o"}]},"call":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"cold":{"over":{"o":"oa"},"fams":[{"fam":"old-family","unit":"o"}]},"found":{"seg":["f","ou","n","d"],"over":{"ou":"ow"},"fams":[{"fam":"ow-team","unit":"ou"}]},"these":{"over":{"th":"thv","s":"z"},"fams":[{"fam":"voiced-th","unit":"th"},{"fam":"s-says-z","unit":"s"}]},"those":{"over":{"th":"thv","s":"z"},"fams":[{"fam":"voiced-th","unit":"th"},{"fam":"s-says-z","unit":"s"}]},"use":{"over":{"u":"ue","s":"z"},"silent":["e"],"fams":[{"fam":"open-syllable","unit":"u"},{"fam":"s-says-z","unit":"s"}]},"very":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"wash":{"over":{"a":"o"},"fams":[{"fam":"wa-family","unit":"a"}]},"why":{"over":{"y":"igh"},"fams":[{"fam":"y-long-i","unit":"y"}]},"write":{"over":{"i":"igh"},"silent":["w","e"]},"about":{"seg":["a","b","ou","t"],"over":{"a":"u","ou":"ow"},"fams":[{"fam":"ow-team","unit":"ou"}]},"carry":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"clean":{"seg":["c","l","ea","n"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"draw":{"seg":["d","r","aw"],"over":{"aw":"aw"},"fams":[{"fam":"aw-team","unit":"aw"}]},"fall":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"grow":{"over":{"o":"oa"},"silent":["w"],"fams":[{"fam":"ow-says-oh","unit":"o"}]},"hold":{"over":{"o":"oa"},"fams":[{"fam":"old-family","unit":"o"}]},"kind":{"over":{"i":"igh"},"fams":[{"fam":"ind-family","unit":"i"}]},"myself":{"over":{"y":"igh"},"fams":[{"fam":"y-long-i","unit":"y"}]},"only":{"over":{"o":"oa","y":"ee"},"fams":[{"fam":"open-syllable","unit":"o"},{"fam":"final-y","unit":"y"}]},"own":{"over":{"o":"oa"},"silent":["w"],"fams":[{"fam":"ow-says-oh","unit":"o"}]},"shall":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"show":{"over":{"o":"oa"},"silent":["w"],"fams":[{"fam":"ow-says-oh","unit":"o"}]},"small":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"today":{"over":{"o":"u"}},"together":{"over":{"o":"u","th":"thv"},"fams":[{"fam":"voiced-th","unit":"th"}]},"try":{"over":{"y":"igh"},"fams":[{"fam":"y-long-i","unit":"y"}]},"water":{"over":{"a":"aw"},"fams":[{"fam":"wa-family","unit":"a"}]},"year":{"over":{"ear":"earnear"},"fams":[{"fam":"ear-near","unit":"ear"}]},"place":{"over":{"a":"ay","c":"s"},"silent":["e"],"fams":[{"fam":"soft-c","unit":"c"}]},"face":{"over":{"c":"s"},"fams":[{"fam":"soft-c","unit":"c"}]},"family":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"body":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"music":{"over":{"u":"ue","s":"z","c":"s"},"fams":[{"fam":"open-syllable","unit":"u"},{"fam":"s-says-z","unit":"s"},{"fam":"soft-c","unit":"c"}]},"horse":{"silent":["e"]},"sea":{"seg":["s","ea"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"mountain":{"seg":["m","ou","n","t","ai","n"],"over":{"ou":"ow","ai":"u"},"fams":[{"fam":"ow-team","unit":"ou"}]},"city":{"over":{"c":"s","y":"ee"},"fams":[{"fam":"soft-c","unit":"c"},{"fam":"final-y","unit":"y"}]},"page":{"over":{"g":"j"},"fams":[{"fam":"soft-g","unit":"g"}]},"story":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"teacher":{"seg":["t","ea","ch","er"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"window":{"over":{"o":"oa"},"silent":["w#2"],"fams":[{"fam":"ow-says-oh","unit":"o"}]},"table":{"over":{"a":"ay"},"silent":["e"],"fams":[{"fam":"open-syllable","unit":"a"}]},"wall":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"paper":{"over":{"a":"ay"},"fams":[{"fam":"open-syllable","unit":"a"}]},"pencil":{"over":{"c":"s"},"fams":[{"fam":"soft-c","unit":"c"}]},"weather":{"seg":["w","ea","th","er"],"over":{"ea":"e","th":"thv"},"fams":[{"fam":"ea-short-e","unit":"ea"},{"fam":"voiced-th","unit":"th"}]},"sound":{"seg":["s","ou","n","d"],"over":{"ou":"ow"},"fams":[{"fam":"ow-team","unit":"ou"}]},"idea":{"over":{"i":"igh"},"fams":[{"fam":"open-syllable","unit":"i"}]}};
+const SOUND_FIXES = {"the":{"over":{"th":"thv"},"fams":[{"fam":"voiced-th","unit":"th"}]},"down":{"seg":["d","ow","n"],"over":{"ow":"ow"},"fams":[{"fam":"ow-team","unit":"ow"}]},"baby":{"over":{"a":"ay","y":"ee"},"fams":[{"fam":"open-syllable","unit":"a"},{"fam":"final-y","unit":"y"}]},"he":{"over":{"e":"ee"},"fams":[{"fam":"open-syllable","unit":"e"}]},"she":{"over":{"e":"ee"},"fams":[{"fam":"open-syllable","unit":"e"}]},"be":{"over":{"e":"ee"},"fams":[{"fam":"open-syllable","unit":"e"}]},"we":{"over":{"e":"ee"},"fams":[{"fam":"open-syllable","unit":"e"}]},"so":{"over":{"o":"oa"},"fams":[{"fam":"open-syllable","unit":"o"}]},"no":{"over":{"o":"oa"},"fams":[{"fam":"open-syllable","unit":"o"}]},"tiger":{"over":{"i":"igh"},"fams":[{"fam":"open-syllable","unit":"i"}]},"turn":{"seg":["t","ur","n"],"over":{"ur":"er"},"fams":[{"fam":"r-controlled","unit":"ur"}]},"hurt":{"seg":["h","ur","t"],"over":{"ur":"er"},"fams":[{"fam":"r-controlled","unit":"ur"}]},"burn":{"seg":["b","ur","n"],"over":{"ur":"er"},"fams":[{"fam":"r-controlled","unit":"ur"}]},"more":{"silent":["e"]},"read":{"seg":["r","ea","d"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"tea":{"seg":["t","ea"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"beat":{"seg":["b","ea","t"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"is":{"over":{"s":"z"},"fams":[{"fam":"s-says-z","unit":"s"}]},"go":{"over":{"o":"oa"},"fams":[{"fam":"open-syllable","unit":"o"}]},"was":{"over":{"a":"o","s":"z"},"fams":[{"fam":"wa-family","unit":"a"},{"fam":"s-says-z","unit":"s"}]},"always":{"over":{"a":"aw","s":"z"},"fams":[{"fam":"all-family","unit":"a"},{"fam":"s-says-z","unit":"s"}]},"around":{"seg":["a","r","ou","n","d"],"over":{"a":"u","ou":"ow"},"fams":[{"fam":"ow-team","unit":"ou"}]},"before":{"over":{"e#1":"i"},"silent":["e#2"]},"both":{"over":{"o":"oa"},"fams":[{"fam":"o-says-oh","unit":"o"}]},"call":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"cold":{"over":{"o":"oa"},"fams":[{"fam":"old-family","unit":"o"}]},"found":{"seg":["f","ou","n","d"],"over":{"ou":"ow"},"fams":[{"fam":"ow-team","unit":"ou"}]},"these":{"over":{"th":"thv","s":"z"},"fams":[{"fam":"voiced-th","unit":"th"},{"fam":"s-says-z","unit":"s"}]},"those":{"over":{"th":"thv","s":"z"},"fams":[{"fam":"voiced-th","unit":"th"},{"fam":"s-says-z","unit":"s"}]},"use":{"over":{"u":"ue","s":"z"},"silent":["e"],"fams":[{"fam":"open-syllable","unit":"u"},{"fam":"s-says-z","unit":"s"}]},"very":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"wash":{"over":{"a":"o"},"fams":[{"fam":"wa-family","unit":"a"}]},"why":{"over":{"y":"igh"},"fams":[{"fam":"y-long-i","unit":"y"}]},"write":{"over":{"i":"igh"},"silent":["w","e"]},"about":{"seg":["a","b","ou","t"],"over":{"a":"u","ou":"ow"},"fams":[{"fam":"ow-team","unit":"ou"}]},"carry":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"clean":{"seg":["c","l","ea","n"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"draw":{"seg":["d","r","aw"],"over":{"aw":"aw"},"fams":[{"fam":"aw-team","unit":"aw"}]},"fall":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"grow":{"over":{"o":"oa"},"silent":["w"],"fams":[{"fam":"ow-says-oh","unit":"o"}]},"hold":{"over":{"o":"oa"},"fams":[{"fam":"old-family","unit":"o"}]},"kind":{"over":{"i":"igh"},"fams":[{"fam":"ind-family","unit":"i"}]},"myself":{"over":{"y":"igh"},"fams":[{"fam":"y-long-i","unit":"y"}]},"only":{"over":{"o":"oa","y":"ee"},"fams":[{"fam":"open-syllable","unit":"o"},{"fam":"final-y","unit":"y"}]},"own":{"over":{"o":"oa"},"silent":["w"],"fams":[{"fam":"ow-says-oh","unit":"o"}]},"shall":{},"show":{"over":{"o":"oa"},"silent":["w"],"fams":[{"fam":"ow-says-oh","unit":"o"}]},"small":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"today":{"over":{"o":"u"}},"together":{"over":{"o":"u","th":"thv"},"fams":[{"fam":"voiced-th","unit":"th"}]},"try":{"over":{"y":"igh"},"fams":[{"fam":"y-long-i","unit":"y"}]},"water":{"over":{"a":"aw"},"fams":[{"fam":"a-says-aw","unit":"a"}]},"year":{"over":{"ear":"earnear"},"fams":[{"fam":"ear-near","unit":"ear"}]},"place":{"over":{"a":"ay","c":"s"},"silent":["e"],"fams":[{"fam":"soft-c","unit":"c"}]},"face":{"over":{"c":"s"},"fams":[{"fam":"soft-c","unit":"c"}]},"family":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"body":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"music":{"over":{"u":"ue","s":"z"},"fams":[{"fam":"open-syllable","unit":"u"},{"fam":"s-says-z","unit":"s"}]},"horse":{"silent":["e"]},"sea":{"seg":["s","ea"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"mountain":{"seg":["m","ou","n","t","ai","n"],"over":{"ou":"ow","ai":"u"},"fams":[{"fam":"ow-team","unit":"ou"}]},"city":{"over":{"c":"s","y":"ee"},"fams":[{"fam":"soft-c","unit":"c"},{"fam":"final-y","unit":"y"}]},"page":{"over":{"g":"j"},"fams":[{"fam":"soft-g","unit":"g"}]},"story":{"over":{"y":"ee"},"fams":[{"fam":"final-y","unit":"y"}]},"teacher":{"seg":["t","ea","ch","er"],"over":{"ea":"ee"},"fams":[{"fam":"ea-team","unit":"ea"}]},"window":{"over":{"o":"oa"},"silent":["w#2"],"fams":[{"fam":"ow-says-oh","unit":"o"}]},"table":{"over":{"a":"ay"},"silent":["e"],"fams":[{"fam":"open-syllable","unit":"a"}]},"wall":{"over":{"a":"aw"},"fams":[{"fam":"all-family","unit":"a"}]},"paper":{"over":{"a":"ay"},"fams":[{"fam":"open-syllable","unit":"a"}]},"pencil":{"over":{"c":"s"},"fams":[{"fam":"soft-c","unit":"c"}]},"weather":{"seg":["w","ea","th","er"],"over":{"ea":"e","th":"thv"},"fams":[{"fam":"ea-short-e","unit":"ea"},{"fam":"voiced-th","unit":"th"}]},"sound":{"seg":["s","ou","n","d"],"over":{"ou":"ow"},"fams":[{"fam":"ow-team","unit":"ou"}]},"idea":{"over":{"i":"igh"},"fams":[{"fam":"open-syllable","unit":"i"}]}};
 
-// Teaching families: what the chip shows, the spoken rule line, and the
-// celebration line when a rule block is cleared without a miss. Sound tokens
-// (eee, oh, zzz, thh…) follow the app's established TTS-safe spellings.
+// A rule lesson speaks ordinary guidance and separate letter names, plays
+// the recorded sound, then speaks the whole-word example. Never ask the
+// synthetic voice to pronounce an invented spelling of an isolated sound.
 const CLIP_NAME = { ay:'AY', ee:'EE', igh:'EYE', oa:'OH', ue:'YOU', z:'Z', s:'SSS', j:'J', thv:'NOISY TH', er:'ER', aw:'AW', ow:'OW', ooshort:'OO', earnear:'EAR', e:'EH', u:'U', o:'O', i:'I', air:'AIR' };
 const PATTERN_META = {
-  'open-syllable': { nice:'vowel at the end says its name',
-    line: (w,u) => `The ${u} in ${w} says its name.`,
-    praise: 'You learned the rule: a vowel at the end of a little word says its name!' },
+  'open-syllable': { nice:'vowel says its name here',
+    explanation: 'This vowel says its name here.',
+    sound: (_w, unit) => ({ a:'ay', e:'ee', i:'igh', o:'oa', u:'you' })[unit],
+    praise: 'You practised a vowel saying its name!' },
   'final-y':       { nice:'y at the end says ee',
-    line: (w) => `The y at the end of ${w} says eee.`,
-    praise: 'You learned the rule: y at the end says eee!' },
+    explanation: 'At the end of this word, this letter makes this sound.', sound:'ee',
+    praise: 'You practised the ending in baby!' },
   'y-long-i':      { nice:'y at the end says eye',
-    line: (w) => `The y at the end of ${w} says eye.`,
-    praise: 'You learned the rule: y at the end of a short word says eye!' },
+    explanation: 'At the end of this short word, this letter makes this sound.', sound:'igh',
+    praise: 'You practised the ending in my!' },
   's-says-z':      { nice:'s can say z',
-    line: (w,u) => `The ${u} at the end of ${w} says zzz.`,
-    praise: 'You learned the rule: s at the end sometimes says zzz!' },
+    explanation: 'In this word, this letter makes a buzzing sound.', sound:'z',
+    praise: 'You practised the buzzing sound in is!' },
   'voiced-th':     { nice:'the noisy th',
-    line: (w,u) => `The ${u} in ${w} is the noisy th. Thh!`,
-    praise: 'You learned the noisy th!' },
+    explanation: 'These letters make a sound with your voice switched on.', sound:'thv',
+    praise: 'You practised the first sound in this!' },
   'ea-team':       { nice:'e and a say ee',
-    line: (w,u) => `In ${w}, e and a together say eee.`,
-    praise: 'You learned the rule: e and a together say eee!' },
+    explanation: 'These two letters work together to make this sound.', sound:'ee',
+    praise: 'You practised the vowel sound in tea!' },
   'ea-short-e':    { nice:'e and a say eh',
-    line: (w,u) => `In ${w}, e and a together say eh.`,
-    praise: 'You learned the rule: e and a can say eh!' },
+    explanation: 'In this word, these two letters make this short vowel sound.', sound:'e',
+    praise: 'You practised the vowel sound in weather!' },
   'all-family':    { nice:'all says aw',
-    line: (w,u) => `In ${w}, all says aw.`,
-    praise: 'You learned the aw sound!' },
+    explanation: 'Before two of the letter L, this vowel makes this sound.', sound:'aw',
+    praise: 'You practised the vowel sound in all!' },
   'aw-team':       { nice:'aw says aw',
-    line: (w,u) => `In ${w}, aw says aw.`,
-    praise: 'You learned the aw sound!' },
+    explanation: 'These two letters work together to make this sound.', sound:'aw',
+    praise: 'You practised the vowel sound in draw!' },
   'ow-team':       { nice:'ow says ow',
-    line: (w,u) => `In ${w}, ow says ow, like in down.`,
-    praise: 'You learned the rule: ow says ow, like in down!' },
+    explanation: 'In this word, these two letters make this sound.', sound:'ow',
+    praise: 'You practised the vowel sound in down!' },
   'ow-says-oh':    { nice:'ow can say oh',
-    line: (w,u) => `In ${w}, ow says oh, like in show.`,
-    praise: 'You learned the rule: ow can say oh!' },
+    explanation: 'In this word, the letters O and W make this sound.', letters:'ow', sound:'oa',
+    praise: 'You practised the vowel sound in show!' },
   'soft-c':        { nice:'soft c says s',
-    line: (w,u) => `In ${w}, the c says sss.`,
-    praise: 'You learned the rule: c says sss before e, i, and y!' },
+    explanation: 'In this word, this letter makes a hissing sound.', sound:'s',
+    praise: 'You practised the soft sound in face!' },
   'soft-g':        { nice:'soft g says j',
-    line: (w,u) => `In ${w}, the g says juh.`,
-    praise: 'You learned the rule: g says juh before e, i, and y!' },
+    explanation: 'In this word, this letter makes this sound.', sound:'j',
+    praise: 'You practised the last sound in page!' },
   'old-family':    { nice:'o before l says oh',
-    line: (w,u) => `In ${w}, the o before l says oh.`,
-    praise: 'You learned the rule: o before l says oh!' },
+    explanation: 'Before the letter L in this word, this vowel says its name.', sound:'oa',
+    praise: 'You practised the vowel sound in cold!' },
+  'o-says-oh':     { nice:'o says its name here',
+    explanation: 'In this word, this vowel says its name.', sound:'oa',
+    praise: 'You practised the vowel sound in both!' },
   'ind-family':    { nice:'i in ind says eye',
-    line: (w,u) => `In ${w}, the i says eye.`,
-    praise: 'You learned the rule: i says eye in ind words!' },
+    explanation: 'In this word, this vowel says its name.', sound:'igh',
+    praise: 'You practised the vowel sound in kind!' },
   'r-controlled':  { nice:'u and r say er',
-    line: (w,u) => `In ${w}, u and r together say er.`,
-    praise: 'You learned the rule: u and r together say er!' },
+    explanation: 'These two letters work together to make this sound.', sound:'er',
+    praise: 'You practised the vowel sound in turn!' },
   'wa-family':     { nice:'a after w says o',
-    line: (w,u) => `In ${w}, the a after w makes the o sound, like in hot.`,
-    praise: 'You learned the rule: a after w makes the o sound!' },
+    explanation: 'After the letter W in this word, this vowel makes this short sound.', sound:'o',
+    praise: 'You practised the vowel sound in wash!' },
+  'a-says-aw':     { nice:'a makes the sound in water',
+    explanation: 'In this word, this vowel makes this sound.', sound:'aw',
+    praise: 'You practised the vowel sound in water!' },
   'ear-near':      { nice:'ear says ear',
-    line: (w,u) => `In ${w}, ear says ear.`,
-    praise: 'You learned the rule: ear says ear!' },
+    explanation: 'These three letters work together to make this sound.', sound:'earnear',
+    praise: 'You practised the vowel sound in year!' },
 };
 
 // Family colours for the rule chips (and matching chip label text).
@@ -161,6 +168,7 @@ const FAM_COLOUR = {
   'ow-team':'#ffb74d', 'ow-says-oh':'#ffb74d', 'soft-c':'#64b5f6',
   'soft-g':'#64b5f6', 'old-family':'#4dd0e1', 'ind-family':'#4dd0e1',
   'r-controlled':'#e57373', 'wa-family':'#e0e0e0', 'ear-near':'#f48fb1',
+  'o-says-oh':'#4dd0e1', 'a-says-aw':'#ce93d8',
 };
 
 // Words whose greedy left-to-right segmentation would group letters that do
@@ -350,12 +358,16 @@ function attachSoundUnitGestures(container, opts = {}) {
 }
 
 const letterAudioCache = {};
+let letterSoundPlaybackSequence = 0;
 
 // Bump when the clips in audio/letters/ are regenerated: the service worker
 // caches audio exact-URL, so a new query string forces a refetch.
 const AUDIO_VERSION = 4;
 
 function playLetterSound(seg, forceSpeak) {
+  cancelRuleLessonPlayback('letter sound');
+  stopLetterSoundPlayback();
+  const playbackSequence = letterSoundPlaybackSequence;
   if (forceSpeak) { speak(forceSpeak, 0.8); return; }
   const key = seg.toLowerCase();
   const fallback = soundFallback(key);
@@ -368,12 +380,18 @@ function playLetterSound(seg, forceSpeak) {
     try { speechSynthesis.cancel(); } catch (_) {}
     a.currentTime = 0;
     a.play().catch((e) => {
+      if (playbackSequence !== letterSoundPlaybackSequence) return;
       DBG('letterAudio', key + ' failed: ' + e.name + ' — falling back to TTS');
       speak(fallback, 0.8);
     });
     return;
   }
   if (DIGIT_NAMES[key]) speak(DIGIT_NAMES[key], 0.8);
+}
+
+function stopLetterSoundPlayback() {
+  letterSoundPlaybackSequence++;
+  for (const audio of Object.values(letterAudioCache)) audio.pause();
 }
 
 // ============================================================
@@ -1099,6 +1117,9 @@ function getVoice() {
 let currentUtterance = null;
 
 function speak(text, rate, onEnd, playbackEvents = {}) {
+  if (activeRuleLessonPlayback && playbackEvents.ruleLessonPlayback !== activeRuleLessonPlayback) {
+    cancelRuleLessonPlayback('another spoken help', false);
+  }
   const snippet = text.length > 24 ? text.slice(0, 24) + '…' : text;
   if (!window.speechSynthesis) { DBG('speak', 'NO speechSynthesis'); onEnd?.('unavailable'); return; }
   speechSynthesis.cancel();
@@ -1833,21 +1854,111 @@ function presentItem(item) {
       .concat(famsOf(item).map(fe => fe.fam))
       .find(f => f && PATTERN_META[f] && !stored.rulesHeard[f]);
     if (fam) {
-      speakGuidance(ruleLineFor(fam, item.display), 0.95, () => {
-        stored.rulesHeard[fam] = true;
-        saveStored();
-      });
+      startRuleLessonPlayback(fam, item);
     } else if (item.mastered) {
       speakGuidance('You know this one!', 1.0);
     }
   }
 }
 
-function ruleLineFor(fam, display) {
+function ruleLessonFor(fam, display) {
   const fe = (SOUND_FIXES[display.toLowerCase()] && SOUND_FIXES[display.toLowerCase()].fams || [])
     .find(x => x.fam === fam);
   const meta = PATTERN_META[fam];
-  return meta ? meta.line(display, fe ? fe.unit : '') : '';
+  if (!meta || !fe) throw new Error('The word has no lesson for this rule.');
+  const sound = typeof meta.sound === 'function' ? meta.sound(display, fe.unit) : meta.sound;
+  if (!sound) throw new Error('The rule lesson has no declared sound.');
+  const letters = meta.letters || fe.unit;
+  return [
+    { kind:'speech', text:meta.explanation },
+    ...[...letters].map(letter => ({ kind:'speech', text:`Letter ${letter.toUpperCase()}.` })),
+    // The U-name demonstration is the real word “you”; there is no ue clip.
+    sound === 'you' ? { kind:'speech', text:'you' } : { kind:'recorded-sound', clipKey:sound },
+    { kind:'speech', text:`As in ${display}.` },
+  ];
+}
+
+let ruleLessonPlaybackSequence = 0;
+let activeRuleLessonPlayback = null;
+
+function cancelRuleLessonPlayback(reason, releaseMicrophone = true) {
+  const playback = activeRuleLessonPlayback;
+  if (!playback) return;
+  activeRuleLessonPlayback = null;
+  ruleLessonPlaybackSequence++;
+  clearTimeout(playback.soundDeadlineTimer);
+  if (playback.audio) {
+    playback.audio.onended = null;
+    playback.audio.onerror = null;
+    playback.audio.pause();
+  }
+  try { speechSynthesis.cancel(); } catch (_) {}
+  DBG('rule lesson cancelled', { family:playback.family, reason });
+  if (releaseMicrophone && gs.spokenWordEncounter === playback.encounter && playback.encounter.phase === 'first-ready') setMicState('ready');
+}
+
+function startRuleLessonPlayback(family, item) {
+  const encounter = gs.spokenWordEncounter;
+  if (!encounter || encounter.phase !== 'first-ready' || gs.currentItem !== item) return;
+  cancelRuleLessonPlayback('rule replay');
+  stopLetterSoundPlayback();
+  const steps = ruleLessonFor(family, item.display);
+  const playback = {
+    sequence:++ruleLessonPlaybackSequence, encounter, family,
+    stepIndex:0, audio:null, soundDeadlineTimer:null,
+  };
+  activeRuleLessonPlayback = playback;
+  setMicState('waiting');
+  const ownsLesson = () => activeRuleLessonPlayback === playback &&
+    ruleLessonPlaybackSequence === playback.sequence &&
+    gs.spokenWordEncounter === encounter && encounter.phase === 'first-ready' && gs.currentItem === item;
+  const failLesson = message => {
+    if (!ownsLesson()) return;
+    cancelRuleLessonPlayback('playback failed');
+    document.getElementById('mic-status').textContent = message + ' Tap the rule to try again.';
+    DBG('rule lesson failed', { family, message });
+  };
+  const playNextStep = () => {
+    if (!ownsLesson()) return;
+    clearTimeout(playback.soundDeadlineTimer);
+    playback.soundDeadlineTimer = null;
+    if (playback.audio) {
+      playback.audio.onended = null;
+      playback.audio.onerror = null;
+      playback.audio = null;
+    }
+    if (playback.stepIndex === steps.length) {
+      activeRuleLessonPlayback = null;
+      stored.rulesHeard[family] = true;
+      saveStored();
+      setMicState('ready');
+      return;
+    }
+    const stepIndex = playback.stepIndex++;
+    const step = steps[stepIndex];
+    const ownsStep = () => ownsLesson() && playback.stepIndex === stepIndex + 1;
+    if (step.kind === 'speech') {
+      speak(step.text, 0.9, how => {
+        if (!ownsStep()) return;
+        if (how === 'onend') playNextStep();
+        else failLesson('The spoken rule could not play.');
+      }, { ruleLessonPlayback:playback });
+      return;
+    }
+    const audio = new Audio('./audio/letters/' + step.clipKey + '.mp3?v=' + AUDIO_VERSION);
+    playback.audio = audio;
+    audio.onended = () => { if (ownsStep()) playNextStep(); };
+    audio.onerror = () => { if (ownsStep()) failLesson('The recorded rule sound could not play.'); };
+    playback.soundDeadlineTimer = setTimeout(() => {
+      if (ownsStep()) failLesson('The recorded rule sound took too long to play.');
+    }, 10000);
+    try {
+      audio.play().catch(() => {
+        if (ownsStep()) failLesson('The recorded rule sound could not play.');
+      });
+    } catch (_) { failLesson('The recorded rule sound could not play.'); }
+  };
+  playNextStep();
 }
 
 // Standing rule chips under the word: one per teaching family the word
@@ -1873,12 +1984,9 @@ function renderRuleChips(item) {
                      '</span><span class="rule-chip-icon" aria-hidden="true">🔊</span>';
     chip.setAttribute('aria-label', 'Hear the rule: ' + meta.nice);
     chip.addEventListener('click', () => {
-      if (gs.currentItem !== item || gs.spokenWordEncounter?.phase !== 'first-ready' || micState !== 'ready') return;
-      const encounter = gs.spokenWordEncounter;
-      setMicState('waiting');
-      speak(ruleLineFor(fe.fam, item.display), 0.95, () => {
-        if (gs.spokenWordEncounter === encounter && encounter.phase === 'first-ready') setMicState('ready');
-      });
+      if (gs.currentItem !== item || gs.spokenWordEncounter?.phase !== 'first-ready' ||
+          (micState !== 'ready' && activeRuleLessonPlayback?.encounter !== gs.spokenWordEncounter)) return;
+      startRuleLessonPlayback(fe.fam, item);
     });
     host.appendChild(chip);
   }
@@ -1898,6 +2006,8 @@ function beginWordEncounter(item) {
 }
 
 function cancelWordEncounter() {
+  cancelRuleLessonPlayback('word or screen changed');
+  stopLetterSoundPlayback();
   spokenWordEncounterSequence++;
   spokenAttemptGeneration++;
   clearTimeout(maxListenTimer);
@@ -2137,7 +2247,7 @@ function setMicState(state) {
   if (question) question.classList.toggle('hidden', !comparing && !playbackError);
   if (hearBtn) {
     hearBtn.classList.toggle('hidden', Boolean(encounter && encounter.phase !== 'first-ready' && encounter.phase !== 'first-recording' && !playbackError));
-    hearBtn.disabled = state !== 'ready' && !playbackError;
+    hearBtn.disabled = state !== 'ready' && !playbackError && activeRuleLessonPlayback?.encounter !== encounter;
     hearBtn.classList.toggle('disabled', hearBtn.disabled);
   }
   // Pointer release must still reach the mic while permission/resume is
@@ -2985,7 +3095,8 @@ function setupEvents() {
 
   // Letter taps/drags on the practice word and on the preview list.
   attachSoundUnitGestures(document.getElementById('word-display'), {
-    guard: () => !gs.awaitingResult && micState === 'ready' && gs.spokenWordEncounter?.phase === 'first-ready',
+    guard: () => !gs.awaitingResult && gs.spokenWordEncounter?.phase === 'first-ready' &&
+      (micState === 'ready' || activeRuleLessonPlayback?.encounter === gs.spokenWordEncounter),
     onTrigger: (span) => { if (!span.dataset.silent) gs.letterTaps++; },
   });
   attachSoundUnitGestures(document.getElementById('soundpreview-list'));
@@ -3005,7 +3116,7 @@ function setupEvents() {
       askSpokenSelfCheck(encounter);
       return;
     }
-    if (micState !== 'ready' || !gs.currentItem) return;
+    if ((micState !== 'ready' && activeRuleLessonPlayback?.encounter !== encounter) || !gs.currentItem) return;
     if (!encounter || encounter.phase !== 'first-ready') return;
     gs.hearPressed = true;
     setMicState('waiting');
@@ -3131,7 +3242,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v45 — child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v46 — recorded rule sounds; child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed

@@ -19,7 +19,7 @@ const testedReadingAppSource = [
   readingAppSection('// MICROPHONE CAPTURE AND TUNING RECOGNITION', '// AUDITION (grown-up tuning)'),
   readingAppSection('async function armAudition(itemId)', '// ROUND BUILDING'),
   readingAppSection('async function openTuning()', 'function setTuneTab(tab)'),
-  readingAppSection('function presentItem(item)', 'function ruleLineFor(fam, display)'),
+  readingAppSection('function presentItem(item)', 'function ruleLessonFor(fam, display)'),
   readingAppSection('function beginWordEncounter(item)', 'function endRound()'),
   readingAppSection('function checkLevelComplete()', '// UI'),
   readingAppSection('function showScreen(name)', 'function playPling()'),
@@ -226,7 +226,17 @@ function createReadingVoiceHarness(options = {}) {
     buildSoundUnitSpans: () => ({}), renderRuleChips() {},
     famsOf: () => options.families || [],
     PATTERN_META: { practiceRule: { line: () => 'Say the sounds.', praise: 'Good sounds.' } },
-    ruleLineFor: () => 'Say the sounds.',
+    activeRuleLessonPlayback: null,
+    cancelRuleLessonPlayback() {}, stopLetterSoundPlayback() {},
+    startRuleLessonPlayback(family) {
+      const encounter = practice.spokenWordEncounter;
+      context.setMicState('waiting');
+      context.speak('Say the sounds.', 0.9, how => {
+        if (practice.spokenWordEncounter !== encounter || encounter.phase !== 'first-ready') return;
+        if (how === 'onend') { context.stored.rulesHeard[family] = true; context.saveStored(); }
+        context.setMicState('ready');
+      });
+    },
     loadStored() {}, loadVoices() {}, setupEvents() {}, levelFromHash: () => null,
     loadImageManifest: async () => { observations.imageManifestLoads++; },
     renderPicker: () => { observations.pickerRenders++; },
@@ -1451,7 +1461,7 @@ function createSpeechCompletionHarness({ cancelDispatchesError = true } = {}) {
   };
   const context = vm.createContext({
     window: { speechSynthesis }, speechSynthesis, SpeechSynthesisUtterance: TestSpeechUtterance,
-    getVoice: () => null, stored: { settings: { speechRate: 0.9 } }, DBG() {},
+    getVoice: () => null, stored: { settings: { speechRate: 0.9 } }, DBG() {}, activeRuleLessonPlayback:null,
     speechCompleted: how => completionCallbacks.push({ how, activeUtterance }),
     setTimeout(callback) {
       const timerId = nextSpeechTimerId++;
