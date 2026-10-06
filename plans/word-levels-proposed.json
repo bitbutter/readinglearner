@@ -1,0 +1,1346 @@
+{
+  "schemaVersion": 1,
+  "status": "proposed",
+  "courseId": "one-rule-word-course-draft",
+  "createdDate": "2026-10-06",
+  "title": "One new rule per level",
+  "description": "A proposed cumulative word course for the Reading Learner app. Each small level adds one focus; earlier patterns can appear again.",
+  "scope": "Reviewable curriculum map only. The running app still uses its existing ten word levels.",
+  "prerequisitesNote": "The sequence is cumulative: every level assumes the patterns from all earlier levels. Listed prerequisites highlight additional earlier patterns inside its focus words; they are not a separate route through the course.",
+  "startingSkills": [
+    "The child recognises the ordinary single-letter consonant sounds, including hard c and g, consonant y, and x as ks.",
+    "The child can attempt blending simple consonant-vowel-consonant words.",
+    "These are provisional assumptions, not confirmed assessment results. Check them before adopting the course."
+  ],
+  "startingWordSuggestions": [
+    "mat",
+    "dad",
+    "hat"
+  ],
+  "startingWordsNote": "Use these only if the child already reads them independently. Choose and confirm the familiar starter bank before the first practice round. Do not label an unseen word an easy win merely because it is decodable.",
+  "roundRecipe": {
+    "openingCount": 3,
+    "focusCount": 4,
+    "closingCount": 3,
+    "opening": "Three familiar words, drawn from the child's demonstrated known-word bank.",
+    "focus": "Four encounters from the current level's focus bank. Rotate the bank across rounds; the whole level need not fit in one round.",
+    "closing": "Three familiar words again. Repeats of known words are allowed.",
+    "reviewSelection": "The lists below are candidates. Use a candidate only after the child has demonstrated it is familiar. Earlier levels remain available for review; there is no requirement to use every candidate.",
+    "noKnownWords": "Confirm starting skills and a familiar starter bank before enabling this course. If the prerequisite is not met, address the foundation explicitly rather than presenting unfamiliar words as wins."
+  },
+  "completion": {
+    "focusWordsOnly": true,
+    "firstAttemptYesCount": 2,
+    "description": "Only the focus bank determines level completion. Keep the current requirement of two qualifying first-attempt Yes confirmations per focus word. A helped repeat advances the encounter but does not earn a qualifying first-attempt Yes.",
+    "familiarWords": "Opening and closing words do not add new completion requirements.",
+    "earnedProgress": "Preserve existing word trophies and earned confirmations. An already mastered focus word keeps its credit.",
+    "restart": "Start the new course at the first unfinished focus bank using preserved word progress. Let a parent choose Level 1 for practice without wiping trophies.",
+    "selfCheck": "Keep the current record → expected word → Got it? → Yes or record again flow. The voice-recognition experiment is not part of this proposal.",
+    "ruleChips": "Show the current level's one focus as the primary rule chip. Earlier spelling help remains available through the word's sound buttons; do not automatically introduce extra rule chips in a focused round."
+  },
+  "levels": [
+    {
+      "level": 1,
+      "id": "short-a",
+      "phase": "Short vowels",
+      "focus": "Short a, as in cat",
+      "spokenRule": "In these words, a makes the short vowel sound in cat.",
+      "focusWords": [
+        "cat",
+        "map",
+        "tap",
+        "sad",
+        "bag",
+        "jam"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "mat",
+        "dad",
+        "hat"
+      ],
+      "notes": [],
+      "artwork": "images/l1_lonemarine.jpg"
+    },
+    {
+      "level": 2,
+      "id": "short-e",
+      "phase": "Short vowels",
+      "focus": "Short e, as in bed",
+      "spokenRule": "In these words, e makes the short vowel sound in bed.",
+      "focusWords": [
+        "bed",
+        "red",
+        "hen",
+        "pen",
+        "net",
+        "wet"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "cat",
+        "map",
+        "tap"
+      ],
+      "notes": [],
+      "artwork": "images/l1_lonemarine.jpg"
+    },
+    {
+      "level": 3,
+      "id": "short-i",
+      "phase": "Short vowels",
+      "focus": "Short i, as in pig",
+      "spokenRule": "In these words, i makes the short vowel sound in pig.",
+      "focusWords": [
+        "pig",
+        "sit",
+        "pin",
+        "lip",
+        "dig",
+        "fin"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "cat",
+        "map",
+        "tap",
+        "bed",
+        "red",
+        "hen"
+      ],
+      "notes": [],
+      "artwork": "images/l1_lonemarine.jpg"
+    },
+    {
+      "level": 4,
+      "id": "short-o",
+      "phase": "Short vowels",
+      "focus": "Short o, as in dog",
+      "spokenRule": "In these words, o makes the short vowel sound in dog.",
+      "focusWords": [
+        "dog",
+        "log",
+        "pot",
+        "hot",
+        "top",
+        "mop"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "bed",
+        "red",
+        "hen",
+        "pig",
+        "sit",
+        "pin"
+      ],
+      "notes": [],
+      "artwork": "images/l1_lonemarine.jpg"
+    },
+    {
+      "level": 5,
+      "id": "short-u",
+      "phase": "Short vowels",
+      "focus": "Short u, as in sun",
+      "spokenRule": "In these words, u makes the vowel sound in sun.",
+      "focusWords": [
+        "sun",
+        "cup",
+        "bus",
+        "mud",
+        "run",
+        "hut"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "pig",
+        "sit",
+        "pin",
+        "dog",
+        "log",
+        "pot"
+      ],
+      "notes": [
+        "Use the child's home pronunciation. A Yorkshire u in cup is not an error."
+      ],
+      "artwork": "images/l1_lonemarine.jpg"
+    },
+    {
+      "level": 6,
+      "id": "initial-blends",
+      "phase": "Blending and doubled letters",
+      "focus": "Blend known consonant sounds at the start",
+      "spokenRule": "Say the consonant sounds together at the start.",
+      "focusWords": [
+        "clap",
+        "flag",
+        "frog",
+        "plum",
+        "stop",
+        "swim"
+      ],
+      "prerequisiteFocusIds": [
+        "short-a",
+        "short-i",
+        "short-o",
+        "short-u"
+      ],
+      "reviewWordCandidates": [
+        "dog",
+        "log",
+        "pot",
+        "sun",
+        "cup",
+        "bus"
+      ],
+      "notes": [
+        "This is a blending skill using already known consonant sounds. No new digraph is introduced. The core examples use two adjacent consonant sounds."
+      ],
+      "artwork": "images/l2_cathedralknight.jpg"
+    },
+    {
+      "level": 7,
+      "id": "final-blends",
+      "phase": "Blending and doubled letters",
+      "focus": "Blend known consonant sounds at the end",
+      "spokenRule": "Say the consonant sounds together at the end.",
+      "focusWords": [
+        "hand",
+        "tent",
+        "lamp",
+        "milk",
+        "pond",
+        "dust"
+      ],
+      "prerequisiteFocusIds": [
+        "short-a",
+        "short-e",
+        "short-i",
+        "short-o",
+        "short-u"
+      ],
+      "reviewWordCandidates": [
+        "sun",
+        "cup",
+        "bus",
+        "clap",
+        "flag",
+        "frog"
+      ],
+      "notes": [
+        "This is a blending skill using already known consonant sounds. The core examples use two adjacent consonant sounds."
+      ],
+      "artwork": "images/l2_cathedralknight.jpg"
+    },
+    {
+      "level": 8,
+      "id": "ck",
+      "phase": "Blending and doubled letters",
+      "focus": "ck says k",
+      "spokenRule": "c and k together say k.",
+      "focusWords": [
+        "back",
+        "neck",
+        "kick",
+        "rock",
+        "duck",
+        "sock"
+      ],
+      "prerequisiteFocusIds": [
+        "short-a",
+        "short-e",
+        "short-i",
+        "short-o",
+        "short-u"
+      ],
+      "reviewWordCandidates": [
+        "clap",
+        "flag",
+        "frog",
+        "hand",
+        "tent",
+        "lamp"
+      ],
+      "notes": [],
+      "artwork": "images/l2_cathedralknight.jpg"
+    },
+    {
+      "level": 9,
+      "id": "ff",
+      "phase": "Blending and doubled letters",
+      "focus": "ff says f",
+      "spokenRule": "Two f letters make one f sound.",
+      "focusWords": [
+        "off",
+        "puff",
+        "huff",
+        "cuff",
+        "sniff",
+        "stiff"
+      ],
+      "prerequisiteFocusIds": [
+        "short-i",
+        "short-o",
+        "short-u",
+        "initial-blends"
+      ],
+      "reviewWordCandidates": [
+        "hand",
+        "tent",
+        "lamp",
+        "back",
+        "neck",
+        "kick"
+      ],
+      "notes": [
+        "Introduce the meaning of cuff if it is unfamiliar."
+      ],
+      "artwork": "images/l3_helmet.jpg"
+    },
+    {
+      "level": 10,
+      "id": "ll",
+      "phase": "Blending and doubled letters",
+      "focus": "ll says l",
+      "spokenRule": "Two l letters make one l sound.",
+      "focusWords": [
+        "bell",
+        "hill",
+        "doll",
+        "tell",
+        "well",
+        "fill"
+      ],
+      "prerequisiteFocusIds": [
+        "short-e",
+        "short-i",
+        "short-o"
+      ],
+      "reviewWordCandidates": [
+        "back",
+        "neck",
+        "kick",
+        "off",
+        "puff",
+        "huff"
+      ],
+      "notes": [],
+      "artwork": "images/l3_helmet.jpg"
+    },
+    {
+      "level": 11,
+      "id": "ss",
+      "phase": "Blending and doubled letters",
+      "focus": "ss says s",
+      "spokenRule": "Two s letters make one s sound.",
+      "focusWords": [
+        "miss",
+        "kiss",
+        "mess",
+        "fuss",
+        "hiss",
+        "boss"
+      ],
+      "prerequisiteFocusIds": [
+        "short-e",
+        "short-i",
+        "short-o",
+        "short-u"
+      ],
+      "reviewWordCandidates": [
+        "off",
+        "puff",
+        "huff",
+        "bell",
+        "hill",
+        "doll"
+      ],
+      "notes": [],
+      "artwork": "images/l3_helmet.jpg"
+    },
+    {
+      "level": 12,
+      "id": "zz",
+      "phase": "Blending and doubled letters",
+      "focus": "zz says z",
+      "spokenRule": "Two z letters make one z sound.",
+      "focusWords": [
+        "buzz",
+        "fuzz",
+        "fizz",
+        "jazz"
+      ],
+      "prerequisiteFocusIds": [
+        "short-a",
+        "short-i",
+        "short-u"
+      ],
+      "reviewWordCandidates": [
+        "bell",
+        "hill",
+        "doll",
+        "miss",
+        "kiss",
+        "mess"
+      ],
+      "notes": [
+        "Four focus words are enough; do not add an unfamiliar pattern merely to fill six slots."
+      ],
+      "artwork": "images/l3_helmet.jpg"
+    },
+    {
+      "level": 13,
+      "id": "sh",
+      "phase": "Consonant teams",
+      "focus": "sh, as in ship",
+      "spokenRule": "s and h together say sh.",
+      "focusWords": [
+        "ship",
+        "shop",
+        "shut",
+        "shed",
+        "fish",
+        "wish"
+      ],
+      "prerequisiteFocusIds": [
+        "short-e",
+        "short-i",
+        "short-o",
+        "short-u"
+      ],
+      "reviewWordCandidates": [
+        "miss",
+        "kiss",
+        "mess",
+        "buzz",
+        "fuzz",
+        "fizz"
+      ],
+      "notes": [],
+      "artwork": "images/l4_hammerchampion.jpg"
+    },
+    {
+      "level": 14,
+      "id": "ch",
+      "phase": "Consonant teams",
+      "focus": "ch, as in chip",
+      "spokenRule": "c and h together say ch.",
+      "focusWords": [
+        "chip",
+        "chop",
+        "chin",
+        "chat",
+        "rich",
+        "much"
+      ],
+      "prerequisiteFocusIds": [
+        "short-a",
+        "short-i",
+        "short-o",
+        "short-u"
+      ],
+      "reviewWordCandidates": [
+        "buzz",
+        "fuzz",
+        "fizz",
+        "ship",
+        "shop",
+        "shut"
+      ],
+      "notes": [],
+      "artwork": "images/l4_hammerchampion.jpg"
+    },
+    {
+      "level": 15,
+      "id": "unvoiced-th",
+      "phase": "Consonant teams",
+      "focus": "Quiet th, as in thin",
+      "spokenRule": "t and h together say the quiet th in thin.",
+      "focusWords": [
+        "thin",
+        "thick",
+        "thud",
+        "moth",
+        "cloth",
+        "thrush"
+      ],
+      "prerequisiteFocusIds": [
+        "short-i",
+        "short-o",
+        "short-u",
+        "ck",
+        "initial-blends",
+        "sh"
+      ],
+      "reviewWordCandidates": [
+        "ship",
+        "shop",
+        "shut",
+        "chip",
+        "chop",
+        "chin"
+      ],
+      "notes": [
+        "thick uses earlier ck; cloth and thrush use earlier initial blending; thrush also uses earlier sh."
+      ],
+      "artwork": "images/l4_hammerchampion.jpg"
+    },
+    {
+      "level": 16,
+      "id": "voiced-th",
+      "phase": "Consonant teams",
+      "focus": "Buzzy th, as in this",
+      "spokenRule": "t and h together say the buzzy th in this.",
+      "focusWords": [
+        "this",
+        "that",
+        "them",
+        "then",
+        "than"
+      ],
+      "prerequisiteFocusIds": [
+        "short-a",
+        "short-e",
+        "short-i",
+        "unvoiced-th"
+      ],
+      "reviewWordCandidates": [
+        "chip",
+        "chop",
+        "chin",
+        "thin",
+        "thick",
+        "thud"
+      ],
+      "notes": [
+        "Use the clearly spoken, isolated forms of than and them, rather than their reduced forms in sentences. Five focus words are enough."
+      ],
+      "artwork": "images/l4_hammerchampion.jpg"
+    },
+    {
+      "level": 17,
+      "id": "ng",
+      "phase": "Consonant teams",
+      "focus": "ng, as in ring",
+      "spokenRule": "n and g together say ng, as in ring.",
+      "focusWords": [
+        "bang",
+        "hang",
+        "rang",
+        "ring",
+        "sing",
+        "king"
+      ],
+      "prerequisiteFocusIds": [
+        "short-a",
+        "short-i"
+      ],
+      "reviewWordCandidates": [
+        "thin",
+        "thick",
+        "thud",
+        "this",
+        "that",
+        "them"
+      ],
+      "notes": [],
+      "artwork": "images/l4_hammerchampion.jpg"
+    },
+    {
+      "level": 18,
+      "id": "qu",
+      "phase": "Consonant teams",
+      "focus": "qu says kw",
+      "spokenRule": "q and u together say kw.",
+      "focusWords": [
+        "quit",
+        "quiz",
+        "quill",
+        "quack",
+        "quick",
+        "quest"
+      ],
+      "prerequisiteFocusIds": [
+        "short-a",
+        "short-e",
+        "short-i",
+        "ll",
+        "ck",
+        "final-blends"
+      ],
+      "reviewWordCandidates": [
+        "this",
+        "that",
+        "them",
+        "bang",
+        "hang",
+        "rang"
+      ],
+      "notes": [
+        "quill uses earlier ll; quack and quick use earlier ck; quest uses earlier final blending.",
+        "Introduce the meanings of quill and quest if they are unfamiliar."
+      ],
+      "artwork": "images/l4_hammerchampion.jpg"
+    },
+    {
+      "level": 19,
+      "id": "a-e",
+      "phase": "Silent final e",
+      "focus": "a-e, as in cake",
+      "spokenRule": "In these words, a says its name and the final e is silent.",
+      "focusWords": [
+        "cake",
+        "name",
+        "game",
+        "tape",
+        "wave",
+        "late"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "bang",
+        "hang",
+        "rang",
+        "quit",
+        "quiz",
+        "quill"
+      ],
+      "notes": [],
+      "artwork": "images/l5_scouts.jpg"
+    },
+    {
+      "level": 20,
+      "id": "i-e",
+      "phase": "Silent final e",
+      "focus": "i-e, as in bike",
+      "spokenRule": "In these words, i says its name and the final e is silent.",
+      "focusWords": [
+        "bike",
+        "kite",
+        "time",
+        "five",
+        "lime",
+        "hide"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "quit",
+        "quiz",
+        "quill",
+        "cake",
+        "name",
+        "game"
+      ],
+      "notes": [],
+      "artwork": "images/l5_scouts.jpg"
+    },
+    {
+      "level": 21,
+      "id": "o-e",
+      "phase": "Silent final e",
+      "focus": "o-e, as in home",
+      "spokenRule": "In these words, o says its name and the final e is silent.",
+      "focusWords": [
+        "home",
+        "hope",
+        "rope",
+        "bone",
+        "cone",
+        "note"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "cake",
+        "name",
+        "game",
+        "bike",
+        "kite",
+        "time"
+      ],
+      "notes": [],
+      "artwork": "images/l5_scouts.jpg"
+    },
+    {
+      "level": 22,
+      "id": "u-e-yoo",
+      "phase": "Silent final e",
+      "focus": "u-e says yoo",
+      "spokenRule": "In these words, u says yoo and the final e is silent.",
+      "focusWords": [
+        "cube",
+        "cute",
+        "mule",
+        "mute",
+        "fume"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "bike",
+        "kite",
+        "time",
+        "home",
+        "hope",
+        "rope"
+      ],
+      "notes": [
+        "Teach only the yoo pronunciation here. Reserve u-e as in rule and coalescing pronunciations such as tune for separate later work.",
+        "Introduce the meaning of fume if it is unfamiliar. Five focus words are enough."
+      ],
+      "artwork": "images/l5_scouts.jpg"
+    },
+    {
+      "level": 23,
+      "id": "ee",
+      "phase": "Vowel teams",
+      "focus": "ee, as in feet",
+      "spokenRule": "In these words, e and e together say ee.",
+      "focusWords": [
+        "bee",
+        "see",
+        "feet",
+        "seed",
+        "sheep",
+        "green"
+      ],
+      "prerequisiteFocusIds": [
+        "sh",
+        "initial-blends"
+      ],
+      "reviewWordCandidates": [
+        "home",
+        "hope",
+        "rope",
+        "cube",
+        "cute",
+        "mule"
+      ],
+      "notes": [
+        "sheep uses earlier sh; green uses earlier initial blending."
+      ],
+      "artwork": "images/l6_muster.jpg"
+    },
+    {
+      "level": 24,
+      "id": "ai",
+      "phase": "Vowel teams",
+      "focus": "ai, as in rain",
+      "spokenRule": "In these words, a and i together say ay.",
+      "focusWords": [
+        "rain",
+        "pain",
+        "tail",
+        "sail",
+        "mail",
+        "train"
+      ],
+      "prerequisiteFocusIds": [
+        "initial-blends"
+      ],
+      "reviewWordCandidates": [
+        "cube",
+        "cute",
+        "mule",
+        "bee",
+        "see",
+        "feet"
+      ],
+      "notes": [],
+      "artwork": "images/l6_muster.jpg"
+    },
+    {
+      "level": 25,
+      "id": "ay",
+      "phase": "Vowel teams",
+      "focus": "ay, as in day",
+      "spokenRule": "In these words, a and y together say ay.",
+      "focusWords": [
+        "day",
+        "pay",
+        "say",
+        "way",
+        "ray",
+        "play"
+      ],
+      "prerequisiteFocusIds": [
+        "initial-blends"
+      ],
+      "reviewWordCandidates": [
+        "bee",
+        "see",
+        "feet",
+        "rain",
+        "pain",
+        "tail"
+      ],
+      "notes": [],
+      "artwork": "images/l6_muster.jpg"
+    },
+    {
+      "level": 26,
+      "id": "oa",
+      "phase": "Vowel teams",
+      "focus": "oa, as in boat",
+      "spokenRule": "In these words, o and a together say oh.",
+      "focusWords": [
+        "boat",
+        "coat",
+        "goat",
+        "road",
+        "soap",
+        "toad"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "rain",
+        "pain",
+        "tail",
+        "day",
+        "pay",
+        "say"
+      ],
+      "notes": [],
+      "artwork": "images/l6_muster.jpg"
+    },
+    {
+      "level": 27,
+      "id": "long-oo",
+      "phase": "Vowel teams",
+      "focus": "oo, as in moon",
+      "spokenRule": "In these words, o and o together say the oo in moon.",
+      "focusWords": [
+        "moon",
+        "food",
+        "soon",
+        "boot",
+        "pool",
+        "spoon"
+      ],
+      "prerequisiteFocusIds": [
+        "initial-blends"
+      ],
+      "reviewWordCandidates": [
+        "day",
+        "pay",
+        "say",
+        "boat",
+        "coat",
+        "goat"
+      ],
+      "notes": [],
+      "artwork": "images/l6_muster.jpg"
+    },
+    {
+      "level": 28,
+      "id": "short-oo",
+      "phase": "Vowel teams",
+      "focus": "oo, as in book",
+      "spokenRule": "In these words, o and o together say the oo in book.",
+      "focusWords": [
+        "book",
+        "cook",
+        "look",
+        "took",
+        "foot",
+        "good"
+      ],
+      "prerequisiteFocusIds": [
+        "long-oo"
+      ],
+      "reviewWordCandidates": [
+        "boat",
+        "coat",
+        "goat",
+        "moon",
+        "food",
+        "soon"
+      ],
+      "notes": [
+        "This is the second oo pronunciation. Contrast the selected examples with moon; do not claim one pronunciation covers every oo word.",
+        "book is excluded from the old app's general practice bank; this proposal deliberately introduces it here."
+      ],
+      "artwork": "images/l6_muster.jpg"
+    },
+    {
+      "level": 29,
+      "id": "igh",
+      "phase": "Vowel teams",
+      "focus": "igh, as in night",
+      "spokenRule": "In these words, i, g and h together say eye.",
+      "focusWords": [
+        "high",
+        "sigh",
+        "night",
+        "light",
+        "right",
+        "tight"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "moon",
+        "food",
+        "soon",
+        "book",
+        "cook",
+        "look"
+      ],
+      "notes": [],
+      "artwork": "images/l6_muster.jpg"
+    },
+    {
+      "level": 30,
+      "id": "ow-cow",
+      "phase": "More vowel teams",
+      "focus": "ow, as in cow",
+      "spokenRule": "In these words, o and w together say ow, as in cow.",
+      "focusWords": [
+        "cow",
+        "how",
+        "now",
+        "down",
+        "town",
+        "brown"
+      ],
+      "prerequisiteFocusIds": [
+        "initial-blends"
+      ],
+      "reviewWordCandidates": [
+        "book",
+        "cook",
+        "look",
+        "high",
+        "sigh",
+        "night"
+      ],
+      "notes": [
+        "The chosen words use the cow pronunciation. The snow pronunciation gets its own later level."
+      ],
+      "artwork": "images/l7_saint.jpg"
+    },
+    {
+      "level": 31,
+      "id": "ou",
+      "phase": "More vowel teams",
+      "focus": "ou, as in out",
+      "spokenRule": "In these words, o and u together say ow, as in out.",
+      "focusWords": [
+        "out",
+        "shout",
+        "cloud",
+        "loud",
+        "proud",
+        "round"
+      ],
+      "prerequisiteFocusIds": [
+        "sh",
+        "initial-blends",
+        "final-blends"
+      ],
+      "reviewWordCandidates": [
+        "high",
+        "sigh",
+        "night",
+        "cow",
+        "how",
+        "now"
+      ],
+      "notes": [],
+      "artwork": "images/l7_saint.jpg"
+    },
+    {
+      "level": 32,
+      "id": "ow-snow",
+      "phase": "More vowel teams",
+      "focus": "ow, as in snow",
+      "spokenRule": "In these words, o and w together say oh, as in snow.",
+      "focusWords": [
+        "low",
+        "slow",
+        "snow",
+        "grow",
+        "blow",
+        "flow"
+      ],
+      "prerequisiteFocusIds": [
+        "initial-blends",
+        "ow-cow"
+      ],
+      "reviewWordCandidates": [
+        "cow",
+        "how",
+        "now",
+        "out",
+        "shout",
+        "cloud"
+      ],
+      "notes": [
+        "This is the second ow pronunciation. Earlier cow words remain valid; the spelling has more than one sound."
+      ],
+      "artwork": "images/l7_saint.jpg"
+    },
+    {
+      "level": 33,
+      "id": "oi",
+      "phase": "More vowel teams",
+      "focus": "oi, as in coin",
+      "spokenRule": "In these words, o and i together say oy.",
+      "focusWords": [
+        "oil",
+        "boil",
+        "coil",
+        "foil",
+        "coin",
+        "join"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "out",
+        "shout",
+        "cloud",
+        "low",
+        "slow",
+        "snow"
+      ],
+      "notes": ["Introduce the meaning of coil if it is unfamiliar."],
+      "artwork": "images/l7_saint.jpg"
+    },
+    {
+      "level": 34,
+      "id": "oy",
+      "phase": "More vowel teams",
+      "focus": "oy, as in toy",
+      "spokenRule": "In these words, o and y together say oy.",
+      "focusWords": [
+        "boy",
+        "toy",
+        "joy",
+        "soy"
+      ],
+      "prerequisiteFocusIds": [],
+      "reviewWordCandidates": [
+        "low",
+        "slow",
+        "snow",
+        "oil",
+        "boil",
+        "coil"
+      ],
+      "notes": [
+        "Introduce the meaning of soy if it is unfamiliar. Four focus words are enough."
+      ],
+      "artwork": "images/l7_saint.jpg"
+    },
+    {
+      "level": 35,
+      "id": "ar",
+      "phase": "Vowels with r",
+      "focus": "ar, as in car",
+      "spokenRule": "In these words, a and r together sound like ar in car.",
+      "focusWords": [
+        "car",
+        "far",
+        "jar",
+        "arm",
+        "farm",
+        "star"
+      ],
+      "prerequisiteFocusIds": [
+        "initial-blends",
+        "final-blends"
+      ],
+      "reviewWordCandidates": [
+        "oil",
+        "boil",
+        "coil",
+        "boy",
+        "toy",
+        "joy"
+      ],
+      "notes": [
+        "Use the child's home accent for the presence or absence of a pronounced r. Do not require a southern model accent."
+      ],
+      "artwork": "images/l8_battleship.jpg"
+    },
+    {
+      "level": 36,
+      "id": "or",
+      "phase": "Vowels with r",
+      "focus": "or, as in fork",
+      "spokenRule": "In these words, o and r together sound like or in fork.",
+      "focusWords": [
+        "fork",
+        "corn",
+        "cord",
+        "horn",
+        "short",
+        "sport"
+      ],
+      "prerequisiteFocusIds": [
+        "sh",
+        "initial-blends",
+        "final-blends"
+      ],
+      "reviewWordCandidates": [
+        "boy",
+        "toy",
+        "joy",
+        "car",
+        "far",
+        "jar"
+      ],
+      "notes": [
+        "Use the child's home accent for the presence or absence of a pronounced r."
+      ],
+      "artwork": "images/l8_battleship.jpg"
+    },
+    {
+      "level": 37,
+      "id": "ur",
+      "phase": "Vowels with r",
+      "focus": "ur, as in turn",
+      "spokenRule": "In these words, u and r together sound like ur in turn.",
+      "focusWords": [
+        "fur",
+        "burn",
+        "turn",
+        "hurt",
+        "curl",
+        "surf"
+      ],
+      "prerequisiteFocusIds": [
+        "final-blends"
+      ],
+      "reviewWordCandidates": [
+        "car",
+        "far",
+        "jar",
+        "fork",
+        "corn",
+        "cord"
+      ],
+      "notes": [
+        "Use the child's home accent. ur, er and ir are taught as separate spellings even where their sounds coincide."
+      ],
+      "artwork": "images/l8_battleship.jpg"
+    },
+    {
+      "level": 38,
+      "id": "er",
+      "phase": "Vowels with r",
+      "focus": "er, as in fern",
+      "spokenRule": "In these words, e and r together sound like er in fern.",
+      "focusWords": [
+        "fern",
+        "herd",
+        "term",
+        "verb",
+        "perch",
+        "stern"
+      ],
+      "prerequisiteFocusIds": [
+        "ch",
+        "initial-blends",
+        "final-blends"
+      ],
+      "reviewWordCandidates": [
+        "fork",
+        "corn",
+        "cord",
+        "fur",
+        "burn",
+        "turn"
+      ],
+      "notes": [
+        "Introduce the meanings of fern, term, verb, perch and stern if they are unfamiliar. Use full, isolated word pronunciations."
+      ],
+      "artwork": "images/l9_titanparade.jpg"
+    },
+    {
+      "level": 39,
+      "id": "ir",
+      "phase": "Vowels with r",
+      "focus": "ir, as in bird",
+      "spokenRule": "In these words, i and r together sound like ir in bird.",
+      "focusWords": [
+        "bird",
+        "girl",
+        "dirt",
+        "firm",
+        "stir",
+        "third"
+      ],
+      "prerequisiteFocusIds": [
+        "unvoiced-th",
+        "initial-blends",
+        "final-blends"
+      ],
+      "reviewWordCandidates": [
+        "fur",
+        "burn",
+        "turn",
+        "fern",
+        "herd",
+        "term"
+      ],
+      "notes": [
+        "third uses earlier quiet th.",
+        "Introduce the meaning of firm if it is unfamiliar."
+      ],
+      "artwork": "images/l9_titanparade.jpg"
+    },
+    {
+      "level": 40,
+      "id": "aw",
+      "phase": "aw spellings",
+      "focus": "aw, as in saw",
+      "spokenRule": "In these words, a and w together sound like aw in saw.",
+      "focusWords": [
+        "saw",
+        "paw",
+        "jaw",
+        "raw",
+        "claw",
+        "draw"
+      ],
+      "prerequisiteFocusIds": [
+        "initial-blends"
+      ],
+      "reviewWordCandidates": [
+        "fern",
+        "herd",
+        "term",
+        "bird",
+        "girl",
+        "dirt"
+      ],
+      "notes": [
+        "draw replaces straw in the draft; the focus bank does not introduce a three-consonant onset."
+      ],
+      "artwork": "images/l9_titanparade.jpg"
+    },
+    {
+      "level": 41,
+      "id": "a-before-ll",
+      "phase": "aw spellings",
+      "focus": "a before ll, as in ball",
+      "spokenRule": "In these words, a before two l letters sounds like aw in ball.",
+      "focusWords": [
+        "all",
+        "ball",
+        "call",
+        "fall",
+        "hall",
+        "tall"
+      ],
+      "prerequisiteFocusIds": [
+        "ll",
+        "aw"
+      ],
+      "reviewWordCandidates": [
+        "bird",
+        "girl",
+        "dirt",
+        "saw",
+        "paw",
+        "jaw"
+      ],
+      "notes": [
+        "This is a specific a-before-ll cohort. It is not a claim that all double consonants change a vowel in the same way."
+      ],
+      "artwork": "images/l10_ringplanet.jpg"
+    }
+  ],
+  "deferredPatterns": [
+    {
+      "pattern": "ea and further vowel spellings",
+      "reason": "Separate spelling cohorts need their own levels; ee and ea should not share a new-rule level."
+    },
+    {
+      "pattern": "u-e saying oo and coalescing sounds",
+      "reason": "Keep them separate from the yoo cohort."
+    },
+    {
+      "pattern": "Open syllables and final y",
+      "reason": "baby combines an open syllable, final y and more than one syllable."
+    },
+    {
+      "pattern": "Soft c and g, ph and wh",
+      "reason": "Introduce each pattern separately after the core course."
+    },
+    {
+      "pattern": "Silent consonants and further consonant teams",
+      "reason": "They are additional correspondences, outside this first map."
+    },
+    {
+      "pattern": "Unstressed vowels and longer words",
+      "reason": "music and longer words require more than the core single-syllable patterns."
+    },
+    {
+      "pattern": "Common exception words",
+      "reason": "Words such as the, of, was and have need deliberate separate teaching. Teaching quiet th and buzzy th does not cover the exceptional vowel in the."
+    },
+    {
+      "pattern": "Ambiguous pronunciations",
+      "reason": "live and similar words need context or an explicitly selected meaning before they are suitable focus items."
+    }
+  ],
+  "implementationNotes": [
+    {
+      "before": "A word's single numeric level drives both selection and completion.",
+      "after": "Give the new word course explicit focus banks and review membership; keep one stable progress record per word.",
+      "reason": "The same familiar word can support many later levels without gaining new mastery requirements."
+    },
+    {
+      "before": "Missing canonical words are deleted from stored progress during loading.",
+      "after": "Keep all existing word identities in the catalog, including parked words; only remove them from this course's selection.",
+      "reason": "Deferred words must retain their trophies, attempts and settings."
+    },
+    {
+      "before": "The old course's numeric level and old one-time migrations describe the ten-level sequence.",
+      "after": "Introduce a new word-course identity and an explicit migration; preserve old history and select the first unfinished focus bank.",
+      "reason": "Old Level 3 cannot silently acquire the meaning of the new Level 3."
+    },
+    {
+      "before": "Word and number practice share MAX_LEVEL = 10.",
+      "after": "Use independent word-course and number-course bounds.",
+      "reason": "The proposed 41 word levels do not change the ten number levels."
+    },
+    {
+      "before": "Artwork is assigned only to the ten old word levels.",
+      "after": "Use the explicit artwork reuse map recorded for every proposed level.",
+      "reason": "Every proposed word level has a deliberate image assignment."
+    },
+    {
+      "before": "Sound buttons and family tags cover the existing vocabulary.",
+      "after": "Audit the segmentation, sound clips and rule wording for every proposed focus word before adoption; add needed word-specific sound definitions.",
+      "reason": "A valid spelling bank can still play the wrong sound through an old override."
+    },
+    {
+      "before": "Rules heard flags and recap selection rely on old rule IDs and numeric levels.",
+      "after": "Scope rule introductions to the new focus sequence and select word recaps by course membership; ensure number items cannot enter word recaps.",
+      "reason": "Previously heard rules and old numeric levels must not suppress or misdirect the new course."
+    },
+    {
+      "before": "Several existing rule tags are inconsistent, including both, shall, water and music.",
+      "after": "Resolve the already tracked sound and rule issues before importing their words into a future focus bank.",
+      "reason": "Known annotation errors must not become new teaching rules."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Department for Education: choosing a phonics teaching programme",
+      "url": "https://www.gov.uk/government/publications/choosing-a-phonics-teaching-programme/list-of-phonics-teaching-programmes",
+      "purpose": "Supports using a systematic progression. This custom map is not a DfE-validated programme."
+    },
+    {
+      "title": "Letters and Sounds",
+      "url": "https://www.gov.uk/government/publications/letters-and-sounds",
+      "purpose": "A phonics reference for correspondences and blending, not an endorsement of this custom word order."
+    }
+  ],
+  "reviewNotes": [
+    "One new focus means one unfamiliar spelling pattern or blending skill. A word may use several earlier patterns.",
+    "Every candidate still needs a child's-eye check for pronunciation and meaning. The word lists do not certify teaching quality.",
+    "The focus labels describe these word cohorts, not universal rules for every English word.",
+    "Review the starting assumptions and the first five banks before adopting the proposed course. No extra reference-audio recordings are required."
+  ]
+}

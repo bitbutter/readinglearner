@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>One new rule per level — proposed word course</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f7f5ee;color:#21333b;font:17px/1.55 system-ui,sans-serif}main{max-width:1050px;margin:auto;padding:38px 24px 70px}h1{font-size:clamp(30px,5vw,48px);line-height:1.12;margin:14px 0}h2{font-size:25px;margin:28px 0 10px}h3{font-size:21px;margin:3px 0 12px}p{margin:10px 0}.badge{display:inline-block;background:#e6e0bf;color:#564c21;padding:5px 12px;border-radius:20px;font-size:14px;font-weight:650}.lede{max-width:780px}.count{font-weight:700;color:#246377}.scope{border-left:4px solid #ae8e43;padding-left:14px;color:#5c542f}.round{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.round>div{background:#e8efed;padding:18px;border-radius:10px}.round strong{display:block;font-size:19px}.panel{background:#fff;border:1px solid #dce1dd;border-radius:12px;padding:20px;margin:18px 0}.filters{display:flex;gap:14px;margin:18px 0;flex-wrap:wrap}.filters label{flex:1;min-width:230px;font-weight:650;font-size:15px}input,select{width:100%;margin-top:5px;padding:11px;border:1px solid #b2bcb9;border-radius:7px;background:white;color:inherit;font:inherit}.level{display:flex;gap:20px;background:white;border:1px solid #dce1dd;border-radius:12px;margin:12px 0;padding:20px}.level-number{flex:0 0 48px;height:48px;display:grid;place-items:center;background:#246377;color:white;font-size:22px;font-weight:700;border-radius:50%}.level-body{min-width:0;flex:1}.phase{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#627674}.focus-words{display:flex;flex-wrap:wrap;gap:9px}.focus-words strong{background:#e6f0ef;border-radius:6px;padding:4px 12px;font-size:21px;color:#153f4a}.review{font-size:15px;color:#5d6b6b}.review span{font-weight:600}small{font-size:13px;color:#627674}summary{cursor:pointer;color:#246377;font-weight:600}details p,details ul{font-size:15px}details{margin-top:10px}li+li{margin-top:7px}a{color:#17617e}code{font-size:13px}footer{margin-top:28px;color:#627674;font-size:14px}.coverage-list p{line-height:1.9}.technical li{margin-bottom:18px}.technical b{display:block}.empty{padding:20px;text-align:center}[hidden]{display:none!important}button{padding:9px 16px;border:1px solid #b2bcb9;border-radius:7px;background:white;color:#246377;font:inherit;cursor:pointer}input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid #d7ae53;outline-offset:3px}
+@media(max-width:600px){main{padding:24px 14px}.round{grid-template-columns:1fr}.level{gap:12px;padding:15px}.level-number{flex-basis:36px;height:36px;font-size:18px}.focus-words strong{font-size:19px;padding:3px 9px}}
+@media print{body{background:white;font-size:11pt}main{padding:0;max-width:none}h1{font-size:26pt}.filters,button{display:none}.level{break-inside:avoid;border-radius:0}.focus-words strong{background:none;padding:0;margin-right:8px;font-size:13pt}.level-number{background:none;color:black}.panel{break-inside:avoid}details{font-size:10pt}}
+</style></head><body><main>
+<header><span class="badge">Proposed · 2026-10-06</span><h1>One new rule per level</h1>
+<p class="lede">A proposed cumulative word course for the Reading Learner app. Each small level adds one focus; earlier patterns can appear again.</p><p class="count">41 small levels · 240 focus words · usually 6 words per level</p>
+<p class="scope">Reviewable curriculum map only. The running app still uses its existing ten word levels.</p></header>
+<section aria-labelledby="practice-heading"><h2 id="practice-heading">A practice round</h2><div class="round">
+<div><strong>3 familiar words</strong>Three familiar words, drawn from the child&#39;s demonstrated known-word bank.</div>
+<div><strong>4 focus encounters</strong>Four encounters from the current level&#39;s focus bank. Rotate the bank across rounds; the whole level need not fit in one round.</div>
+<div><strong>3 familiar words</strong>Three familiar words again. Repeats of known words are allowed.</div></div>
+<p>Only the focus bank determines level completion. Keep the current requirement of two qualifying first-attempt Yes confirmations per focus word. A helped repeat advances the encounter but does not earn a qualifying first-attempt Yes.</p><p>Opening and closing words do not add new completion requirements. Preserve existing word trophies and earned confirmations. An already mastered focus word keeps its credit.</p></section>
+<section class="panel"><h2>Check the starting point</h2><ul><li>The child recognises the ordinary single-letter consonant sounds, including hard c and g, consonant y, and x as ks.</li><li>The child can attempt blending simple consonant-vowel-consonant words.</li><li>These are provisional assumptions, not confirmed assessment results. Check them before adopting the course.</li></ul>
+<p>Possible familiar starters: <b>mat, dad, hat</b>.</p><p>Use these only if the child already reads them independently. Choose and confirm the familiar starter bank before the first practice round. Do not label an unseen word an easy win merely because it is decodable.</p>
+<details><summary>If these starting skills are not ready</summary><p>Confirm starting skills and a familiar starter bank before enabling this course. If the prerequisite is not met, address the foundation explicitly rather than presenting unfamiliar words as wins.</p></details></section>
+<section aria-labelledby="levels-heading"><h2 id="levels-heading">The proposed levels</h2><p>The sequence is cumulative: every level assumes the patterns from all earlier levels. Listed prerequisites highlight additional earlier patterns inside its focus words; they are not a separate route through the course.</p>
+<p>Bold words practise the level’s focus. Familiar-word candidates are optional; use them only after he knows them.</p>
+<div class="filters"><label>Find a rule or focus word<input id="word-search" type="search" placeholder="e.g. th, moon, short a"></label>
+<label>Show a group<select id="phase-filter"><option value="">All groups</option><option value="Short vowels">Short vowels</option><option value="Blending and doubled letters">Blending and doubled letters</option><option value="Consonant teams">Consonant teams</option><option value="Silent final e">Silent final e</option><option value="Vowel teams">Vowel teams</option><option value="More vowel teams">More vowel teams</option><option value="Vowels with r">Vowels with r</option><option value="aw spellings">aw spellings</option></select></label></div>
+<p id="visible-count" role="status">Showing all 41 levels</p><div id="levels"><article class="level" data-search="1 short a, as in cat short vowels cat map tap sad bag jam" data-phase="Short vowels">
+      <div class="level-number">1</div><div class="level-body">
+      <div class="phase">Short vowels</div><h3>Short a, as in cat</h3>
+      <p class="focus-words"><strong>cat</strong> <strong>map</strong> <strong>tap</strong> <strong>sad</strong> <strong>bag</strong> <strong>jam</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> mat, dad, hat <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, a makes the short vowel sound in cat.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="2 short e, as in bed short vowels bed red hen pen net wet" data-phase="Short vowels">
+      <div class="level-number">2</div><div class="level-body">
+      <div class="phase">Short vowels</div><h3>Short e, as in bed</h3>
+      <p class="focus-words"><strong>bed</strong> <strong>red</strong> <strong>hen</strong> <strong>pen</strong> <strong>net</strong> <strong>wet</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> cat, map, tap <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, e makes the short vowel sound in bed.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="3 short i, as in pig short vowels pig sit pin lip dig fin" data-phase="Short vowels">
+      <div class="level-number">3</div><div class="level-body">
+      <div class="phase">Short vowels</div><h3>Short i, as in pig</h3>
+      <p class="focus-words"><strong>pig</strong> <strong>sit</strong> <strong>pin</strong> <strong>lip</strong> <strong>dig</strong> <strong>fin</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> cat, map, tap, bed, red, hen <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, i makes the short vowel sound in pig.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="4 short o, as in dog short vowels dog log pot hot top mop" data-phase="Short vowels">
+      <div class="level-number">4</div><div class="level-body">
+      <div class="phase">Short vowels</div><h3>Short o, as in dog</h3>
+      <p class="focus-words"><strong>dog</strong> <strong>log</strong> <strong>pot</strong> <strong>hot</strong> <strong>top</strong> <strong>mop</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> bed, red, hen, pig, sit, pin <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o makes the short vowel sound in dog.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="5 short u, as in sun short vowels sun cup bus mud run hut" data-phase="Short vowels">
+      <div class="level-number">5</div><div class="level-body">
+      <div class="phase">Short vowels</div><h3>Short u, as in sun</h3>
+      <p class="focus-words"><strong>sun</strong> <strong>cup</strong> <strong>bus</strong> <strong>mud</strong> <strong>run</strong> <strong>hut</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> pig, sit, pin, dog, log, pot <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, u makes the vowel sound in sun.”</p>
+      <p>Builds on all earlier levels.</p><ul><li>Use the child&#39;s home pronunciation. A Yorkshire u in cup is not an error.</li></ul></details>
+      </div></article>
+<article class="level" data-search="6 blend known consonant sounds at the start blending and doubled letters clap flag frog plum stop swim" data-phase="Blending and doubled letters">
+      <div class="level-number">6</div><div class="level-body">
+      <div class="phase">Blending and doubled letters</div><h3>Blend known consonant sounds at the start</h3>
+      <p class="focus-words"><strong>clap</strong> <strong>flag</strong> <strong>frog</strong> <strong>plum</strong> <strong>stop</strong> <strong>swim</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> dog, log, pot, sun, cup, bus <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“Say the consonant sounds together at the start.”</p>
+      <p>Builds on all earlier levels. Especially: Short a, as in cat; Short i, as in pig; Short o, as in dog; Short u, as in sun.</p><ul><li>This is a blending skill using already known consonant sounds. No new digraph is introduced. The core examples use two adjacent consonant sounds.</li></ul></details>
+      </div></article>
+<article class="level" data-search="7 blend known consonant sounds at the end blending and doubled letters hand tent lamp milk pond dust" data-phase="Blending and doubled letters">
+      <div class="level-number">7</div><div class="level-body">
+      <div class="phase">Blending and doubled letters</div><h3>Blend known consonant sounds at the end</h3>
+      <p class="focus-words"><strong>hand</strong> <strong>tent</strong> <strong>lamp</strong> <strong>milk</strong> <strong>pond</strong> <strong>dust</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> sun, cup, bus, clap, flag, frog <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“Say the consonant sounds together at the end.”</p>
+      <p>Builds on all earlier levels. Especially: Short a, as in cat; Short e, as in bed; Short i, as in pig; Short o, as in dog; Short u, as in sun.</p><ul><li>This is a blending skill using already known consonant sounds. The core examples use two adjacent consonant sounds.</li></ul></details>
+      </div></article>
+<article class="level" data-search="8 ck says k blending and doubled letters back neck kick rock duck sock" data-phase="Blending and doubled letters">
+      <div class="level-number">8</div><div class="level-body">
+      <div class="phase">Blending and doubled letters</div><h3>ck says k</h3>
+      <p class="focus-words"><strong>back</strong> <strong>neck</strong> <strong>kick</strong> <strong>rock</strong> <strong>duck</strong> <strong>sock</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> clap, flag, frog, hand, tent, lamp <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“c and k together say k.”</p>
+      <p>Builds on all earlier levels. Especially: Short a, as in cat; Short e, as in bed; Short i, as in pig; Short o, as in dog; Short u, as in sun.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="9 ff says f blending and doubled letters off puff huff cuff sniff stiff" data-phase="Blending and doubled letters">
+      <div class="level-number">9</div><div class="level-body">
+      <div class="phase">Blending and doubled letters</div><h3>ff says f</h3>
+      <p class="focus-words"><strong>off</strong> <strong>puff</strong> <strong>huff</strong> <strong>cuff</strong> <strong>sniff</strong> <strong>stiff</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> hand, tent, lamp, back, neck, kick <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“Two f letters make one f sound.”</p>
+      <p>Builds on all earlier levels. Especially: Short i, as in pig; Short o, as in dog; Short u, as in sun; Blend known consonant sounds at the start.</p><ul><li>Introduce the meaning of cuff if it is unfamiliar.</li></ul></details>
+      </div></article>
+<article class="level" data-search="10 ll says l blending and doubled letters bell hill doll tell well fill" data-phase="Blending and doubled letters">
+      <div class="level-number">10</div><div class="level-body">
+      <div class="phase">Blending and doubled letters</div><h3>ll says l</h3>
+      <p class="focus-words"><strong>bell</strong> <strong>hill</strong> <strong>doll</strong> <strong>tell</strong> <strong>well</strong> <strong>fill</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> back, neck, kick, off, puff, huff <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“Two l letters make one l sound.”</p>
+      <p>Builds on all earlier levels. Especially: Short e, as in bed; Short i, as in pig; Short o, as in dog.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="11 ss says s blending and doubled letters miss kiss mess fuss hiss boss" data-phase="Blending and doubled letters">
+      <div class="level-number">11</div><div class="level-body">
+      <div class="phase">Blending and doubled letters</div><h3>ss says s</h3>
+      <p class="focus-words"><strong>miss</strong> <strong>kiss</strong> <strong>mess</strong> <strong>fuss</strong> <strong>hiss</strong> <strong>boss</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> off, puff, huff, bell, hill, doll <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“Two s letters make one s sound.”</p>
+      <p>Builds on all earlier levels. Especially: Short e, as in bed; Short i, as in pig; Short o, as in dog; Short u, as in sun.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="12 zz says z blending and doubled letters buzz fuzz fizz jazz" data-phase="Blending and doubled letters">
+      <div class="level-number">12</div><div class="level-body">
+      <div class="phase">Blending and doubled letters</div><h3>zz says z</h3>
+      <p class="focus-words"><strong>buzz</strong> <strong>fuzz</strong> <strong>fizz</strong> <strong>jazz</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> bell, hill, doll, miss, kiss, mess <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“Two z letters make one z sound.”</p>
+      <p>Builds on all earlier levels. Especially: Short a, as in cat; Short i, as in pig; Short u, as in sun.</p><ul><li>Four focus words are enough; do not add an unfamiliar pattern merely to fill six slots.</li></ul></details>
+      </div></article>
+<article class="level" data-search="13 sh, as in ship consonant teams ship shop shut shed fish wish" data-phase="Consonant teams">
+      <div class="level-number">13</div><div class="level-body">
+      <div class="phase">Consonant teams</div><h3>sh, as in ship</h3>
+      <p class="focus-words"><strong>ship</strong> <strong>shop</strong> <strong>shut</strong> <strong>shed</strong> <strong>fish</strong> <strong>wish</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> miss, kiss, mess, buzz, fuzz, fizz <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“s and h together say sh.”</p>
+      <p>Builds on all earlier levels. Especially: Short e, as in bed; Short i, as in pig; Short o, as in dog; Short u, as in sun.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="14 ch, as in chip consonant teams chip chop chin chat rich much" data-phase="Consonant teams">
+      <div class="level-number">14</div><div class="level-body">
+      <div class="phase">Consonant teams</div><h3>ch, as in chip</h3>
+      <p class="focus-words"><strong>chip</strong> <strong>chop</strong> <strong>chin</strong> <strong>chat</strong> <strong>rich</strong> <strong>much</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> buzz, fuzz, fizz, ship, shop, shut <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“c and h together say ch.”</p>
+      <p>Builds on all earlier levels. Especially: Short a, as in cat; Short i, as in pig; Short o, as in dog; Short u, as in sun.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="15 quiet th, as in thin consonant teams thin thick thud moth cloth thrush" data-phase="Consonant teams">
+      <div class="level-number">15</div><div class="level-body">
+      <div class="phase">Consonant teams</div><h3>Quiet th, as in thin</h3>
+      <p class="focus-words"><strong>thin</strong> <strong>thick</strong> <strong>thud</strong> <strong>moth</strong> <strong>cloth</strong> <strong>thrush</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> ship, shop, shut, chip, chop, chin <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“t and h together say the quiet th in thin.”</p>
+      <p>Builds on all earlier levels. Especially: Short i, as in pig; Short o, as in dog; Short u, as in sun; ck says k; Blend known consonant sounds at the start; sh, as in ship.</p><ul><li>thick uses earlier ck; cloth and thrush use earlier initial blending; thrush also uses earlier sh.</li></ul></details>
+      </div></article>
+<article class="level" data-search="16 buzzy th, as in this consonant teams this that them then than" data-phase="Consonant teams">
+      <div class="level-number">16</div><div class="level-body">
+      <div class="phase">Consonant teams</div><h3>Buzzy th, as in this</h3>
+      <p class="focus-words"><strong>this</strong> <strong>that</strong> <strong>them</strong> <strong>then</strong> <strong>than</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> chip, chop, chin, thin, thick, thud <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“t and h together say the buzzy th in this.”</p>
+      <p>Builds on all earlier levels. Especially: Short a, as in cat; Short e, as in bed; Short i, as in pig; Quiet th, as in thin.</p><ul><li>Use the clearly spoken, isolated forms of than and them, rather than their reduced forms in sentences. Five focus words are enough.</li></ul></details>
+      </div></article>
+<article class="level" data-search="17 ng, as in ring consonant teams bang hang rang ring sing king" data-phase="Consonant teams">
+      <div class="level-number">17</div><div class="level-body">
+      <div class="phase">Consonant teams</div><h3>ng, as in ring</h3>
+      <p class="focus-words"><strong>bang</strong> <strong>hang</strong> <strong>rang</strong> <strong>ring</strong> <strong>sing</strong> <strong>king</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> thin, thick, thud, this, that, them <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“n and g together say ng, as in ring.”</p>
+      <p>Builds on all earlier levels. Especially: Short a, as in cat; Short i, as in pig.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="18 qu says kw consonant teams quit quiz quill quack quick quest" data-phase="Consonant teams">
+      <div class="level-number">18</div><div class="level-body">
+      <div class="phase">Consonant teams</div><h3>qu says kw</h3>
+      <p class="focus-words"><strong>quit</strong> <strong>quiz</strong> <strong>quill</strong> <strong>quack</strong> <strong>quick</strong> <strong>quest</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> this, that, them, bang, hang, rang <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“q and u together say kw.”</p>
+      <p>Builds on all earlier levels. Especially: Short a, as in cat; Short e, as in bed; Short i, as in pig; ll says l; ck says k; Blend known consonant sounds at the end.</p><ul><li>quill uses earlier ll; quack and quick use earlier ck; quest uses earlier final blending.</li><li>Introduce the meanings of quill and quest if they are unfamiliar.</li></ul></details>
+      </div></article>
+<article class="level" data-search="19 a-e, as in cake silent final e cake name game tape wave late" data-phase="Silent final e">
+      <div class="level-number">19</div><div class="level-body">
+      <div class="phase">Silent final e</div><h3>a-e, as in cake</h3>
+      <p class="focus-words"><strong>cake</strong> <strong>name</strong> <strong>game</strong> <strong>tape</strong> <strong>wave</strong> <strong>late</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> bang, hang, rang, quit, quiz, quill <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, a says its name and the final e is silent.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="20 i-e, as in bike silent final e bike kite time five lime hide" data-phase="Silent final e">
+      <div class="level-number">20</div><div class="level-body">
+      <div class="phase">Silent final e</div><h3>i-e, as in bike</h3>
+      <p class="focus-words"><strong>bike</strong> <strong>kite</strong> <strong>time</strong> <strong>five</strong> <strong>lime</strong> <strong>hide</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> quit, quiz, quill, cake, name, game <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, i says its name and the final e is silent.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="21 o-e, as in home silent final e home hope rope bone cone note" data-phase="Silent final e">
+      <div class="level-number">21</div><div class="level-body">
+      <div class="phase">Silent final e</div><h3>o-e, as in home</h3>
+      <p class="focus-words"><strong>home</strong> <strong>hope</strong> <strong>rope</strong> <strong>bone</strong> <strong>cone</strong> <strong>note</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> cake, name, game, bike, kite, time <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o says its name and the final e is silent.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="22 u-e says yoo silent final e cube cute mule mute fume" data-phase="Silent final e">
+      <div class="level-number">22</div><div class="level-body">
+      <div class="phase">Silent final e</div><h3>u-e says yoo</h3>
+      <p class="focus-words"><strong>cube</strong> <strong>cute</strong> <strong>mule</strong> <strong>mute</strong> <strong>fume</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> bike, kite, time, home, hope, rope <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, u says yoo and the final e is silent.”</p>
+      <p>Builds on all earlier levels.</p><ul><li>Teach only the yoo pronunciation here. Reserve u-e as in rule and coalescing pronunciations such as tune for separate later work.</li><li>Introduce the meaning of fume if it is unfamiliar. Five focus words are enough.</li></ul></details>
+      </div></article>
+<article class="level" data-search="23 ee, as in feet vowel teams bee see feet seed sheep green" data-phase="Vowel teams">
+      <div class="level-number">23</div><div class="level-body">
+      <div class="phase">Vowel teams</div><h3>ee, as in feet</h3>
+      <p class="focus-words"><strong>bee</strong> <strong>see</strong> <strong>feet</strong> <strong>seed</strong> <strong>sheep</strong> <strong>green</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> home, hope, rope, cube, cute, mule <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, e and e together say ee.”</p>
+      <p>Builds on all earlier levels. Especially: sh, as in ship; Blend known consonant sounds at the start.</p><ul><li>sheep uses earlier sh; green uses earlier initial blending.</li></ul></details>
+      </div></article>
+<article class="level" data-search="24 ai, as in rain vowel teams rain pain tail sail mail train" data-phase="Vowel teams">
+      <div class="level-number">24</div><div class="level-body">
+      <div class="phase">Vowel teams</div><h3>ai, as in rain</h3>
+      <p class="focus-words"><strong>rain</strong> <strong>pain</strong> <strong>tail</strong> <strong>sail</strong> <strong>mail</strong> <strong>train</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> cube, cute, mule, bee, see, feet <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, a and i together say ay.”</p>
+      <p>Builds on all earlier levels. Especially: Blend known consonant sounds at the start.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="25 ay, as in day vowel teams day pay say way ray play" data-phase="Vowel teams">
+      <div class="level-number">25</div><div class="level-body">
+      <div class="phase">Vowel teams</div><h3>ay, as in day</h3>
+      <p class="focus-words"><strong>day</strong> <strong>pay</strong> <strong>say</strong> <strong>way</strong> <strong>ray</strong> <strong>play</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> bee, see, feet, rain, pain, tail <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, a and y together say ay.”</p>
+      <p>Builds on all earlier levels. Especially: Blend known consonant sounds at the start.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="26 oa, as in boat vowel teams boat coat goat road soap toad" data-phase="Vowel teams">
+      <div class="level-number">26</div><div class="level-body">
+      <div class="phase">Vowel teams</div><h3>oa, as in boat</h3>
+      <p class="focus-words"><strong>boat</strong> <strong>coat</strong> <strong>goat</strong> <strong>road</strong> <strong>soap</strong> <strong>toad</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> rain, pain, tail, day, pay, say <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and a together say oh.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="27 oo, as in moon vowel teams moon food soon boot pool spoon" data-phase="Vowel teams">
+      <div class="level-number">27</div><div class="level-body">
+      <div class="phase">Vowel teams</div><h3>oo, as in moon</h3>
+      <p class="focus-words"><strong>moon</strong> <strong>food</strong> <strong>soon</strong> <strong>boot</strong> <strong>pool</strong> <strong>spoon</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> day, pay, say, boat, coat, goat <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and o together say the oo in moon.”</p>
+      <p>Builds on all earlier levels. Especially: Blend known consonant sounds at the start.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="28 oo, as in book vowel teams book cook look took foot good" data-phase="Vowel teams">
+      <div class="level-number">28</div><div class="level-body">
+      <div class="phase">Vowel teams</div><h3>oo, as in book</h3>
+      <p class="focus-words"><strong>book</strong> <strong>cook</strong> <strong>look</strong> <strong>took</strong> <strong>foot</strong> <strong>good</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> boat, coat, goat, moon, food, soon <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and o together say the oo in book.”</p>
+      <p>Builds on all earlier levels. Especially: oo, as in moon.</p><ul><li>This is the second oo pronunciation. Contrast the selected examples with moon; do not claim one pronunciation covers every oo word.</li><li>book is excluded from the old app&#39;s general practice bank; this proposal deliberately introduces it here.</li></ul></details>
+      </div></article>
+<article class="level" data-search="29 igh, as in night vowel teams high sigh night light right tight" data-phase="Vowel teams">
+      <div class="level-number">29</div><div class="level-body">
+      <div class="phase">Vowel teams</div><h3>igh, as in night</h3>
+      <p class="focus-words"><strong>high</strong> <strong>sigh</strong> <strong>night</strong> <strong>light</strong> <strong>right</strong> <strong>tight</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> moon, food, soon, book, cook, look <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, i, g and h together say eye.”</p>
+      <p>Builds on all earlier levels.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="30 ow, as in cow more vowel teams cow how now down town brown" data-phase="More vowel teams">
+      <div class="level-number">30</div><div class="level-body">
+      <div class="phase">More vowel teams</div><h3>ow, as in cow</h3>
+      <p class="focus-words"><strong>cow</strong> <strong>how</strong> <strong>now</strong> <strong>down</strong> <strong>town</strong> <strong>brown</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> book, cook, look, high, sigh, night <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and w together say ow, as in cow.”</p>
+      <p>Builds on all earlier levels. Especially: Blend known consonant sounds at the start.</p><ul><li>The chosen words use the cow pronunciation. The snow pronunciation gets its own later level.</li></ul></details>
+      </div></article>
+<article class="level" data-search="31 ou, as in out more vowel teams out shout cloud loud proud round" data-phase="More vowel teams">
+      <div class="level-number">31</div><div class="level-body">
+      <div class="phase">More vowel teams</div><h3>ou, as in out</h3>
+      <p class="focus-words"><strong>out</strong> <strong>shout</strong> <strong>cloud</strong> <strong>loud</strong> <strong>proud</strong> <strong>round</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> high, sigh, night, cow, how, now <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and u together say ow, as in out.”</p>
+      <p>Builds on all earlier levels. Especially: sh, as in ship; Blend known consonant sounds at the start; Blend known consonant sounds at the end.</p><ul></ul></details>
+      </div></article>
+<article class="level" data-search="32 ow, as in snow more vowel teams low slow snow grow blow flow" data-phase="More vowel teams">
+      <div class="level-number">32</div><div class="level-body">
+      <div class="phase">More vowel teams</div><h3>ow, as in snow</h3>
+      <p class="focus-words"><strong>low</strong> <strong>slow</strong> <strong>snow</strong> <strong>grow</strong> <strong>blow</strong> <strong>flow</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> cow, how, now, out, shout, cloud <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and w together say oh, as in snow.”</p>
+      <p>Builds on all earlier levels. Especially: Blend known consonant sounds at the start; ow, as in cow.</p><ul><li>This is the second ow pronunciation. Earlier cow words remain valid; the spelling has more than one sound.</li></ul></details>
+      </div></article>
+<article class="level" data-search="33 oi, as in coin more vowel teams oil boil coil foil coin join" data-phase="More vowel teams">
+      <div class="level-number">33</div><div class="level-body">
+      <div class="phase">More vowel teams</div><h3>oi, as in coin</h3>
+      <p class="focus-words"><strong>oil</strong> <strong>boil</strong> <strong>coil</strong> <strong>foil</strong> <strong>coin</strong> <strong>join</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> out, shout, cloud, low, slow, snow <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and i together say oy.”</p>
+      <p>Builds on all earlier levels.</p><ul><li>Introduce the meaning of coil if it is unfamiliar.</li></ul></details>
+      </div></article>
+<article class="level" data-search="34 oy, as in toy more vowel teams boy toy joy soy" data-phase="More vowel teams">
+      <div class="level-number">34</div><div class="level-body">
+      <div class="phase">More vowel teams</div><h3>oy, as in toy</h3>
+      <p class="focus-words"><strong>boy</strong> <strong>toy</strong> <strong>joy</strong> <strong>soy</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> low, slow, snow, oil, boil, coil <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and y together say oy.”</p>
+      <p>Builds on all earlier levels.</p><ul><li>Introduce the meaning of soy if it is unfamiliar. Four focus words are enough.</li></ul></details>
+      </div></article>
+<article class="level" data-search="35 ar, as in car vowels with r car far jar arm farm star" data-phase="Vowels with r">
+      <div class="level-number">35</div><div class="level-body">
+      <div class="phase">Vowels with r</div><h3>ar, as in car</h3>
+      <p class="focus-words"><strong>car</strong> <strong>far</strong> <strong>jar</strong> <strong>arm</strong> <strong>farm</strong> <strong>star</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> oil, boil, coil, boy, toy, joy <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, a and r together sound like ar in car.”</p>
+      <p>Builds on all earlier levels. Especially: Blend known consonant sounds at the start; Blend known consonant sounds at the end.</p><ul><li>Use the child&#39;s home accent for the presence or absence of a pronounced r. Do not require a southern model accent.</li></ul></details>
+      </div></article>
+<article class="level" data-search="36 or, as in fork vowels with r fork corn cord horn short sport" data-phase="Vowels with r">
+      <div class="level-number">36</div><div class="level-body">
+      <div class="phase">Vowels with r</div><h3>or, as in fork</h3>
+      <p class="focus-words"><strong>fork</strong> <strong>corn</strong> <strong>cord</strong> <strong>horn</strong> <strong>short</strong> <strong>sport</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> boy, toy, joy, car, far, jar <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, o and r together sound like or in fork.”</p>
+      <p>Builds on all earlier levels. Especially: sh, as in ship; Blend known consonant sounds at the start; Blend known consonant sounds at the end.</p><ul><li>Use the child&#39;s home accent for the presence or absence of a pronounced r.</li></ul></details>
+      </div></article>
+<article class="level" data-search="37 ur, as in turn vowels with r fur burn turn hurt curl surf" data-phase="Vowels with r">
+      <div class="level-number">37</div><div class="level-body">
+      <div class="phase">Vowels with r</div><h3>ur, as in turn</h3>
+      <p class="focus-words"><strong>fur</strong> <strong>burn</strong> <strong>turn</strong> <strong>hurt</strong> <strong>curl</strong> <strong>surf</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> car, far, jar, fork, corn, cord <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, u and r together sound like ur in turn.”</p>
+      <p>Builds on all earlier levels. Especially: Blend known consonant sounds at the end.</p><ul><li>Use the child&#39;s home accent. ur, er and ir are taught as separate spellings even where their sounds coincide.</li></ul></details>
+      </div></article>
+<article class="level" data-search="38 er, as in fern vowels with r fern herd term verb perch stern" data-phase="Vowels with r">
+      <div class="level-number">38</div><div class="level-body">
+      <div class="phase">Vowels with r</div><h3>er, as in fern</h3>
+      <p class="focus-words"><strong>fern</strong> <strong>herd</strong> <strong>term</strong> <strong>verb</strong> <strong>perch</strong> <strong>stern</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> fork, corn, cord, fur, burn, turn <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, e and r together sound like er in fern.”</p>
+      <p>Builds on all earlier levels. Especially: ch, as in chip; Blend known consonant sounds at the start; Blend known consonant sounds at the end.</p><ul><li>Introduce the meanings of fern, term, verb, perch and stern if they are unfamiliar. Use full, isolated word pronunciations.</li></ul></details>
+      </div></article>
+<article class="level" data-search="39 ir, as in bird vowels with r bird girl dirt firm stir third" data-phase="Vowels with r">
+      <div class="level-number">39</div><div class="level-body">
+      <div class="phase">Vowels with r</div><h3>ir, as in bird</h3>
+      <p class="focus-words"><strong>bird</strong> <strong>girl</strong> <strong>dirt</strong> <strong>firm</strong> <strong>stir</strong> <strong>third</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> fur, burn, turn, fern, herd, term <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, i and r together sound like ir in bird.”</p>
+      <p>Builds on all earlier levels. Especially: Quiet th, as in thin; Blend known consonant sounds at the start; Blend known consonant sounds at the end.</p><ul><li>third uses earlier quiet th.</li><li>Introduce the meaning of firm if it is unfamiliar.</li></ul></details>
+      </div></article>
+<article class="level" data-search="40 aw, as in saw aw spellings saw paw jaw raw claw draw" data-phase="aw spellings">
+      <div class="level-number">40</div><div class="level-body">
+      <div class="phase">aw spellings</div><h3>aw, as in saw</h3>
+      <p class="focus-words"><strong>saw</strong> <strong>paw</strong> <strong>jaw</strong> <strong>raw</strong> <strong>claw</strong> <strong>draw</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> fern, herd, term, bird, girl, dirt <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, a and w together sound like aw in saw.”</p>
+      <p>Builds on all earlier levels. Especially: Blend known consonant sounds at the start.</p><ul><li>draw replaces straw in the draft; the focus bank does not introduce a three-consonant onset.</li></ul></details>
+      </div></article>
+<article class="level" data-search="41 a before ll, as in ball aw spellings all ball call fall hall tall" data-phase="aw spellings">
+      <div class="level-number">41</div><div class="level-body">
+      <div class="phase">aw spellings</div><h3>a before ll, as in ball</h3>
+      <p class="focus-words"><strong>all</strong> <strong>ball</strong> <strong>call</strong> <strong>fall</strong> <strong>hall</strong> <strong>tall</strong></p>
+      <p class="review"><span>Familiar-word candidates:</span> bird, girl, dirt, saw, paw, jaw <small>— only if already known</small></p>
+      <details><summary>Rule wording &amp; teaching notes</summary><p>“In these words, a before two l letters sounds like aw in ball.”</p>
+      <p>Builds on all earlier levels. Especially: ll says l; aw, as in saw.</p><ul><li>This is a specific a-before-ll cohort. It is not a claim that all double consonants change a vowel in the same way.</li></ul></details>
+      </div></article></div><p id="empty" class="empty" hidden>No levels match. Try another rule or word.</p></section>
+<section class="panel"><h2>What happens to the old words?</h2><p>95 existing words are in these banks; 145 words are new. 191 existing words are parked outside this core sequence. Their progress records would be preserved.</p>
+<p>Some later topics need separate levels: ea and further vowel spellings; u-e saying oo and coalescing sounds; open syllables and final y; soft c and g, ph and wh; silent consonants and further consonant teams; unstressed vowels and longer words; common exception words; ambiguous pronunciations.</p>
+<details><summary>Deferred topics and reasons</summary><ul><li>ea and further vowel spellings: Separate spelling cohorts need their own levels; ee and ea should not share a new-rule level.</li><li>u-e saying oo and coalescing sounds: Keep them separate from the yoo cohort.</li><li>Open syllables and final y: baby combines an open syllable, final y and more than one syllable.</li><li>Soft c and g, ph and wh: Introduce each pattern separately after the core course.</li><li>Silent consonants and further consonant teams: They are additional correspondences, outside this first map.</li><li>Unstressed vowels and longer words: music and longer words require more than the core single-syllable patterns.</li><li>Common exception words: Words such as the, of, was and have need deliberate separate teaching. Teaching quiet th and buzzy th does not cover the exceptional vowel in the.</li><li>Ambiguous pronunciations: live and similar words need context or an explicitly selected meaning before they are suitable focus items.</li></ul></details>
+<details class="coverage-list"><summary>Existing active words kept (94)</summary><p>arm <small>L35</small> · back <small>L8</small> · bag <small>L1</small> · bed <small>L2</small> · bike <small>L20</small> · bird <small>L39</small> · boat <small>L26</small> · bone <small>L21</small> · boot <small>L27</small> · boy <small>L34</small> · burn <small>L37</small> · bus <small>L5</small> · cake <small>L19</small> · call <small>L41</small> · car <small>L35</small> · cat <small>L1</small> · chip <small>L14</small> · clap <small>L6</small> · coat <small>L26</small> · coin <small>L33</small> · corn <small>L36</small> · cube <small>L22</small> · cup <small>L5</small> · cute <small>L22</small> · day <small>L25</small> · dog <small>L4</small> · down <small>L30</small> · draw <small>L40</small> · duck <small>L8</small> · fall <small>L41</small> · far <small>L35</small> · farm <small>L35</small> · fin <small>L3</small> · fish <small>L13</small> · five <small>L20</small> · flag <small>L6</small> · food <small>L27</small> · fork <small>L36</small> · frog <small>L6</small> · girl <small>L39</small> · green <small>L23</small> · grow <small>L32</small> · hen <small>L2</small> · high <small>L29</small> · home <small>L21</small> · horn <small>L36</small> · hot <small>L4</small> · hurt <small>L37</small> · join <small>L33</small> · light <small>L29</small> · lip <small>L3</small> · log <small>L4</small> · map <small>L1</small> · milk <small>L7</small> · moon <small>L27</small> · mop <small>L4</small> · much <small>L14</small> · mud <small>L5</small> · name <small>L19</small> · net <small>L2</small> · night <small>L29</small> · note <small>L21</small> · off <small>L9</small> · pen <small>L2</small> · pig <small>L3</small> · pin <small>L3</small> · play <small>L25</small> · pot <small>L4</small> · rain <small>L24</small> · right <small>L29</small> · road <small>L26</small> · rock <small>L8</small> · run <small>L5</small> · sad <small>L1</small> · say <small>L25</small> · see <small>L23</small> · ship <small>L13</small> · short <small>L36</small> · sing <small>L17</small> · sit <small>L3</small> · sock <small>L8</small> · star <small>L35</small> · sun <small>L5</small> · tap <small>L1</small> · tape <small>L19</small> · tell <small>L10</small> · thin <small>L15</small> · time <small>L20</small> · toy <small>L34</small> · train <small>L24</small> · turn <small>L37</small> · way <small>L25</small> · wet <small>L2</small> · wish <small>L13</small></p></details>
+<details class="coverage-list"><summary>Previously excluded words introduced here (1)</summary><p>book <small>L28</small></p></details>
+<details class="coverage-list"><summary>New focus words (145)</summary><p>all <small>L41</small> · ball <small>L41</small> · bang <small>L17</small> · bee <small>L23</small> · bell <small>L10</small> · blow <small>L32</small> · boil <small>L33</small> · boss <small>L11</small> · brown <small>L30</small> · buzz <small>L12</small> · chat <small>L14</small> · chin <small>L14</small> · chop <small>L14</small> · claw <small>L40</small> · cloth <small>L15</small> · cloud <small>L31</small> · coil <small>L33</small> · cone <small>L21</small> · cook <small>L28</small> · cord <small>L36</small> · cow <small>L30</small> · cuff <small>L9</small> · curl <small>L37</small> · dig <small>L3</small> · dirt <small>L39</small> · doll <small>L10</small> · dust <small>L7</small> · feet <small>L23</small> · fern <small>L38</small> · fill <small>L10</small> · firm <small>L39</small> · fizz <small>L12</small> · flow <small>L32</small> · foil <small>L33</small> · foot <small>L28</small> · fume <small>L22</small> · fur <small>L37</small> · fuss <small>L11</small> · fuzz <small>L12</small> · game <small>L19</small> · goat <small>L26</small> · good <small>L28</small> · hall <small>L41</small> · hand <small>L7</small> · hang <small>L17</small> · herd <small>L38</small> · hide <small>L20</small> · hill <small>L10</small> · hiss <small>L11</small> · hope <small>L21</small> · how <small>L30</small> · huff <small>L9</small> · hut <small>L5</small> · jam <small>L1</small> · jar <small>L35</small> · jaw <small>L40</small> · jazz <small>L12</small> · joy <small>L34</small> · kick <small>L8</small> · king <small>L17</small> · kiss <small>L11</small> · kite <small>L20</small> · lamp <small>L7</small> · late <small>L19</small> · lime <small>L20</small> · look <small>L28</small> · loud <small>L31</small> · low <small>L32</small> · mail <small>L24</small> · mess <small>L11</small> · miss <small>L11</small> · moth <small>L15</small> · mule <small>L22</small> · mute <small>L22</small> · neck <small>L8</small> · now <small>L30</small> · oil <small>L33</small> · out <small>L31</small> · pain <small>L24</small> · paw <small>L40</small> · pay <small>L25</small> · perch <small>L38</small> · plum <small>L6</small> · pond <small>L7</small> · pool <small>L27</small> · proud <small>L31</small> · puff <small>L9</small> · quack <small>L18</small> · quest <small>L18</small> · quick <small>L18</small> · quill <small>L18</small> · quit <small>L18</small> · quiz <small>L18</small> · rang <small>L17</small> · raw <small>L40</small> · ray <small>L25</small> · red <small>L2</small> · rich <small>L14</small> · ring <small>L17</small> · rope <small>L21</small> · round <small>L31</small> · sail <small>L24</small> · saw <small>L40</small> · seed <small>L23</small> · shed <small>L13</small> · sheep <small>L23</small> · shop <small>L13</small> · shout <small>L31</small> · shut <small>L13</small> · sigh <small>L29</small> · slow <small>L32</small> · sniff <small>L9</small> · snow <small>L32</small> · soap <small>L26</small> · soon <small>L27</small> · soy <small>L34</small> · spoon <small>L27</small> · sport <small>L36</small> · stern <small>L38</small> · stiff <small>L9</small> · stir <small>L39</small> · stop <small>L6</small> · surf <small>L37</small> · swim <small>L6</small> · tail <small>L24</small> · tall <small>L41</small> · tent <small>L7</small> · term <small>L38</small> · than <small>L16</small> · that <small>L16</small> · them <small>L16</small> · then <small>L16</small> · thick <small>L15</small> · third <small>L39</small> · this <small>L16</small> · thrush <small>L15</small> · thud <small>L15</small> · tight <small>L29</small> · toad <small>L26</small> · took <small>L28</small> · top <small>L4</small> · town <small>L30</small> · verb <small>L38</small> · wave <small>L19</small> · well <small>L10</small></p></details>
+<details class="coverage-list"><summary>All existing words parked (191)</summary><p>about · air · always · and · animal · are · around · at · baby · bad · bat · be · bear · beat · because · been · before · best · better · body · both · bring · brother · bug · bun · but · buy · can · cap · carry · cart · chair · children · city · clean · clock · cold · colour · cool · crab · cut · dad · dish · do · does · don&#39;t · done · door · drink · drum · earth · eight · end · face · family · fast · father · feed · first · floor · found · fox · friend · full · garden · gate · gave · go · goes · got · hair · hat · he · her · hold · hop · horse · idea · if · in · is · it · its · jug · keep · kind · kitchen · land · laugh · lock · long · mad · made · make · man · many · mat · meet · more · morning · mother · mountain · music · myself · never · no · not · on · only · or · own · page · pan · paper · park · part · pear · pencil · people · pick · picture · pipe · place · pull · rag · ran · rat · read · ride · river · room · sat · school · sea · seven · shall · she · shore · show · sister · six · sled · sleep · slip · small · so · sound · start · store · story · street · sweet · table · tag · tea · teacher · ten · the · their · these · those · tiger · to · today · together · tree · try · tube · up · upon · us · use · van · very · wall · warm · was · wash · water · we · weather · web · which · why · window · work · would · write · year · your · zip</p></details>
+<p><a href="word-levels-coverage.json">Download the coverage list</a> · <a href="word-levels-proposed.json">Download the exact course map</a></p></section>
+<section class="panel"><h2>Review before adoption</h2><ul><li>One new focus means one unfamiliar spelling pattern or blending skill. A word may use several earlier patterns.</li><li>Every candidate still needs a child&#39;s-eye check for pronunciation and meaning. The word lists do not certify teaching quality.</li><li>The focus labels describe these word cohorts, not universal rules for every English word.</li><li>Review the starting assumptions and the first five banks before adopting the proposed course. No extra reference-audio recordings are required.</li></ul><p>Keep the current record → expected word → Got it? → Yes or record again flow. The voice-recognition experiment is not part of this proposal.</p><p>Start the new course at the first unfinished focus bank using preserved word progress. Let a parent choose Level 1 for practice without wiping trophies.</p>
+<p>This draft uses the principle of a systematic progression. It is a custom map, not a validated teaching programme.</p>
+<p><a href="https://www.gov.uk/government/publications/choosing-a-phonics-teaching-programme/list-of-phonics-teaching-programmes">Department for Education: choosing a phonics teaching programme</a><br><small>Supports using a systematic progression. This custom map is not a DfE-validated programme.</small></p><p><a href="https://www.gov.uk/government/publications/letters-and-sounds">Letters and Sounds</a><br><small>A phonics reference for correspondences and blending, not an endorsement of this custom word order.</small></p></section>
+<details class="panel technical"><summary>Changes needed in the app before adoption</summary>
+<p>Show the current level&#39;s one focus as the primary rule chip. Earlier spelling help remains available through the word&#39;s sound buttons; do not automatically introduce extra rule chips in a focused round.</p><ol><li><b>OLD:</b>A word&#39;s single numeric level drives both selection and completion.<b>CHANGES_TO:</b>Give the new word course explicit focus banks and review membership; keep one stable progress record per word.<b>REASON:</b>The same familiar word can support many later levels without gaining new mastery requirements.</li><li><b>OLD:</b>Missing canonical words are deleted from stored progress during loading.<b>CHANGES_TO:</b>Keep all existing word identities in the catalog, including parked words; only remove them from this course&#39;s selection.<b>REASON:</b>Deferred words must retain their trophies, attempts and settings.</li><li><b>OLD:</b>The old course&#39;s numeric level and old one-time migrations describe the ten-level sequence.<b>CHANGES_TO:</b>Introduce a new word-course identity and an explicit migration; preserve old history and select the first unfinished focus bank.<b>REASON:</b>Old Level 3 cannot silently acquire the meaning of the new Level 3.</li><li><b>OLD:</b>Word and number practice share MAX_LEVEL = 10.<b>CHANGES_TO:</b>Use independent word-course and number-course bounds.<b>REASON:</b>The proposed 41 word levels do not change the ten number levels.</li><li><b>OLD:</b>Artwork is assigned only to the ten old word levels.<b>CHANGES_TO:</b>Use the explicit artwork reuse map recorded for every proposed level.<b>REASON:</b>Every proposed word level has a deliberate image assignment.</li><li><b>OLD:</b>Sound buttons and family tags cover the existing vocabulary.<b>CHANGES_TO:</b>Audit the segmentation, sound clips and rule wording for every proposed focus word before adoption; add needed word-specific sound definitions.<b>REASON:</b>A valid spelling bank can still play the wrong sound through an old override.</li><li><b>OLD:</b>Rules heard flags and recap selection rely on old rule IDs and numeric levels.<b>CHANGES_TO:</b>Scope rule introductions to the new focus sequence and select word recaps by course membership; ensure number items cannot enter word recaps.<b>REASON:</b>Previously heard rules and old numeric levels must not suppress or misdirect the new course.</li><li><b>OLD:</b>Several existing rule tags are inconsistent, including both, shall, water and music.<b>CHANGES_TO:</b>Resolve the already tracked sound and rule issues before importing their words into a future focus bank.<b>REASON:</b>Known annotation errors must not become new teaching rules.</li></ol>
+<details><summary>Explicit artwork reuse map</summary><ul><li>Level 1: images/l1_lonemarine.jpg</li><li>Level 2: images/l1_lonemarine.jpg</li><li>Level 3: images/l1_lonemarine.jpg</li><li>Level 4: images/l1_lonemarine.jpg</li><li>Level 5: images/l1_lonemarine.jpg</li><li>Level 6: images/l2_cathedralknight.jpg</li><li>Level 7: images/l2_cathedralknight.jpg</li><li>Level 8: images/l2_cathedralknight.jpg</li><li>Level 9: images/l3_helmet.jpg</li><li>Level 10: images/l3_helmet.jpg</li><li>Level 11: images/l3_helmet.jpg</li><li>Level 12: images/l3_helmet.jpg</li><li>Level 13: images/l4_hammerchampion.jpg</li><li>Level 14: images/l4_hammerchampion.jpg</li><li>Level 15: images/l4_hammerchampion.jpg</li><li>Level 16: images/l4_hammerchampion.jpg</li><li>Level 17: images/l4_hammerchampion.jpg</li><li>Level 18: images/l4_hammerchampion.jpg</li><li>Level 19: images/l5_scouts.jpg</li><li>Level 20: images/l5_scouts.jpg</li><li>Level 21: images/l5_scouts.jpg</li><li>Level 22: images/l5_scouts.jpg</li><li>Level 23: images/l6_muster.jpg</li><li>Level 24: images/l6_muster.jpg</li><li>Level 25: images/l6_muster.jpg</li><li>Level 26: images/l6_muster.jpg</li><li>Level 27: images/l6_muster.jpg</li><li>Level 28: images/l6_muster.jpg</li><li>Level 29: images/l6_muster.jpg</li><li>Level 30: images/l7_saint.jpg</li><li>Level 31: images/l7_saint.jpg</li><li>Level 32: images/l7_saint.jpg</li><li>Level 33: images/l7_saint.jpg</li><li>Level 34: images/l7_saint.jpg</li><li>Level 35: images/l8_battleship.jpg</li><li>Level 36: images/l8_battleship.jpg</li><li>Level 37: images/l8_battleship.jpg</li><li>Level 38: images/l9_titanparade.jpg</li><li>Level 39: images/l9_titanparade.jpg</li><li>Level 40: images/l9_titanparade.jpg</li><li>Level 41: images/l10_ringplanet.jpg</li></ul></details></details>
+<footer>Course map one-rule-word-course-draft · Generated from the reviewed word-list file. Structural validation checks counts, unique words and earlier prerequisites; it does not validate pronunciation.</footer>
+</main><script>
+const wordSearch = document.getElementById('word-search');
+const phaseFilter = document.getElementById('phase-filter');
+const levelCards = [...document.querySelectorAll('.level')];
+function filterLevels() {
+  const query = wordSearch.value.trim().toLowerCase();
+  let visibleCount = 0;
+  for (const card of levelCards) {
+    card.hidden = !(card.dataset.search.includes(query) && (!phaseFilter.value || card.dataset.phase === phaseFilter.value));
+    if (!card.hidden) visibleCount++;
+  }
+  document.getElementById('visible-count').textContent = 'Showing ' + visibleCount + ' of ' + levelCards.length + ' levels';
+  document.getElementById('empty').hidden = visibleCount > 0;
+}
+wordSearch.addEventListener('input', filterLevels);
+phaseFilter.addEventListener('change', filterLevels);
+</script></body></html>
