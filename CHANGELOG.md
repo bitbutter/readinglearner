@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Practice now speaks the answer after the first recording and asks the child “Got it?” Yes confirms the first attempt; the same microphone records one helped repeat and then moves on.
 - Gold and purple trophies now each require two qualifying first-attempt confirmations on separate encounters. Confirmation dots survive helped repeats, and previously earned trophies remain earned.
 - Practice no longer uses speech recognition to grade answers or displays a transcript. Vosk's model loads only when opening grown-up tuning, which shows engine status; practice starts independently. The retry-limit setting has been removed.
-- Yes waits for the spoken question to finish successfully. If playback fails, Hear it retries the same question without discarding the first recording or awarding progress.
+- Yes and the repeat mic become available as soon as the spoken answer finishes, before “Got it?” plays. Either choice stops that question immediately. If the answer cannot play, Hear it retries the answer and question without discarding the first recording or awarding progress.
 
 ### Added
 

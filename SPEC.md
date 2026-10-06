@@ -39,7 +39,9 @@ Practice captures microphone audio locally. No practice recognizer, transcript d
 
 The bundled on-device Vosk engine remains available for grown-up audition and tuning only. Its model loads only when the grown-up opens tuning; child startup and practice are independent of model loading or model failure. The tuning screen shows whether the engine is loading, ready, or unavailable. Its model and vocabulary matching do not grade child practice. The separate recording evaluator, its stored recordings, and cloud-model comparisons remain separate tools.
 
-The self-check choice becomes available only after the answer-and-question utterance reports a successful `onend`. A playback failure enters the explicit `question-error` phase: Yes stays hidden or disabled, the mic cannot begin another recording, and parent-readable text explains the problem. The same Hear it button retries the original “[answer]. Got it?” utterance. This retry preserves the first recording and its help counts; it does not submit another answer or select an alternative verdict.
+The answer and “Got it?” play as separate utterances. The self-check choice becomes available as soon as the answer reports a successful `onend`, before “Got it?” starts. Choosing Yes or recording a repeat stops any remaining question speech immediately. The question's completion does not change the available choices or score the answer.
+
+An answer playback failure enters the explicit `answer-error` phase: Yes stays hidden or disabled, the mic cannot begin another recording, and parent-readable text explains the problem. The same Hear it button retries the answer followed by “Got it?”. This retry preserves the first recording and its help counts; it does not submit another answer or select an alternative verdict.
 
 Onboarding is spoken once per saved progress record. It introduces saying the word, hearing the answer, and choosing the checkmark or trying it again with the microphone. A denied or unavailable microphone receives a clear spoken error; it does not become a wrong answer.
 
@@ -57,8 +59,8 @@ One encounter has the following sequence:
 
 1. **Present the word or number.** Show the text, earned trophies, applicable rule chips, and two mastery-confirmation dots. The child can hear the whole answer or tap sound groups before speaking.
 2. **Record the first attempt.** The child holds the existing large mic button and speaks; release stops capture. The existing tap-to-start/tap-to-stop accommodation remains available. During microphone warm-up, the button remains able to receive the held pointer's release; releasing early cancels that unfinished capture.
-3. **Speak the answer and question.** After a valid capture, pause for 0.5 seconds, then say exactly “[answer]. Got it?” Controls wait for the utterance's successful completion. If playback fails, show a parent-readable error and Hear it to replay the same question. The spoken reveal and its playback retries do not count as help used before the first attempt.
-4. **Let the child choose.** Show the large checkmark button labelled Yes alongside the same mic button. Hide Hear it during this choice. The short question is also visible for a nearby grown-up.
+3. **Speak the answer and question.** After a valid capture, pause for 0.5 seconds, then speak the answer. When the answer finishes successfully, enable Yes and the repeat mic, then say “Got it?”. If the answer cannot play, show a parent-readable error and Hear it to replay the answer and question. The spoken reveal and its playback retries do not count as help used before the first attempt.
+4. **Let the child choose.** Show the large checkmark button labelled Yes alongside the same mic button. Hide Hear it during this choice. The short question is also visible for a nearby grown-up. The child can choose while “Got it?” is playing; either choice stops the question immediately.
    - **Yes:** Commit the child's confirmation of the first attempt, award any qualifying progress, give spoken and visual feedback, and advance.
    - **Mic:** Record one helped repeat of the same word or number. After a valid capture, pause for 0.5 seconds, assume the repeat succeeded, give feedback, and advance without another question or confirmation button.
 
@@ -105,8 +107,8 @@ The all-done screen retains spoken praise, reward visuals, and the tomorrow send
 - Hear it and the mic are available for the initial attempt. During self-check, Yes and the same mic are the two choices.
 - Yes has a checkmark, a large friendly circular control, and a footprint matching the mic. Choosing the repeat route has no failure mark or punishing presentation.
 - Round-progress dots, mastery-confirmation dots, and earned trophies remain visually distinct.
-- Yes and Hear it use real disabled attributes while unavailable. The mic is disabled while waiting or while the question has a playback error, and remains able to receive release during warm-up. The child cannot commit Yes while the answer is speaking or capture is active.
-- Failed question playback exposes Hear it for replaying the same question, with parent-readable error text. Yes and a new recording remain unavailable until playback completes successfully.
+- Yes and Hear it use real disabled attributes while unavailable. The mic is disabled while waiting or while the answer has a playback error, and remains able to receive release during warm-up. The child cannot commit Yes while the answer is speaking or capture is active.
+- Failed answer playback exposes Hear it for replaying the answer and question, with parent-readable error text. Yes and a new recording remain unavailable until the answer completes successfully. Both choices remain available while “Got it?” plays.
 - Controls have accessible names and visible keyboard focus. Filled confirmation dots differ in fill as well as color.
 - Phone, tablet, and desktop layouts keep the word, question, and touch controls on screen with generous spacing.
 
@@ -124,13 +126,13 @@ Progress continues to use `readingLearner.v1` with storage version 1. Settings, 
 
 Item records retain their identity, content, level, practice statistics, last-seen information, and permanent `decoded`, `mastered`, and `flawless` trophy flags. They add `masteryConfirmationCount` and `flawlessConfirmationCount`, each initialized to zero when absent. Recognition accepted forms and audition confidence records remain relevant to grown-up tuning.
 
-Commit item progress only when the encounter resolves through Yes or a valid helped repeat. Microphone errors and an unfinished question do not award or persist a confirmation. Keep prior confirmation counts and earned trophy flags across reloads and helped repeats. Resetting all progress remains an explicit grown-up action.
+Commit item progress only when the encounter resolves through Yes or a valid helped repeat. Microphone errors and an unheard answer do not award or persist a confirmation. Keep prior confirmation counts and earned trophy flags across reloads and helped repeats. Resetting all progress remains an explicit grown-up action.
 
 ## Acceptance Criteria
 
 - The child can use every practice control through icons and spoken prompts.
 - A valid first recording always leads to the correct answer followed by “Got it?”
-- Yes becomes available only after the spoken question completes successfully. Playback failure retains the first recording and offers Hear it to retry that question.
+- Yes and the repeat mic become available after the spoken answer completes successfully, before “Got it?” starts. Either choice stops the question immediately. Answer playback failure retains the first recording and offers Hear it to retry the answer and question.
 - Yes resolves only that first attempt and cannot be committed twice for one encounter.
 - The same mic records the one helped repeat. A valid repeat completes the encounter without a second self-check.
 - A failed capture awards no progress and leaves the unfinished stage available.

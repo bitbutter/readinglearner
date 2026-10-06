@@ -1298,6 +1298,7 @@ async function startListening() {
   if (!encounter || encounter.committed) return;
   if (micState === 'confirming' && encounter.phase === 'confirming') {
     encounter.phase = 'repeat-ready';
+    speechSynthesis.cancel();
   }
   const helpedRepeat = encounter.phase === 'repeat-ready';
   if (!helpedRepeat && encounter.phase !== 'first-ready') return;
@@ -1355,20 +1356,21 @@ function finishSpokenAttempt() {
 
 function askSpokenSelfCheck(encounter) {
   if (gs.spokenWordEncounter !== encounter || encounter.committed) return;
-  encounter.phase = 'question';
+  encounter.phase = 'answer';
   const question = `${gs.currentItem.display}. Got it?`;
   document.getElementById('self-check-question').textContent = question;
   setMicState('waiting');
-  speak(question, stored.settings.speechRate, how => {
-    if (gs.spokenWordEncounter !== encounter || encounter.phase !== 'question') return;
+  speakWord(gs.currentItem.display, how => {
+    if (gs.spokenWordEncounter !== encounter || encounter.phase !== 'answer') return;
     if (how !== 'onend') {
-      encounter.phase = 'question-error';
+      encounter.phase = 'answer-error';
       document.getElementById('self-check-question').textContent = 'The word could not play. Check sound, then tap Hear it to try again.';
-      setMicState('question-error');
+      setMicState('answer-error');
       return;
     }
     encounter.phase = 'confirming';
     setMicState('confirming');
+    speak('Got it?', stored.settings.speechRate);
   });
 }
 
@@ -1859,6 +1861,7 @@ function commitSelfCheckedAnswer(outcome) {
   if (!assistance || encounter.itemId !== gs.currentItem?.id) throw new Error('The self-check must belong to its recorded word.');
   encounter.committed = true;
   encounter.phase = 'completed';
+  if (!helpedRepeat) speechSynthesis.cancel();
   gs.awaitingResult = true;
   setMicState('waiting');
   const item = gs.currentItem;
@@ -2062,8 +2065,8 @@ function setMicState(state) {
   const yesBtn = document.getElementById('self-check-yes');
   const question = document.getElementById('self-check-question');
   const encounter = gs.spokenWordEncounter;
-  const comparing = encounter?.phase === 'question' || encounter?.phase === 'confirming';
-  const playbackError = encounter?.phase === 'question-error';
+  const comparing = encounter?.phase === 'answer' || encounter?.phase === 'confirming';
+  const playbackError = encounter?.phase === 'answer-error';
   if (yesBtn) {
     yesBtn.classList.toggle('hidden', !comparing);
     yesBtn.disabled = state !== 'confirming';
@@ -2935,7 +2938,7 @@ function setupEvents() {
   const hearBtn = document.getElementById('hear-button');
   hearBtn.addEventListener('click', () => {
     const encounter = gs.spokenWordEncounter;
-    if (encounter?.phase === 'question-error') {
+    if (encounter?.phase === 'answer-error') {
       askSpokenSelfCheck(encounter);
       return;
     }
@@ -3065,7 +3068,7 @@ function setupEvents() {
 // ============================================================
 
 async function init() {
-  console.log('[ReadingLearner] build v43 — child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
+  console.log('[ReadingLearner] build v44 — child self-check; two confirmations for mastery; on-device Vosk for grown-up audition. Type rlDump() / rlExportAccepted().');
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // updateViaCache:'none' → re-check sw.js on every load so a pushed
